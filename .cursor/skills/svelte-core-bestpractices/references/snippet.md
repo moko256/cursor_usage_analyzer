@@ -150,7 +150,7 @@ Within the template, snippets are values just like any other. As such, they can 
 	<td>{d.qty * d.price}</td>
 {/snippet}
 
-<Table data={fruits} +++{header} {row} +++ />
+<Table data={fruits} {header} {row} />
 ```
 
 ```svelte
