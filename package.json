@@ -11,7 +11,7 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"test:unit": "vitest",
-		"test": "npm run test:unit -- --run",
+		"test": "pnpm run test:unit -- --run",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write ."
 	},
@@ -34,5 +34,8 @@
 		"typescript-eslint": "^8.60.1",
 		"vite": "^8.0.16",
 		"vitest": "^4.1.8"
+	},
+	"dependencies": {
+		"@awesome.me/webawesome": "^3.11.0"
 	}
 }
