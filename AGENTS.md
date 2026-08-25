@@ -4,6 +4,24 @@
 - **Package Manager**: pnpm
 - **Add-ons**: ai-tools, paraglide, sveltekit-adapter, vitest, eslint, prettier
 
+## Project
+
+- SvelteKit + Svelte 5 + Vite app using `@sveltejs/adapter-static`.
+- Project files use Svelte runes mode.
+- Pages: `src/routes/`; shared code: `src/lib/`; static files: `static/`.
+- Translations: `messages/{locale}.json`; locales are `en` and `ja`, with `en` as the base locale.
+- `src/lib/paraglide/` is generated; edit translation sources, not generated files.
+- Locale routing is implemented in `src/hooks.ts` and `src/hooks.server.ts`.
+- Web Awesome assets and components are loaded from `src/app.html`.
+
+## Commands
+
+- Dev: `pnpm dev`
+- Check: `pnpm check`
+- Test: `pnpm test`
+- Lint: `pnpm lint`
+- Build: `pnpm build`
+
 ---
 
 You are able to use the Svelte MCP server, where you have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:
