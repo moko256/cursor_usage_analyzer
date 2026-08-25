@@ -102,6 +102,15 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Download deployment script
+        uses: actions/download-artifact@v4
+        with:
+          name: deploy-source-${{ github.run_id }}
+          path: source
+
+      - name: Unpack deployment script
+        run: tar --extract --gzip --file=source/source.tar.gz
+
       - name: Download static site
         uses: actions/download-artifact@v4
         with:
