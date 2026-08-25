@@ -1,3 +1,9 @@
+<script module lang="ts">
+	import { base } from '$app/paths';
+
+	const basePath = base;
+</script>
+
 <script lang="ts">
 	import type { Pathname } from '$app/types';
 	import { resolve } from '$app/paths';
@@ -13,6 +19,8 @@
 
 <div style="display:none">
 	{#each locales as locale (locale)}
-		<a href={resolve(localizeHref(page.url.pathname, { locale }) as Pathname)}>{locale}</a>
+		<a href={resolve(localizeHref(page.url.pathname.replace(basePath, ''), { locale }) as Pathname)}
+			>{locale}</a
+		>
 	{/each}
 </div>

@@ -3,6 +3,11 @@ import { defineConfig } from 'vitest/config';
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 
+const configuredBasePath = process.env.BASE_PATH ?? '';
+const basePath: '' | `/${string}` = configuredBasePath.startsWith('/')
+	? (configuredBasePath as `/${string}`)
+	: '';
+
 export default defineConfig({
 	plugins: [
 		sveltekit({
@@ -11,7 +16,15 @@ export default defineConfig({
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
-			adapter: adapter()
+			adapter: adapter({
+				fallback: '404.html'
+			}),
+			prerender: {
+				crawl: false
+			},
+			paths: {
+				base: basePath
+			}
 		}),
 
 		paraglideVitePlugin({
