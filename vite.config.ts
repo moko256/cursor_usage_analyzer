@@ -16,6 +16,9 @@ export default defineConfig({
 			adapter: adapter({
 				fallback: '404.html'
 			}),
+			prerender: {
+				crawl: false
+			},
 			paths: {
 				base: basePath
 			}
