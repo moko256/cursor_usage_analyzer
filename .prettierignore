@@ -7,3 +7,8 @@ bun.lockb
 
 # Miscellaneous
 /static/
+
+# Generated i18n artifacts (paraglide compiler output + inlang project metadata)
+/src/lib/paraglide/
+project.inlang/*
+!project.inlang/settings.json
