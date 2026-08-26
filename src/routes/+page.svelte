@@ -22,30 +22,32 @@
 	let isDragging = $state(false);
 	let dragDepth = $state(0);
 
-	let amountPoints = $derived(points.filter((point) => point.cost !== null));
-	let totalCost = $derived(amountPoints.reduce((total, point) => total + (point.cost ?? 0), 0));
-	let averageCost = $derived(amountPoints.length > 0 ? totalCost / amountPoints.length : 0);
-	let firstDate = $derived(amountPoints[0]?.date ?? '—');
-	let lastDate = $derived(amountPoints[amountPoints.length - 1]?.date ?? '—');
+	let allPoints = $derived(points);
+	let numericPoints = $derived(points.filter((point) => point.cost !== null));
+	let totalCost = $derived(numericPoints.reduce((total, point) => total + (point.cost ?? 0), 0));
+	let averageCost = $derived(numericPoints.length > 0 ? totalCost / numericPoints.length : 0);
+	let firstDate = $derived(allPoints[0]?.date ?? '—');
+	let lastDate = $derived(allPoints[allPoints.length - 1]?.date ?? '—');
 
 	let minimumCost = $derived(
-		amountPoints.length > 0 ? Math.min(...amountPoints.map((point) => point.cost ?? 0)) : 0
+		numericPoints.length > 0 ? Math.min(...numericPoints.map((point) => point.cost ?? 0)) : 0
 	);
 	let maximumCost = $derived(
-		amountPoints.length > 0 ? Math.max(...amountPoints.map((point) => point.cost ?? 0)) : 0
+		numericPoints.length > 0 ? Math.max(...numericPoints.map((point) => point.cost ?? 0)) : 0
 	);
-	let costRange = $derived(Math.max(maximumCost - minimumCost, maximumCost * 0.08, 1));
+	let chartMaximum = $derived(Math.max(0, maximumCost));
+	let chartRange = $derived(Math.max(chartMaximum, 1));
 
 	let chartPoints = $derived.by(() => {
-		const denominator = Math.max(amountPoints.length - 1, 1);
+		const denominator = Math.max(allPoints.length - 1, 1);
 
-		return amountPoints.map((point, index) => {
-			const cost = point.cost ?? 0;
+		return allPoints.map((point, index) => {
+			const cost = Math.max(0, point.cost ?? 0);
 			const x =
-				amountPoints.length === 1
+				allPoints.length === 1
 					? chartWidth / 2
 					: chartPadding.left + (index / denominator) * (chartRight - chartPadding.left);
-			const y = chartBottom - ((cost - minimumCost) / costRange) * (chartBottom - chartPadding.top);
+			const y = chartBottom - (cost / chartRange) * (chartBottom - chartPadding.top);
 
 			return {
 				point,
@@ -53,7 +55,7 @@
 				y,
 				barWidth: Math.min(
 					42,
-					Math.max(12, (chartRight - chartPadding.left) / amountPoints.length - 10)
+					Math.max(12, (chartRight - chartPadding.left) / allPoints.length - 10)
 				)
 			};
 		});
@@ -62,7 +64,7 @@
 	let chartPath = $derived(chartPoints.map(({ x, y }) => `${x},${y}`).join(' '));
 	let yTicks = $derived(
 		[0, 0.25, 0.5, 0.75, 1].map((ratio) => ({
-			value: minimumCost + costRange * ratio,
+			value: chartRange * ratio,
 			y: chartBottom - ratio * (chartBottom - chartPadding.top)
 		}))
 	);
@@ -317,14 +319,14 @@
 					<p>ファイルを確認して、もう一度アップロードしてください。</p>
 				</div>
 			</wa-card>
-		{:else if amountPoints.length === 0}
+		{:else if allPoints.length === 0}
 			<wa-card class="empty-card">
 				<div class="empty-state">
 					<div class="empty-graphic empty-graphic-warm" aria-hidden="true">
 						<wa-icon name="magnifying-glass"></wa-icon>
 					</div>
-					<h3>表示できるコストがありません</h3>
-					<p>cost列に数値があるCSVをアップロードすると、チャートが表示されます。</p>
+					<h3>表示できるデータがありません</h3>
+					<p>有効なDateとCostの行があるCSVをアップロードすると、チャートが表示されます。</p>
 				</div>
 			</wa-card>
 		{:else}
@@ -352,7 +354,7 @@
 					</div>
 					<div>
 						<p class="stat-label">データポイント</p>
-						<p class="stat-value">{amountPoints.length}<small>件</small></p>
+						<p class="stat-value">{allPoints.length}<small>件</small></p>
 					</div>
 				</div>
 				<div class="stat-card">
@@ -390,7 +392,8 @@
 						<desc id="chart-description">
 							{formatDate(firstDate)}から{formatDate(
 								lastDate
-							)}までのコストを棒と線で表示しています。
+							)}までの全{allPoints.length}件のコストを棒と線で表示しています。
+							Freeと空欄のCostは0として表示しています。
 						</desc>
 						<defs>
 							<linearGradient id="chart-area-fill" x1="0" x2="0" y1="0" y2="1">
@@ -464,7 +467,8 @@
 					</svg>
 				</div>
 				<div slot="footer" class="chart-footer">
-					<span>全{amountPoints.length}件の有効なコストデータ</span>
+					<span>全{allPoints.length}件（Free・空欄は0として表示）</span>
+					<span>数値範囲: {formatCurrency(minimumCost)} — {formatCurrency(maximumCost)}</span>
 					<span>単位: USD</span>
 				</div>
 			</wa-card>
@@ -1142,7 +1146,9 @@
 
 	.chart-footer {
 		display: flex;
+		flex-wrap: wrap;
 		justify-content: space-between;
+		gap: 8px 16px;
 		padding: 3px 28px 20px;
 		color: #a1a39c;
 		font-size: 10px;
