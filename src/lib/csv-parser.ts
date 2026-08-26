@@ -27,7 +27,7 @@ export function parseCsvText(text: string): CsvPoint[] {
 		throw new Error('CSVファイルにデータがありません。');
 	}
 
-	const headers = records[0].map((header, index) =>
+	const headers = records[0].map((header) =>
 		header
 			.replace(/^\uFEFF/, '')
 			.trim()
