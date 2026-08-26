@@ -217,7 +217,7 @@
 					<p class="drop-subtitle">または</p>
 					<wa-button
 						variant="brand"
-						size="medium"
+						size="m"
 						type="button"
 						role="button"
 						tabindex="0"
