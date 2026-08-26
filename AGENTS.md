@@ -4,28 +4,28 @@
 - **Package Manager**: pnpm
 - **Add-ons**: ai-tools, paraglide, sveltekit-adapter, vitest, eslint, prettier
 
+## Project
+
+- SvelteKit + Svelte 5 + Vite app using `@sveltejs/adapter-static`.
+- Project files use Svelte runes mode.
+- Pages: `src/routes/`; shared code: `src/lib/`; static files: `static/`.
+- Translations: `messages/{locale}.json`; locales are `en` and `ja`, with `en` as the base locale.
+- `src/lib/paraglide/` is generated; edit translation sources, not generated files.
+- Locale routing is implemented in `src/hooks.ts` and `src/hooks.server.ts`.
+- Web Awesome assets and components are loaded from `src/app.html`.
+
+## Commands
+
+- Dev: `pnpm dev`
+- Check: `pnpm check`
+- Test: `pnpm test`
+- Lint: `pnpm lint`
+- Build: `pnpm build`
+
 ---
 
-You are able to use the Svelte MCP server, where you have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:
+## Svelte MCP
 
-## Available Svelte MCP Tools:
-
-### 1. list-sections
-
-Use this FIRST to discover all available documentation sections. Returns a structured list with titles, use_cases, and paths.
-When asked about Svelte or SvelteKit topics, ALWAYS use this tool at the start of the chat to find relevant sections.
-
-### 2. get-documentation
-
-Retrieves full documentation content for specific sections. Accepts single or multiple sections.
-After calling the list-sections tool, you MUST analyze the returned documentation sections (especially the use_cases field) and then use the get-documentation tool to fetch ALL documentation sections that are relevant for the user's task.
-
-### 3. svelte-autofixer
-
-Analyzes Svelte code and returns issues and suggestions.
-You MUST use this tool whenever writing Svelte code before sending it to the user. Keep calling it until no issues or suggestions are returned.
-
-### 4. playground-link
-
-Generates a Svelte Playground link with the provided code.
-After completing the code, ask the user if they want a playground link. Only call this tool after user confirmation and NEVER if code was written to files in their project.
+- For Svelte/SvelteKit work, if available, list documentation sections first and fetch all relevant sections before implementing.
+- After editing Svelte code, run the autofixer until it reports no issues.
+- Generate a Playground link only after user confirmation, and never for code written to this repository.
