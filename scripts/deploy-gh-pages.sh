@@ -8,6 +8,7 @@ readonly build_dir="${BUILD_DIR:-${repository_root}/build}"
 readonly pages_branch="${PAGES_BRANCH:-gh-pages}"
 readonly pages_remote_url="${PAGES_REMOTE_URL:-}"
 readonly pages_token="${PAGES_TOKEN:-}"
+readonly pages_basic_auth="$(printf 'x-access-token:%s' "${pages_token}" | base64 | tr -d '\n')"
 readonly commit_message="${DEPLOY_COMMIT_MESSAGE:-Deploy static site}"
 readonly pages_checkout="$(mktemp -d)"
 
@@ -32,7 +33,7 @@ if [[ -z "${pages_token}" ]]; then
 fi
 
 git_authenticated() {
-	git -c "http.extraheader=AUTHORIZATION: bearer ${pages_token}" "$@"
+	git -c "http.extraheader=AUTHORIZATION: basic ${pages_basic_auth}" "$@"
 }
 
 if git_authenticated ls-remote --exit-code --heads "${pages_remote_url}" "${pages_branch}" >/dev/null; then
