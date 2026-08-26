@@ -25,7 +25,7 @@
 	let allPoints = $derived(points);
 	let numericPoints = $derived(points.filter((point) => point.cost !== null));
 	let totalCost = $derived(numericPoints.reduce((total, point) => total + (point.cost ?? 0), 0));
-	let averageCost = $derived(numericPoints.length > 0 ? totalCost / numericPoints.length : 0);
+	let averageCost = $derived(allPoints.length > 0 ? totalCost / allPoints.length : 0);
 	let firstDate = $derived(allPoints[0]?.date ?? '—');
 	let lastDate = $derived(allPoints[allPoints.length - 1]?.date ?? '—');
 
@@ -344,7 +344,7 @@
 						<wa-icon name="calculator"></wa-icon>
 					</div>
 					<div>
-						<p class="stat-label">平均コスト</p>
+						<p class="stat-label">平均コスト（全行）</p>
 						<p class="stat-value">{formatCurrency(averageCost)}</p>
 					</div>
 				</div>
