@@ -20,7 +20,6 @@
 	const plotWidth = chartRight - chartPadding.left;
 
 	let points = $state<CsvPoint[]>([]);
-	let fileName = $state('');
 	let status = $state<ViewState>('idle');
 	let errorMessage = $state('');
 	let isDragging = $state(false);
@@ -202,7 +201,6 @@
 			return;
 		}
 
-		fileName = file.name;
 		status = 'loading';
 		errorMessage = '';
 		points = [];
@@ -276,14 +274,6 @@
 />
 
 <main class:loaded={status === 'success'} class="app-shell">
-	<header class="topbar">
-		<h1><wa-icon name="chart-line" aria-hidden="true"></wa-icon> CSVコスト分析</h1>
-		{#if status === 'success'}
-			<span class="file-name"><wa-icon name="file-csv" aria-hidden="true"></wa-icon>{fileName}</span
-			>
-		{/if}
-	</header>
-
 	<section class="dashboard-content" aria-label="CSV分析">
 		<wa-card class:compact={status === 'success'} class="picker-card">
 			<div class="picker">
@@ -603,47 +593,6 @@
 		gap: 16px;
 		margin: 0 auto;
 		padding: 16px clamp(12px, 3vw, 30px) 20px;
-	}
-
-	.topbar {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 12px;
-		flex: 0 0 auto;
-	}
-
-	.topbar h1 {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		margin: 0;
-		color: #26363a;
-		font-size: clamp(17px, 2.4vw, 21px);
-		font-weight: 700;
-		letter-spacing: -0.04em;
-	}
-
-	.topbar h1 :global(wa-icon) {
-		color: #d96e4d;
-		font-size: 19px;
-	}
-
-	.file-name {
-		display: flex;
-		min-width: 0;
-		align-items: center;
-		gap: 6px;
-		overflow: hidden;
-		color: #77817f;
-		font-size: 11px;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.file-name :global(wa-icon) {
-		flex: 0 0 auto;
-		color: #d96e4d;
 	}
 
 	.dashboard-content {
