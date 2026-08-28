@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { CsvPoint } from '$lib/csv-parser';
+	import * as m from '$lib/paraglide/messages';
 	import { chartWidth, formatCurrency, getHorizontalBars, groupByModel } from './chart-utils';
 
 	interface Props {
@@ -16,15 +17,15 @@
 <wa-card class="chart-card horizontal-card">
 	<figure>
 		<figcaption>
-			<strong>値段/モデル</strong>
-			<span>モデル別コスト</span>
+			<strong>{m.cost_per_model_heading()}</strong>
+			<span>{m.model_cost_subtitle()}</span>
 		</figcaption>
 		<div class="chart-scroll">
 			<svg
 				class="chart-svg"
 				viewBox={`0 0 ${chartWidth} ${horizontalChartHeight}`}
 				role="img"
-				aria-label="モデル別コスト。バーは左から右へ増加します。"
+				aria-label={m.model_cost_chart_aria()}
 			>
 				{#each modelCostBars as bar (bar.model)}
 					<text x="8" y={bar.y + 14} class="model-label">{bar.model}</text>
@@ -38,7 +39,7 @@
 						rx="5"
 						class="hbar hbar-cost"
 					>
-						<title>{bar.model}: {formatCurrency(bar.value)}</title>
+						<title>{m.model_cost_value_title({ model: bar.model, value: formatCurrency(bar.value) })}</title>
 					</rect>
 					<text x={bar.barStart + bar.width + 8} y={bar.y + 13} class="value-label">
 						{formatCurrency(bar.value)}

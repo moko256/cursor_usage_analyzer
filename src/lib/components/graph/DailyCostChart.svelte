@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { CsvPoint } from '$lib/csv-parser';
+	import * as m from '$lib/paraglide/messages';
 	import {
 		chartBottom,
 		chartHeight,
@@ -30,15 +31,15 @@
 <wa-card class="chart-card">
 	<figure>
 		<figcaption>
-			<strong>値段/日</strong>
-			<span>日別のコスト</span>
+			<strong>{m.cost_per_day_heading()}</strong>
+			<span>{m.daily_cost_subtitle()}</span>
 		</figcaption>
 		<div class="chart-scroll">
 			<svg
 				class="chart-svg"
 				viewBox={`0 0 ${chartWidth} ${chartHeight}`}
 				role="img"
-				aria-label={`日別コスト。${dayValues.length}日分。Freeと空欄は0として集計。`}
+				aria-label={m.daily_cost_chart_aria({ count: dayValues.length })}
 			>
 				<line x1={chartPadding.left} x2={chartRight} y1={chartBottom} y2={chartBottom} class="axis"
 				></line>
@@ -67,7 +68,12 @@
 						rx="4"
 						class="bar bar-primary"
 					>
-						<title>{formatDay(bar.day.day)}: {formatCurrency(bar.day.cost)}</title>
+						<title>
+							{m.daily_cost_value_title({
+								date: formatDay(bar.day.day),
+								value: formatCurrency(bar.day.cost)
+							})}
+						</title>
 					</rect>
 					<text x={bar.x + bar.width / 2} y={chartHeight - 17} class="day-label">
 						{formatDay(bar.day.day)}

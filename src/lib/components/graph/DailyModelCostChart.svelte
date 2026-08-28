@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { CsvPoint } from '$lib/csv-parser';
+	import * as m from '$lib/paraglide/messages';
 	import {
 		chartBottom,
 		chartHeight,
@@ -30,10 +31,10 @@
 <wa-card class="chart-card">
 	<figure>
 		<figcaption>
-			<strong>モデル/日</strong>
-			<span>モデル別の日次コスト</span>
+			<strong>{m.models_per_day_heading()}</strong>
+			<span>{m.daily_model_cost_subtitle()}</span>
 		</figcaption>
-		<div class="legend" aria-label="モデル凡例">
+		<div class="legend" aria-label={m.model_legend_aria()}>
 			{#each models as model, index (model)}
 				<span><i class={`legend-color color-${index % 5}`}></i>{model}</span>
 			{/each}
@@ -43,7 +44,10 @@
 				class="chart-svg"
 				viewBox={`0 0 ${chartWidth} ${chartHeight}`}
 				role="img"
-				aria-label={`モデル別の日次コスト。${models.length}モデル、${dayValues.length}日分。`}
+				aria-label={m.daily_model_cost_chart_aria({
+					modelCount: models.length,
+					dayCount: dayValues.length
+				})}
 			>
 				<line x1={chartPadding.left} x2={chartRight} y1={chartBottom} y2={chartBottom} class="axis"
 				></line>
@@ -66,7 +70,11 @@
 							class={`bar color-bar-${models.indexOf(segment.model) % 5}`}
 						>
 							<title>
-								{formatDay(dayBars.day.day)} / {segment.model}: {formatCurrency(segment.value)}
+								{m.daily_model_cost_value_title({
+									date: formatDay(dayBars.day.day),
+									model: segment.model,
+									value: formatCurrency(segment.value)
+								})}
 							</title>
 						</rect>
 					{/each}

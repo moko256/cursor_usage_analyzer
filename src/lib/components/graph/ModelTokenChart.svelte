@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { CsvPoint } from '$lib/csv-parser';
+	import * as m from '$lib/paraglide/messages';
 	import { chartWidth, formatNumber, getHorizontalBars, groupByModel } from './chart-utils';
 
 	interface Props {
@@ -16,15 +17,15 @@
 <wa-card class="chart-card horizontal-card">
 	<figure>
 		<figcaption>
-			<strong>Token/モデル</strong>
-			<span>モデル別トークン数</span>
+			<strong>{m.tokens_per_model_heading()}</strong>
+			<span>{m.model_token_subtitle()}</span>
 		</figcaption>
 		<div class="chart-scroll">
 			<svg
 				class="chart-svg"
 				viewBox={`0 0 ${chartWidth} ${horizontalChartHeight}`}
 				role="img"
-				aria-label="モデル別トークン数。バーは左から右へ増加します。"
+				aria-label={m.model_token_chart_aria()}
 			>
 				{#each tokenBars as bar (bar.model)}
 					<text x="8" y={bar.y + 14} class="model-label">{bar.model}</text>
@@ -38,7 +39,9 @@
 						rx="5"
 						class="hbar hbar-token"
 					>
-						<title>{bar.model}: {formatNumber(bar.value)} tokens</title>
+						<title>
+							{m.model_token_value_title({ model: bar.model, value: formatNumber(bar.value) })}
+						</title>
 					</rect>
 					<text x={bar.barStart + bar.width + 8} y={bar.y + 13} class="value-label">
 						{formatNumber(bar.value)}

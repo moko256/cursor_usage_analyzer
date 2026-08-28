@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import * as m from '$lib/paraglide/messages';
 
 	type ViewState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -73,8 +74,8 @@
 	<div class="picker">
 		<div class="picker-icon" aria-hidden="true"><wa-icon name="cloud-arrow-up"></wa-icon></div>
 		<div>
-			<h2>CSVを選択</h2>
-			<p>CSVをドロップ、またはファイルを選択</p>
+			<h2>{m.csv_picker_title()}</h2>
+			<p>{m.csv_picker_description()}</p>
 		</div>
 		<wa-button
 			variant="brand"
@@ -86,20 +87,20 @@
 			onkeydown={handlePickerKeydown}
 		>
 			<wa-icon slot="start" name="folder-open"></wa-icon>
-			選択
+			{m.select_file()}
 		</wa-button>
 		<input
 			id="csv-file-input"
 			class="file-input"
 			type="file"
 			accept=".csv,text/csv"
-			aria-label="CSVファイルを選択"
+			aria-label={m.csv_file_input_label()}
 			onchange={handleFileInput}
 		/>
 		{#if status === 'loading'}
 			<div class="picker-status" role="status">
-				<span>解析中</span>
-				<wa-progress-bar indeterminate label="CSVを解析中"></wa-progress-bar>
+				<span>{m.parsing()}</span>
+				<wa-progress-bar indeterminate label={m.parsing_csv()}></wa-progress-bar>
 			</div>
 		{:else if status === 'error'}
 			<wa-callout variant="danger" appearance="outlined" class="picker-status">
@@ -109,7 +110,7 @@
 		{:else if status === 'success'}
 			<wa-callout variant="success" appearance="outlined" class="picker-status">
 				<wa-icon slot="icon" name="circle-check"></wa-icon>
-				{pointCount}件を読み込みました
+				{m.csv_files_loaded({ count: pointCount })}
 			</wa-callout>
 		{/if}
 	</div>
@@ -126,8 +127,8 @@
 	>
 		<div class="drop-message">
 			<wa-icon name="cloud-arrow-up" aria-hidden="true"></wa-icon>
-			<strong>ここにドロップ</strong>
-			<span>CSVファイルを読み込みます</span>
+			<strong>{m.drop_here()}</strong>
+			<span>{m.load_csv()}</span>
 		</div>
 	</div>
 {/if}
