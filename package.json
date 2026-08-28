@@ -36,7 +36,7 @@
 		"vitest": "^4.1.8"
 	},
 	"dependencies": {
-		"@awesome.me/webawesome": "^3.11.0",
+		"@picocss/pico": "^2.1.1",
 		"layerchart": "^2.3.1"
 	}
 }

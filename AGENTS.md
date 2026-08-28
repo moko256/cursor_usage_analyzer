@@ -12,7 +12,7 @@
 - Translations: `messages/{locale}.json`; locales are `en` and `ja`, with `en` as the base locale.
 - `src/lib/paraglide/` is generated; edit translation sources, not generated files.
 - Locale routing is implemented in `src/hooks.ts` and `src/hooks.server.ts`.
-- Web Awesome assets and components are loaded from `src/app.html`.
+- Pico CSS is loaded globally from `src/routes/+layout.svelte`.
 
 ## Commands
 

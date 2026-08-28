@@ -1,7 +1,5 @@
 <script module lang="ts">
-	import '@awesome.me/webawesome/dist/styles/webawesome.css';
-	import '@awesome.me/webawesome/dist/components/callout/callout.js';
-	import '@awesome.me/webawesome/dist/components/input/input.js';
+	import '@picocss/pico/css/pico.min.css';
 	import { base } from '$app/paths';
 
 	const basePath = base;
