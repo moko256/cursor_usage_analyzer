@@ -1,4 +1,5 @@
 <script module lang="ts">
+	import '@picocss/pico/css/pico.min.css';
 	import { base } from '$app/paths';
 
 	const basePath = base;
