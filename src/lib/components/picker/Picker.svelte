@@ -120,30 +120,17 @@
 	}
 
 	.picker {
-		display: flex;
 		min-width: 0;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 1rem;
 	}
 
 	.picker-card.initial .picker {
-		align-content: center;
-		justify-content: center;
+		display: grid;
+		place-content: center;
 		min-height: inherit;
 	}
 
 	.picker-copy {
 		min-width: 0;
-		flex: 1 1 12rem;
-	}
-
-	.picker h2 {
-		margin: 0;
-	}
-
-	.picker p {
-		margin: 0;
 	}
 
 	.file-input {
@@ -157,14 +144,12 @@
 	}
 
 	.picker-status {
-		flex: 1 0 100%;
-		margin: 0;
+		display: block;
 	}
 
 	.picker-status progress {
 		display: block;
 		width: 100%;
-		margin-top: 0.5rem;
 	}
 
 	.drop-overlay {
