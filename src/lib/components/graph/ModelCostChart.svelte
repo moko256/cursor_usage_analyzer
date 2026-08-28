@@ -39,7 +39,12 @@
 						rx="5"
 						class="hbar hbar-cost"
 					>
-						<title>{m.model_cost_value_title({ model: bar.model, value: formatCurrency(bar.value) })}</title>
+						<title
+							>{m.model_cost_value_title({
+								model: bar.model,
+								value: formatCurrency(bar.value)
+							})}</title
+						>
 					</rect>
 					<text x={bar.barStart + bar.width + 8} y={bar.y + 13} class="value-label">
 						{formatCurrency(bar.value)}
