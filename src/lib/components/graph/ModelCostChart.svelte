@@ -13,7 +13,7 @@
 	let horizontalChartHeight = $derived(Math.max(190, modelValues.length * 36 + 55));
 </script>
 
-<wa-card class="chart-card horizontal-card">
+<article class="chart-card horizontal-card">
 	<figure>
 		<figcaption>
 			<strong>値段/モデル</strong>
@@ -47,7 +47,7 @@
 			</svg>
 		</div>
 	</figure>
-</wa-card>
+</article>
 
 <style>
 	.chart-card {

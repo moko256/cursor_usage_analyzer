@@ -27,7 +27,7 @@
 	);
 </script>
 
-<wa-card class="chart-card">
+<article class="chart-card">
 	<figure>
 		<figcaption>
 			<strong>値段/日</strong>
@@ -79,7 +79,7 @@
 			</svg>
 		</div>
 	</figure>
-</wa-card>
+</article>
 
 <style>
 	.chart-card {

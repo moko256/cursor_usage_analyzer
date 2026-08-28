@@ -27,7 +27,7 @@
 	let stackedDailyBars = $derived(getStackedDailyBars(dayValues, models, dailyCostScale));
 </script>
 
-<wa-card class="chart-card">
+<article class="chart-card">
 	<figure>
 		<figcaption>
 			<strong>モデル/日</strong>
@@ -81,7 +81,7 @@
 			</svg>
 		</div>
 	</figure>
-</wa-card>
+</article>
 
 <style>
 	.chart-card {
