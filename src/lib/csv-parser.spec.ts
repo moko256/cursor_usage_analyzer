@@ -46,7 +46,7 @@ describe('parseCsvText', () => {
 
 	it('requires Date and Cost headers', () => {
 		expect(() => parseCsvText('Timestamp,Amount,Model\n2025-01-01T00:00:00Z,1,alpha')).toThrow(
-			'CSVにDate列、Cost列、Model列が必要です。'
+			'missing_columns'
 		);
 	});
 

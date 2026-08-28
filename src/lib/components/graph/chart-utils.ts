@@ -1,4 +1,5 @@
 import type { CsvPoint } from '$lib/csv-parser';
+import * as m from '$lib/paraglide/messages';
 
 export const chartWidth = 720;
 export const chartHeight = 270;
@@ -77,7 +78,7 @@ export function groupByDay(points: CsvPoint[]): DailyValue[] {
 	for (const point of points) {
 		const day = utcDay(point.date);
 		const dayValue = byDay.get(day) ?? { cost: 0, tokens: 0, models: new Map() };
-		const model = point.model || 'Unknown';
+		const model = point.model || m.unknown_model();
 		const modelValue = dayValue.models.get(model) ?? { model, cost: 0, tokens: 0 };
 
 		dayValue.cost += point.cost ?? 0;
@@ -104,7 +105,7 @@ export function groupByModel(points: CsvPoint[]): ModelValue[] {
 	const byModel = new Map<string, { cost: number; tokens: number }>();
 
 	for (const point of points) {
-		const model = point.model || 'Unknown';
+		const model = point.model || m.unknown_model();
 		const value = byModel.get(model) ?? { cost: 0, tokens: 0 };
 		value.cost += point.cost ?? 0;
 		value.tokens += point.tokens;

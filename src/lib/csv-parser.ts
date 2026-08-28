@@ -6,6 +6,22 @@ export type CsvPoint = {
 	kind: 'amount' | 'free' | 'empty';
 };
 
+export type CsvParseErrorCode =
+	| 'empty'
+	| 'missing_columns'
+	| 'no_valid_data'
+	| 'background_parsing_unavailable'
+	| 'background_parsing_failed'
+	| 'unclosed_quotes'
+	| 'parse_failed';
+
+export class CsvParseError extends Error {
+	constructor(public readonly code: CsvParseErrorCode) {
+		super(code);
+		this.name = 'CsvParseError';
+	}
+}
+
 type WorkerSuccess = {
 	type: 'success';
 	points: CsvPoint[];
@@ -13,7 +29,7 @@ type WorkerSuccess = {
 
 type WorkerFailure = {
 	type: 'error';
-	message: string;
+	code: CsvParseErrorCode;
 };
 
 const isoDateTimePattern =
@@ -26,7 +42,7 @@ const isoDateTimePattern =
 export function parseCsvText(text: string): CsvPoint[] {
 	const records = parseRecords(text);
 	if (records.length === 0) {
-		throw new Error('CSVファイルにデータがありません。');
+		throw new CsvParseError('empty');
 	}
 
 	const headers = records[0].map((header) => normalizeHeader(header));
@@ -38,7 +54,7 @@ export function parseCsvText(text: string): CsvPoint[] {
 	const outputTokenIndex = findHeaderIndex(headers, ['outputtokens', 'outputtoken']);
 
 	if (dateIndex === -1 || costIndex === -1 || modelIndex === -1) {
-		throw new Error('CSVにDate列、Cost列、Model列が必要です。');
+		throw new CsvParseError('missing_columns');
 	}
 
 	const points: CsvPoint[] = [];
@@ -46,7 +62,7 @@ export function parseCsvText(text: string): CsvPoint[] {
 		const date = record[dateIndex]?.trim() ?? '';
 		if (!isIsoDateTime(date)) continue;
 
-		const model = record[modelIndex]?.trim() || 'Unknown';
+		const model = record[modelIndex]?.trim() ?? '';
 		const tokens = parseTokens(record, tokenIndex, inputTokenIndex, outputTokenIndex);
 		const rawCost = record[costIndex]?.trim() ?? '';
 		if (rawCost === '') {
@@ -66,7 +82,7 @@ export function parseCsvText(text: string): CsvPoint[] {
 	}
 
 	if (points.length === 0) {
-		throw new Error('有効なDateとCostのデータが見つかりません。');
+		throw new CsvParseError('no_valid_data');
 	}
 
 	return points.toSorted((left, right) => Date.parse(left.date) - Date.parse(right.date));
@@ -110,7 +126,7 @@ function parseNonNegativeNumber(value: string | undefined) {
 export function parseCsvFile(file: Blob): Promise<CsvPoint[]> {
 	return new Promise((resolve, reject) => {
 		if (typeof Worker === 'undefined') {
-			reject(new Error('このブラウザではバックグラウンド解析を利用できません。'));
+			reject(new CsvParseError('background_parsing_unavailable'));
 			return;
 		}
 
@@ -124,12 +140,12 @@ export function parseCsvFile(file: Blob): Promise<CsvPoint[]> {
 			if (event.data.type === 'success') {
 				resolve(event.data.points);
 			} else {
-				reject(new Error(event.data.message));
+				reject(new CsvParseError(event.data.code));
 			}
 		};
 		worker.onerror = () => {
 			finish();
-			reject(new Error('CSVファイルをバックグラウンドで解析できませんでした。'));
+			reject(new CsvParseError('background_parsing_failed'));
 		};
 		worker.postMessage(file);
 	});
@@ -175,7 +191,7 @@ function parseRecords(text: string): string[][] {
 		}
 	}
 
-	if (insideQuotes) throw new Error('CSVの引用符が正しく閉じられていません。');
+	if (insideQuotes) throw new CsvParseError('unclosed_quotes');
 	if (field !== '' || record.length > 0) pushRecord();
 
 	return records;
