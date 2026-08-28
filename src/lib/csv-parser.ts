@@ -3,7 +3,7 @@ export type CsvPoint = {
 	model: string;
 	cost: number | null;
 	tokens: number;
-	kind: 'amount' | 'free' | 'empty';
+	kind: 'amount' | 'included' | 'free' | 'empty';
 };
 
 type WorkerSuccess = {
@@ -33,9 +33,7 @@ export function parseCsvText(text: string): CsvPoint[] {
 	const dateIndex = headers.indexOf('date');
 	const costIndex = headers.indexOf('cost');
 	const modelIndex = headers.indexOf('model');
-	const tokenIndex = findHeaderIndex(headers, ['tokens', 'token', 'totaltokens']);
-	const inputTokenIndex = findHeaderIndex(headers, ['inputtokens', 'inputtoken']);
-	const outputTokenIndex = findHeaderIndex(headers, ['outputtokens', 'outputtoken']);
+	const tokenIndex = headers.indexOf('totaltokens');
 
 	if (dateIndex === -1 || costIndex === -1 || modelIndex === -1) {
 		throw new Error('CSVにDate列、Cost列、Model列が必要です。');
@@ -47,22 +45,9 @@ export function parseCsvText(text: string): CsvPoint[] {
 		if (!isIsoDateTime(date)) continue;
 
 		const model = record[modelIndex]?.trim() || 'Unknown';
-		const tokens = parseTokens(record, tokenIndex, inputTokenIndex, outputTokenIndex);
-		const rawCost = record[costIndex]?.trim() ?? '';
-		if (rawCost === '') {
-			points.push({ date, model, cost: null, tokens, kind: 'empty' });
-			continue;
-		}
-
-		if (rawCost.toLowerCase() === 'free') {
-			points.push({ date, model, cost: null, tokens, kind: 'free' });
-			continue;
-		}
-
-		const cost = Number(rawCost);
-		if (Number.isFinite(cost)) {
-			points.push({ date, model, cost, tokens, kind: 'amount' });
-		}
+		const tokens = parseNonNegativeNumber(tokenIndex === -1 ? undefined : record[tokenIndex]);
+		const parsedCost = parseCost(record[costIndex]);
+		if (parsedCost !== null) points.push({ date, model, tokens, ...parsedCost });
 	}
 
 	if (points.length === 0) {
@@ -80,22 +65,16 @@ function normalizeHeader(value: string) {
 		.replace(/[^a-z0-9]/g, '');
 }
 
-function findHeaderIndex(headers: string[], names: string[]) {
-	return names.map((name) => headers.indexOf(name)).find((index) => index !== -1) ?? -1;
-}
+function parseCost(value: string | undefined): Pick<CsvPoint, 'cost' | 'kind'> | null {
+	const rawCost = value?.trim() ?? '';
+	if (rawCost === '') return { cost: null, kind: 'empty' };
 
-function parseTokens(
-	record: string[],
-	tokenIndex: number,
-	inputTokenIndex: number,
-	outputTokenIndex: number
-) {
-	if (tokenIndex !== -1) return parseNonNegativeNumber(record[tokenIndex]);
+	const normalized = rawCost.toLowerCase();
+	if (normalized === 'free') return { cost: null, kind: 'free' };
+	if (normalized === 'included') return { cost: null, kind: 'included' };
 
-	return (
-		parseNonNegativeNumber(record[inputTokenIndex]) +
-		parseNonNegativeNumber(record[outputTokenIndex])
-	);
+	const cost = Number(rawCost);
+	return Number.isFinite(cost) ? { cost, kind: 'amount' } : null;
 }
 
 function parseNonNegativeNumber(value: string | undefined) {
@@ -105,7 +84,7 @@ function parseNonNegativeNumber(value: string | undefined) {
 
 /**
  * Sends the file to a dedicated worker. The worker reads and parses the file,
- * returning only the Date, Model, Cost, and token fields needed by the dashboard.
+ * returning only the Date, Model, Cost, and Total Tokens fields needed by the dashboard.
  */
 export function parseCsvFile(file: Blob): Promise<CsvPoint[]> {
 	return new Promise((resolve, reject) => {

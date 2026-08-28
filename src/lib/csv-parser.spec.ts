@@ -1,60 +1,124 @@
 import { describe, expect, it } from 'vitest';
 import { parseCsvText } from './csv-parser';
 
+const newCsvHeader =
+	'Date,Cloud Agent ID,Automation ID,Kind,Model,Max Mode,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost';
+
 describe('parseCsvText', () => {
-	it('extracts and sorts Date and Cost values', () => {
+	it('extracts Total Tokens and Cost from the Cursor usage CSV', () => {
 		const points = parseCsvText(
 			[
-				'Date,Cost,Model,Tokens,Ignored',
-				'2025-02-02T10:00:00Z,2.5,alpha,100,discarded',
-				'2025-02-01T10:00:00Z,Free,beta,200,discarded',
-				'2025-02-03T10:00:00Z,,alpha,300,discarded'
+				newCsvHeader,
+				'"2026-08-28T17:49:12.795Z","bc-801453d9-84f9-4980-b9ca-39bb13165988","","Included","gpt-5.6-luna-high","No","120957","611","1452080","15625","1589273","Included"',
+				'"2026-08-28T17:48:02.229Z","","","Included","cursor-grok-4.6-high","No","","","","","","Free"',
+				'"2026-08-28T17:41:46.434Z","bc-53b5b9a6-1c88-4cca-b5bd-5b9121229264","","Included","gpt-5.6-luna-high","No","231243","639","4130263","27839","4389984","Included"',
+				'"2026-08-28T17:41:33.344Z","","","Included","cursor-grok-4.6-high","No","","","","","","Free"',
+				'"2026-08-28T16:38:08.403Z","","","Included","gpt-5.6-luna-high","No","81777","114","2278964","18640","2379495","Included"',
+				'"2026-08-28T16:00:00.000Z","","","Included","gpt-5.6-luna-high","No","1","2","3","4","100","12.34"',
+				'"2026-08-28T15:00:00.000Z","","","Included","gpt-5.6-luna-high","No","1","2","3","4","50",""'
 			].join('\n')
 		);
 
 		expect(points).toEqual([
-			{ date: '2025-02-01T10:00:00Z', model: 'beta', cost: null, tokens: 200, kind: 'free' },
-			{ date: '2025-02-02T10:00:00Z', model: 'alpha', cost: 2.5, tokens: 100, kind: 'amount' },
-			{ date: '2025-02-03T10:00:00Z', model: 'alpha', cost: null, tokens: 300, kind: 'empty' }
+			{
+				date: '2026-08-28T15:00:00.000Z',
+				model: 'gpt-5.6-luna-high',
+				cost: null,
+				tokens: 50,
+				kind: 'empty'
+			},
+			{
+				date: '2026-08-28T16:00:00.000Z',
+				model: 'gpt-5.6-luna-high',
+				cost: 12.34,
+				tokens: 100,
+				kind: 'amount'
+			},
+			{
+				date: '2026-08-28T16:38:08.403Z',
+				model: 'gpt-5.6-luna-high',
+				cost: null,
+				tokens: 2379495,
+				kind: 'included'
+			},
+			{
+				date: '2026-08-28T17:41:33.344Z',
+				model: 'cursor-grok-4.6-high',
+				cost: null,
+				tokens: 0,
+				kind: 'free'
+			},
+			{
+				date: '2026-08-28T17:41:46.434Z',
+				model: 'gpt-5.6-luna-high',
+				cost: null,
+				tokens: 4389984,
+				kind: 'included'
+			},
+			{
+				date: '2026-08-28T17:48:02.229Z',
+				model: 'cursor-grok-4.6-high',
+				cost: null,
+				tokens: 0,
+				kind: 'free'
+			},
+			{
+				date: '2026-08-28T17:49:12.795Z',
+				model: 'gpt-5.6-luna-high',
+				cost: null,
+				tokens: 1589273,
+				kind: 'included'
+			}
+		]);
+	});
+
+	it('does not sum Input and Output Tokens when Total Tokens is present', () => {
+		const points = parseCsvText(
+			[
+				newCsvHeader,
+				'"2026-08-28T17:00:00.000Z","","","Included","alpha","No","12","0","0","8","3","Included"'
+			].join('\n')
+		);
+
+		expect(points[0]?.tokens).toBe(3);
+	});
+
+	it('uses 0 tokens when Total Tokens is missing', () => {
+		const points = parseCsvText('Date,Cost,Model\n2026-08-28T17:00:00.000Z,1.5,alpha');
+
+		expect(points).toEqual([
+			{ date: '2026-08-28T17:00:00.000Z', model: 'alpha', cost: 1.5, tokens: 0, kind: 'amount' }
 		]);
 	});
 
 	it('supports quoted commas, escaped quotes, and a BOM', () => {
 		const points = parseCsvText(
-			'\uFEFFDate,Cost,Model,Note\r\n"2025-03-01T10:00:00Z","10","alpha","say ""hello, world"""\r\n'
+			'\uFEFFDate,Cost,Model,Total Tokens,Note\r\n"2026-03-01T10:00:00Z","10","alpha","42","say ""hello, world"""\r\n'
 		);
 
 		expect(points).toEqual([
-			{ date: '2025-03-01T10:00:00Z', model: 'alpha', cost: 10, tokens: 0, kind: 'amount' }
+			{ date: '2026-03-01T10:00:00Z', model: 'alpha', cost: 10, tokens: 42, kind: 'amount' }
 		]);
 	});
 
 	it('ignores rows with invalid dates or costs', () => {
 		const points = parseCsvText(
 			[
-				'Date,Cost,Model',
-				'not-a-date,5',
-				'2025-04-01T10:00:00Z,not-a-number,alpha',
-				'2025-04-02T10:00:00Z,Free,alpha'
+				'Date,Cost,Model,Total Tokens',
+				'not-a-date,5,alpha,10',
+				'2026-04-01T10:00:00Z,not-a-number,alpha,10',
+				'2026-04-02T10:00:00Z,Free,alpha,10'
 			].join('\n')
 		);
 
 		expect(points).toEqual([
-			{ date: '2025-04-02T10:00:00Z', model: 'alpha', cost: null, tokens: 0, kind: 'free' }
+			{ date: '2026-04-02T10:00:00Z', model: 'alpha', cost: null, tokens: 10, kind: 'free' }
 		]);
 	});
 
 	it('requires Date and Cost headers', () => {
-		expect(() => parseCsvText('Timestamp,Amount,Model\n2025-01-01T00:00:00Z,1,alpha')).toThrow(
+		expect(() => parseCsvText('Timestamp,Amount,Model\n2026-01-01T00:00:00Z,1,alpha')).toThrow(
 			'CSVにDate列、Cost列、Model列が必要です。'
 		);
-	});
-
-	it('sums input and output tokens when total tokens are not provided', () => {
-		const points = parseCsvText(
-			'Date,Cost,Model,Input Tokens,Output Tokens\n2025-05-01T10:00:00Z,1,alpha,12,8'
-		);
-
-		expect(points[0]?.tokens).toBe(20);
 	});
 });
