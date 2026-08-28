@@ -1,100 +1,196 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { parseCsvFile, type CsvPoint } from '$lib/csv-parser';
+	import { SvelteMap } from 'svelte/reactivity';
 
 	import '@awesome.me/webawesome/dist/components/button/button.js';
+	import '@awesome.me/webawesome/dist/components/callout/callout.js';
 	import '@awesome.me/webawesome/dist/components/card/card.js';
 	import '@awesome.me/webawesome/dist/components/icon/icon.js';
 	import '@awesome.me/webawesome/dist/components/progress-bar/progress-bar.js';
 
 	type ViewState = 'idle' | 'loading' | 'success' | 'error';
 
-	const chartWidth = 900;
-	const chartHeight = 380;
-	const chartPadding = { top: 28, right: 28, bottom: 58, left: 72 };
+	const chartWidth = 720;
+	const chartHeight = 270;
+	const chartPadding = { top: 20, right: 20, bottom: 48, left: 58 };
 	const chartBottom = chartHeight - chartPadding.bottom;
 	const chartRight = chartWidth - chartPadding.right;
+	const plotHeight = chartBottom - chartPadding.top;
+	const plotWidth = chartRight - chartPadding.left;
 
-	let inputFileName = $state('');
 	let points = $state<CsvPoint[]>([]);
+	let fileName = $state('');
 	let status = $state<ViewState>('idle');
 	let errorMessage = $state('');
 	let isDragging = $state(false);
 	let dragDepth = $state(0);
 
 	let allPoints = $derived(points);
-	let numericPoints = $derived(points.filter((point) => point.cost !== null));
-	let totalCost = $derived(numericPoints.reduce((total, point) => total + (point.cost ?? 0), 0));
-	let averageCost = $derived(allPoints.length > 0 ? totalCost / allPoints.length : 0);
-	let firstDate = $derived(allPoints[0]?.date ?? '—');
-	let lastDate = $derived(allPoints[allPoints.length - 1]?.date ?? '—');
-
-	let minimumCost = $derived(
-		numericPoints.length > 0 ? Math.min(...numericPoints.map((point) => point.cost ?? 0)) : 0
+	let models = $derived.by(() =>
+		Array.from(new Set(allPoints.map((point) => point.model || 'Unknown'))).sort((left, right) =>
+			left.localeCompare(right)
+		)
 	);
-	let maximumCost = $derived(
-		numericPoints.length > 0 ? Math.max(...numericPoints.map((point) => point.cost ?? 0)) : 0
-	);
-	let chartMaximum = $derived(Math.max(0, maximumCost));
-	let chartRange = $derived(Math.max(chartMaximum, 1));
 
-	let chartPoints = $derived.by(() => {
-		const denominator = Math.max(allPoints.length - 1, 1);
+	let dayValues = $derived.by(() => {
+		const byDay = new SvelteMap<
+			string,
+			{ cost: number; tokens: number; models: SvelteMap<string, { cost: number; tokens: number }> }
+		>();
 
-		return allPoints.map((point, index) => {
-			const cost = Math.max(0, point.cost ?? 0);
-			const x =
-				allPoints.length === 1
-					? chartWidth / 2
-					: chartPadding.left + (index / denominator) * (chartRight - chartPadding.left);
-			const y = chartBottom - (cost / chartRange) * (chartBottom - chartPadding.top);
+		for (const point of allPoints) {
+			const day = utcDay(point.date);
+			const dayValue = byDay.get(day) ?? { cost: 0, tokens: 0, models: new SvelteMap() };
+			const model = point.model || 'Unknown';
+			const modelValue = dayValue.models.get(model) ?? { cost: 0, tokens: 0 };
 
+			dayValue.cost += point.cost ?? 0;
+			dayValue.tokens += point.tokens;
+			modelValue.cost += point.cost ?? 0;
+			modelValue.tokens += point.tokens;
+			dayValue.models.set(model, modelValue);
+			byDay.set(day, dayValue);
+		}
+
+		return Array.from(byDay.entries())
+			.sort(([left], [right]) => left.localeCompare(right))
+			.map(([day, value]) => ({
+				day,
+				cost: value.cost,
+				tokens: value.tokens,
+				models: Array.from(value.models.entries())
+					.sort(([left], [right]) => left.localeCompare(right))
+					.map(([model, modelValue]) => ({ model, ...modelValue }))
+			}));
+	});
+
+	let modelValues = $derived.by(() => {
+		const byModel = new SvelteMap<string, { cost: number; tokens: number }>();
+
+		for (const point of allPoints) {
+			const model = point.model || 'Unknown';
+			const value = byModel.get(model) ?? { cost: 0, tokens: 0 };
+			value.cost += point.cost ?? 0;
+			value.tokens += point.tokens;
+			byModel.set(model, value);
+		}
+
+		return Array.from(byModel.entries())
+			.sort(([left], [right]) => left.localeCompare(right))
+			.map(([model, value]) => ({ model, ...value }));
+	});
+
+	let maxDailyCost = $derived(Math.max(...dayValues.map((day) => day.cost), 0));
+	let dailyCostScale = $derived(Math.max(maxDailyCost, 1));
+	let maxDailyTokens = $derived(Math.max(...modelValues.map((model) => model.tokens), 0));
+	let maxModelCost = $derived(Math.max(...modelValues.map((model) => model.cost), 0));
+
+	let dailyCostBars = $derived.by(() => {
+		const slotWidth = plotWidth / Math.max(dayValues.length, 1);
+		const barWidth = Math.min(54, Math.max(14, slotWidth * 0.62));
+
+		return dayValues.map((day, index) => {
+			const valueHeight = (Math.max(day.cost, 0) / dailyCostScale) * plotHeight;
 			return {
-				point,
-				x,
-				y,
-				barWidth: Math.min(
-					42,
-					Math.max(12, (chartRight - chartPadding.left) / allPoints.length - 10)
-				)
+				day,
+				x: chartPadding.left + slotWidth * index + (slotWidth - barWidth) / 2,
+				y: chartBottom - valueHeight,
+				width: barWidth,
+				height: Math.max(valueHeight, 1)
 			};
 		});
 	});
 
-	let chartPath = $derived(chartPoints.map(({ x, y }) => `${x},${y}`).join(' '));
-	let yTicks = $derived(
-		[0, 0.25, 0.5, 0.75, 1].map((ratio) => ({
-			value: chartRange * ratio,
-			y: chartBottom - ratio * (chartBottom - chartPadding.top)
-		}))
+	let dailyCostPath = $derived(
+		dailyCostBars.map((bar) => `${bar.x + bar.width / 2},${bar.y}`).join(' ')
 	);
 
-	let statusMessage = $derived.by(() => {
-		if (status === 'loading') return 'CSVを読み込んでいます';
-		if (status === 'error') return errorMessage;
-		if (status === 'success') return `${inputFileName}の読み込みが完了しました`;
-		return 'CSVファイルを選択するか、ページにドロップしてください';
+	let stackedDailyBars = $derived.by(() => {
+		const slotWidth = plotWidth / Math.max(dayValues.length, 1);
+		const barWidth = Math.min(54, Math.max(14, slotWidth * 0.62));
+
+		return dayValues.map((day, index) => {
+			const valuesByModel = new SvelteMap(day.models.map((value) => [value.model, value.cost]));
+			let offset = 0;
+			const segments = models.map((model) => {
+				const value = Math.max(valuesByModel.get(model) ?? 0, 0);
+				const segmentHeight = (value / dailyCostScale) * plotHeight;
+				const segment = {
+					model,
+					value,
+					x: chartPadding.left + slotWidth * index + (slotWidth - barWidth) / 2,
+					y: chartBottom - offset - segmentHeight,
+					width: barWidth,
+					height: Math.max(segmentHeight, value === 0 ? 0 : 1)
+				};
+				offset += segmentHeight;
+				return segment;
+			});
+
+			return { day, segments };
+		});
 	});
+
+	let tokenBars = $derived.by(() => horizontalBars(modelValues, 'tokens', maxDailyTokens));
+	let modelCostBars = $derived.by(() => horizontalBars(modelValues, 'cost', maxModelCost));
+	let horizontalChartHeight = $derived(Math.max(190, modelValues.length * 36 + 55));
 
 	const currency = new Intl.NumberFormat('en-US', {
 		style: 'currency',
 		currency: 'USD',
 		maximumFractionDigits: 2
 	});
+	const compactNumber = new Intl.NumberFormat('en-US', {
+		notation: 'compact',
+		maximumFractionDigits: 1
+	});
+
+	function utcDay(value: string) {
+		const date = new Date(value);
+		return Number.isNaN(date.getTime()) ? value.slice(0, 10) : date.toISOString().slice(0, 10);
+	}
+
+	function formatDay(value: string) {
+		const date = new Date(`${value}T00:00:00Z`);
+		return Number.isNaN(date.getTime())
+			? value
+			: new Intl.DateTimeFormat('en-US', {
+					month: 'short',
+					day: 'numeric',
+					timeZone: 'UTC'
+				}).format(date);
+	}
 
 	function formatCurrency(value: number) {
 		return currency.format(value);
 	}
 
-	function formatDate(value: string) {
-		const date = new Date(value);
-		if (Number.isNaN(date.getTime())) return value;
-		return new Intl.DateTimeFormat('en-US', {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric',
-			timeZone: 'UTC'
-		}).format(date);
+	function formatNumber(value: number) {
+		return compactNumber.format(value);
+	}
+
+	function horizontalBars(
+		values: { model: string; cost: number; tokens: number }[],
+		key: 'cost' | 'tokens',
+		maximum: number
+	) {
+		const rowHeight = 36;
+		const barStart = 130;
+		const barEnd = chartWidth - 24;
+		const scale = Math.max(maximum, 1);
+
+		return values.map((modelValue, index) => {
+			const value = Math.max(modelValue[key], 0);
+			return {
+				...modelValue,
+				value,
+				y: 28 + index * rowHeight,
+				width: ((barEnd - barStart) * value) / scale,
+				barStart,
+				barEnd
+			};
+		});
 	}
 
 	async function processFile(file: File | undefined) {
@@ -106,14 +202,13 @@
 			return;
 		}
 
-		inputFileName = file.name;
+		fileName = file.name;
 		status = 'loading';
 		errorMessage = '';
 		points = [];
 
 		try {
-			const parsedPoints = await parseCsvFile(file);
-			points = parsedPoints;
+			points = await parseCsvFile(file);
 			status = 'success';
 		} catch (error) {
 			status = 'error';
@@ -125,9 +220,7 @@
 	}
 
 	function openFilePicker() {
-		if (browser) {
-			document.getElementById('csv-file-input')?.click();
-		}
+		if (browser) document.getElementById('csv-file-input')?.click();
 	}
 
 	function handlePickerKeydown(event: KeyboardEvent) {
@@ -158,7 +251,7 @@
 
 	function handleDragLeave(event: DragEvent) {
 		event.preventDefault();
-		dragDepth = Math.max(0, dragDepth - 1);
+		dragDepth = Math.max(dragDepth - 1, 0);
 		if (dragDepth === 0) isDragging = false;
 	}
 
@@ -171,8 +264,8 @@
 </script>
 
 <svelte:head>
-	<title>CSV Cost Atlas</title>
-	<meta name="description" content="Upload a CSV file to explore cost trends over time." />
+	<title>CSVコスト分析</title>
+	<meta name="description" content="CSVのコスト、モデル、トークンをコンパクトに可視化します。" />
 </svelte:head>
 
 <svelte:window
@@ -182,300 +275,275 @@
 	ondrop={handleDrop}
 />
 
-<main class="page-shell">
-	<div class="ambient ambient-one"></div>
-	<div class="ambient ambient-two"></div>
-
-	<header class="page-header">
-		<div class="brand-lockup">
-			<div class="brand-mark" aria-hidden="true">
-				<wa-icon name="chart-line"></wa-icon>
-			</div>
-			<div>
-				<p class="eyebrow">CSV COST ATLAS</p>
-				<h1>コストの流れを、ひと目で。</h1>
-			</div>
-		</div>
-		<p class="header-note">アップロードしたデータはブラウザ内だけで処理されます。</p>
+<main class:loaded={status === 'success'} class="app-shell">
+	<header class="topbar">
+		<h1><wa-icon name="chart-line" aria-hidden="true"></wa-icon> CSVコスト分析</h1>
+		{#if status === 'success'}
+			<span class="file-name"><wa-icon name="file-csv" aria-hidden="true"></wa-icon>{fileName}</span
+			>
+		{/if}
 	</header>
 
-	<section class="hero-grid" aria-labelledby="upload-title">
-		<wa-card class="upload-card">
-			<div class="card-content">
-				<div class="section-kicker">
-					<span class="kicker-line"></span>
-					<span>DATA IMPORT</span>
+	<section class="dashboard-content" aria-label="CSV分析">
+		<wa-card class:compact={status === 'success'} class="picker-card">
+			<div class="picker">
+				<div class="picker-icon" aria-hidden="true"><wa-icon name="cloud-arrow-up"></wa-icon></div>
+				<div>
+					<h2>CSVを選択</h2>
+					<p>CSVをドロップ、またはファイルを選択</p>
 				</div>
-				<h2 id="upload-title">CSVを読み込む</h2>
-				<p class="lede">日付とコストのデータをアップロードして、支出の変化を確認しましょう。</p>
-
-				<div class="drop-zone" class:drop-zone-active={isDragging} aria-describedby="drop-help">
-					<div class="upload-icon" aria-hidden="true">
-						<wa-icon name="cloud-arrow-up"></wa-icon>
-					</div>
-					<p class="drop-title">ここにCSVファイルをドロップ</p>
-					<p class="drop-subtitle">または</p>
-					<wa-button
-						variant="brand"
-						size="m"
-						type="button"
-						role="button"
-						tabindex="0"
-						onclick={openFilePicker}
-						onkeydown={handlePickerKeydown}
-					>
-						<wa-icon slot="start" name="folder-open"></wa-icon>
-						ファイルを選択
-					</wa-button>
-					<p id="drop-help" class="drop-help">CSV形式、最大 25 MB</p>
-					<input
-						id="csv-file-input"
-						class="file-input"
-						type="file"
-						accept=".csv,text/csv"
-						aria-label="CSVファイルを選択"
-						onchange={handleFileInput}
-					/>
-				</div>
-
+				<wa-button
+					variant="brand"
+					size="m"
+					type="button"
+					role="button"
+					tabindex="0"
+					onclick={openFilePicker}
+					onkeydown={handlePickerKeydown}
+				>
+					<wa-icon slot="start" name="folder-open"></wa-icon>
+					選択
+				</wa-button>
+				<input
+					id="csv-file-input"
+					class="file-input"
+					type="file"
+					accept=".csv,text/csv"
+					aria-label="CSVファイルを選択"
+					onchange={handleFileInput}
+				/>
 				{#if status === 'loading'}
-					<div class="loading-state" role="status">
-						<div class="state-heading">
-							<wa-icon name="spinner" label="読み込み中"></wa-icon>
-							<span>データを解析中です</span>
-						</div>
+					<div class="picker-status" role="status">
+						<span>解析中</span>
 						<wa-progress-bar indeterminate label="CSVを解析中"></wa-progress-bar>
 					</div>
 				{:else if status === 'error'}
-					<wa-callout variant="danger" appearance="outlined" class="status-callout">
+					<wa-callout variant="danger" appearance="outlined" class="picker-status">
 						<wa-icon slot="icon" name="triangle-exclamation"></wa-icon>
-						<strong>読み込みに失敗しました</strong>
-						<p>{errorMessage}</p>
+						{errorMessage}
 					</wa-callout>
 				{:else if status === 'success'}
-					<wa-callout variant="success" appearance="outlined" class="status-callout">
+					<wa-callout variant="success" appearance="outlined" class="picker-status">
 						<wa-icon slot="icon" name="circle-check"></wa-icon>
-						<strong>{inputFileName}</strong>
-						<p>{points.length}件のレコードを読み込みました。</p>
+						{allPoints.length}件を読み込みました
 					</wa-callout>
 				{/if}
 			</div>
 		</wa-card>
 
-		<div class="hero-aside">
-			<div class="aside-orbit orbit-one"></div>
-			<div class="aside-orbit orbit-two"></div>
-			<div class="aside-content">
-				<p class="eyebrow">MAKE SENSE OF YOUR SPEND</p>
-				<p class="aside-copy">数字を、次の一手につながる<br /><em>ストーリー</em>に変える。</p>
-				<div class="aside-detail">
-					<wa-icon name="sparkles"></wa-icon>
-					<span>シンプルな可視化で、変化を見逃さない</span>
-				</div>
-			</div>
-			<div class="aside-stamp" aria-hidden="true">
-				<span>01</span>
-				<span>INSIGHT</span>
-			</div>
-		</div>
-	</section>
-
-	<section class="dashboard" aria-labelledby="dashboard-title">
-		<div class="dashboard-heading">
-			<div>
-				<p class="section-kicker"><span class="kicker-line"></span><span>OVERVIEW</span></p>
-				<h2 id="dashboard-title">コストダッシュボード</h2>
-			</div>
-			<div class="file-badge" class:file-badge-visible={inputFileName !== ''}>
-				<wa-icon name="file-csv" aria-hidden="true"></wa-icon>
-				<span>{inputFileName || 'CSV未選択'}</span>
-			</div>
-		</div>
-
-		{#if status === 'idle'}
-			<wa-card class="empty-card">
-				<div class="empty-state">
-					<div class="empty-graphic" aria-hidden="true">
-						<wa-icon name="chart-line"></wa-icon>
-					</div>
-					<h3>チャートを表示する準備ができています</h3>
-					<p>CSVファイルをアップロードすると、ここにコストの推移が表示されます。</p>
-				</div>
-			</wa-card>
-		{:else if status === 'loading'}
-			<wa-card class="empty-card">
-				<div class="empty-state loading-empty">
-					<wa-progress-bar indeterminate label="ダッシュボードを準備中"></wa-progress-bar>
-					<p>データを整えています…</p>
-				</div>
-			</wa-card>
-		{:else if status === 'error'}
-			<wa-card class="empty-card">
-				<div class="empty-state">
-					<div class="empty-graphic empty-graphic-error" aria-hidden="true">
-						<wa-icon name="file-circle-xmark"></wa-icon>
-					</div>
-					<h3>データを表示できません</h3>
-					<p>ファイルを確認して、もう一度アップロードしてください。</p>
-				</div>
-			</wa-card>
-		{:else if allPoints.length === 0}
-			<wa-card class="empty-card">
-				<div class="empty-state">
-					<div class="empty-graphic empty-graphic-warm" aria-hidden="true">
-						<wa-icon name="magnifying-glass"></wa-icon>
-					</div>
-					<h3>表示できるデータがありません</h3>
-					<p>有効なDateとCostの行があるCSVをアップロードすると、チャートが表示されます。</p>
-				</div>
-			</wa-card>
-		{:else}
-			<div class="stats-grid">
-				<div class="stat-card stat-card-featured">
-					<div class="stat-icon" aria-hidden="true"><wa-icon name="wallet"></wa-icon></div>
-					<div>
-						<p class="stat-label">合計コスト</p>
-						<p class="stat-value">{formatCurrency(totalCost)}</p>
-					</div>
-					<span class="stat-spark" aria-hidden="true">↗</span>
-				</div>
-				<div class="stat-card">
-					<div class="stat-icon stat-icon-muted" aria-hidden="true">
-						<wa-icon name="calculator"></wa-icon>
-					</div>
-					<div>
-						<p class="stat-label">平均コスト（全行）</p>
-						<p class="stat-value">{formatCurrency(averageCost)}</p>
-					</div>
-				</div>
-				<div class="stat-card">
-					<div class="stat-icon stat-icon-muted" aria-hidden="true">
-						<wa-icon name="database"></wa-icon>
-					</div>
-					<div>
-						<p class="stat-label">データポイント</p>
-						<p class="stat-value">{allPoints.length}<small>件</small></p>
-					</div>
-				</div>
-				<div class="stat-card">
-					<div class="stat-icon stat-icon-muted" aria-hidden="true">
-						<wa-icon name="calendar-days"></wa-icon>
-					</div>
-					<div>
-						<p class="stat-label">対象期間</p>
-						<p class="stat-value stat-value-date">
-							{formatDate(firstDate)} <span>→</span>
-							{formatDate(lastDate)}
-						</p>
-					</div>
-				</div>
-			</div>
-
-			<wa-card class="chart-card">
-				<div slot="header" class="chart-header">
-					<div>
-						<h3>コストの推移</h3>
-						<p>日付ごとのコスト変化を表示しています</p>
-					</div>
-					<div class="chart-legend">
-						<span class="legend-dot"></span>
-						<span>コスト</span>
-					</div>
-				</div>
-				<div class="chart-wrap">
-					<svg
-						viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-						role="img"
-						aria-labelledby="chart-title chart-description"
-					>
-						<title id="chart-title">日付ごとのコスト推移</title>
-						<desc id="chart-description">
-							{formatDate(firstDate)}から{formatDate(
-								lastDate
-							)}までの全{allPoints.length}件のコストを棒と線で表示しています。
-							Freeと空欄のCostは0として表示しています。
-						</desc>
-						<defs>
-							<linearGradient id="chart-area-fill" x1="0" x2="0" y1="0" y2="1">
-								<stop offset="0%" stop-color="#e87852" stop-opacity="0.2"></stop>
-								<stop offset="100%" stop-color="#e87852" stop-opacity="0"></stop>
-							</linearGradient>
-							<linearGradient id="bar-fill" x1="0" x2="0" y1="0" y2="1">
-								<stop offset="0%" stop-color="#f39a73"></stop>
-								<stop offset="100%" stop-color="#e87852"></stop>
-							</linearGradient>
-						</defs>
-						{#each yTicks as tick (tick.value)}
-							<line x1={chartPadding.left} x2={chartRight} y1={tick.y} y2={tick.y} class="grid-line"
-							></line>
-							<text x={chartPadding.left - 14} y={tick.y + 4} text-anchor="end" class="axis-label">
-								{formatCurrency(tick.value)}
-							</text>
-						{/each}
-						<line
-							x1={chartPadding.left}
-							x2={chartRight}
-							y1={chartBottom}
-							y2={chartBottom}
-							class="axis-line"
-						></line>
-						{#if chartPoints.length > 1}
-							<polygon
-								points={`${chartPadding.left},${chartBottom} ${chartPath} ${chartRight},${chartBottom}`}
-								class="chart-area"
-							></polygon>
-						{/if}
-						{#each chartPoints as chartPoint (chartPoint.point)}
-							<rect
-								x={chartPoint.x - chartPoint.barWidth / 2}
-								y={chartPoint.y}
-								width={chartPoint.barWidth}
-								height={Math.max(2, chartBottom - chartPoint.y)}
-								rx="5"
-								class="chart-bar"
+		{#if status === 'success'}
+			<section class="charts-grid" aria-label="コストチャート">
+				<wa-card class="chart-card">
+					<figure>
+						<figcaption>
+							<strong>値段/日</strong>
+							<span>日別のコスト</span>
+						</figcaption>
+						<div class="chart-scroll">
+							<svg
+								class="chart-svg"
+								viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+								role="img"
+								aria-label={`日別コスト。${dayValues.length}日分。Freeと空欄は0として集計。`}
 							>
-								<title
-									>{formatDate(chartPoint.point.date)}: {formatCurrency(
-										chartPoint.point.cost ?? 0
-									)}</title
-								>
-							</rect>
-						{/each}
-						{#if chartPoints.length > 1}
-							<polyline points={chartPath} class="chart-line"></polyline>
-						{/if}
-						{#each chartPoints as chartPoint (chartPoint.point)}
-							<circle cx={chartPoint.x} cy={chartPoint.y} r="5" class="chart-point">
-								<title
-									>{formatDate(chartPoint.point.date)}: {formatCurrency(
-										chartPoint.point.cost ?? 0
-									)}</title
-								>
-							</circle>
-						{/each}
-						<text x={chartPadding.left} y={chartHeight - 18} class="axis-label axis-date">
-							{formatDate(firstDate)}
-						</text>
-						<text
-							x={chartRight}
-							y={chartHeight - 18}
-							text-anchor="end"
-							class="axis-label axis-date"
-						>
-							{formatDate(lastDate)}
-						</text>
-					</svg>
-				</div>
-				<div slot="footer" class="chart-footer">
-					<span>全{allPoints.length}件（Free・空欄は0として表示）</span>
-					<span>数値範囲: {formatCurrency(minimumCost)} — {formatCurrency(maximumCost)}</span>
-					<span>単位: USD</span>
-				</div>
-			</wa-card>
+								<line
+									x1={chartPadding.left}
+									x2={chartRight}
+									y1={chartBottom}
+									y2={chartBottom}
+									class="axis"
+								></line>
+								{#each [0, 0.5, 1] as ratio (ratio)}
+									<line
+										x1={chartPadding.left}
+										x2={chartRight}
+										y1={chartBottom - ratio * plotHeight}
+										y2={chartBottom - ratio * plotHeight}
+										class="grid"
+									></line>
+									<text
+										x={chartPadding.left - 10}
+										y={chartBottom - ratio * plotHeight + 4}
+										class="axis-label"
+									>
+										{formatCurrency(dailyCostScale * ratio)}
+									</text>
+								{/each}
+								{#each dailyCostBars as bar (bar.day.day)}
+									<rect
+										x={bar.x}
+										y={bar.y}
+										width={bar.width}
+										height={bar.height}
+										rx="4"
+										class="bar bar-primary"
+									>
+										<title>{formatDay(bar.day.day)}: {formatCurrency(bar.day.cost)}</title>
+									</rect>
+									<text x={bar.x + bar.width / 2} y={chartHeight - 17} class="day-label">
+										{formatDay(bar.day.day)}
+									</text>
+								{/each}
+								{#if dailyCostBars.length > 1}
+									<polyline points={dailyCostPath} class="line"></polyline>
+								{/if}
+							</svg>
+						</div>
+					</figure>
+				</wa-card>
+
+				<wa-card class="chart-card">
+					<figure>
+						<figcaption>
+							<strong>モデル/日</strong>
+							<span>モデル別の日次コスト</span>
+						</figcaption>
+						<div class="legend" aria-label="モデル凡例">
+							{#each models as model, index (model)}
+								<span><i class={`legend-color color-${index % 5}`}></i>{model}</span>
+							{/each}
+						</div>
+						<div class="chart-scroll">
+							<svg
+								class="chart-svg"
+								viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+								role="img"
+								aria-label={`モデル別の日次コスト。${models.length}モデル、${dayValues.length}日分。`}
+							>
+								<line
+									x1={chartPadding.left}
+									x2={chartRight}
+									y1={chartBottom}
+									y2={chartBottom}
+									class="axis"
+								></line>
+								{#each [0, 0.5, 1] as ratio (ratio)}
+									<line
+										x1={chartPadding.left}
+										x2={chartRight}
+										y1={chartBottom - ratio * plotHeight}
+										y2={chartBottom - ratio * plotHeight}
+										class="grid"
+									></line>
+								{/each}
+								{#each stackedDailyBars as dayBars (dayBars.day.day)}
+									{#each dayBars.segments as segment (segment.model)}
+										<rect
+											x={segment.x}
+											y={segment.y}
+											width={segment.width}
+											height={segment.height}
+											class={`bar color-bar-${models.indexOf(segment.model) % 5}`}
+										>
+											<title>
+												{formatDay(dayBars.day.day)} / {segment.model}: {formatCurrency(
+													segment.value
+												)}
+											</title>
+										</rect>
+									{/each}
+									<text
+										x={dayBars.segments[0]?.x + (dayBars.segments[0]?.width ?? 0) / 2}
+										y={chartHeight - 17}
+										class="day-label"
+									>
+										{formatDay(dayBars.day.day)}
+									</text>
+								{/each}
+							</svg>
+						</div>
+					</figure>
+				</wa-card>
+
+				<wa-card class="chart-card horizontal-card">
+					<figure>
+						<figcaption>
+							<strong>Token/モデル</strong>
+							<span>モデル別トークン数</span>
+						</figcaption>
+						<div class="chart-scroll">
+							<svg
+								class="chart-svg"
+								viewBox={`0 0 ${chartWidth} ${horizontalChartHeight}`}
+								role="img"
+								aria-label="モデル別トークン数。バーは左から右へ増加します。"
+							>
+								{#each tokenBars as bar (bar.model)}
+									<text x="8" y={bar.y + 14} class="model-label">{bar.model}</text>
+									<line
+										x1={bar.barStart}
+										x2={bar.barEnd}
+										y1={bar.y + 9}
+										y2={bar.y + 9}
+										class="track"
+									></line>
+									<rect
+										x={bar.barStart}
+										y={bar.y}
+										width={Math.max(bar.width, 1)}
+										height="18"
+										rx="5"
+										class="hbar hbar-token"
+									>
+										<title>{bar.model}: {formatNumber(bar.value)} tokens</title>
+									</rect>
+									<text x={bar.barStart + bar.width + 8} y={bar.y + 13} class="value-label">
+										{formatNumber(bar.value)}
+									</text>
+								{/each}
+							</svg>
+						</div>
+					</figure>
+				</wa-card>
+
+				<wa-card class="chart-card horizontal-card">
+					<figure>
+						<figcaption>
+							<strong>値段/モデル</strong>
+							<span>モデル別コスト</span>
+						</figcaption>
+						<div class="chart-scroll">
+							<svg
+								class="chart-svg"
+								viewBox={`0 0 ${chartWidth} ${horizontalChartHeight}`}
+								role="img"
+								aria-label="モデル別コスト。バーは左から右へ増加します。"
+							>
+								{#each modelCostBars as bar (bar.model)}
+									<text x="8" y={bar.y + 14} class="model-label">{bar.model}</text>
+									<line
+										x1={bar.barStart}
+										x2={bar.barEnd}
+										y1={bar.y + 9}
+										y2={bar.y + 9}
+										class="track"
+									></line>
+									<rect
+										x={bar.barStart}
+										y={bar.y}
+										width={Math.max(bar.width, 1)}
+										height="18"
+										rx="5"
+										class="hbar hbar-cost"
+									>
+										<title>{bar.model}: {formatCurrency(bar.value)}</title>
+									</rect>
+									<text x={bar.barStart + bar.width + 8} y={bar.y + 13} class="value-label">
+										{formatCurrency(bar.value)}
+									</text>
+								{/each}
+							</svg>
+						</div>
+					</figure>
+				</wa-card>
+			</section>
 		{/if}
 	</section>
 
-	<p class="sr-only" aria-live="polite">{statusMessage}</p>
+	<section class="overview" aria-labelledby="overview-title">
+		<h2 id="overview-title">概要</h2>
+		<p>コスト・モデル・トークンの傾向を、日別とモデル別で確認できます。</p>
+	</section>
 </main>
 
 {#if isDragging}
@@ -487,10 +555,10 @@
 		ondragleave={handleDragLeave}
 		ondrop={handleDrop}
 	>
-		<div class="overlay-inner">
-			<div class="overlay-icon" aria-hidden="true"><wa-icon name="cloud-arrow-up"></wa-icon></div>
-			<strong>ここにドロップしてアップロード</strong>
-			<span>CSVファイルを受け付けます</span>
+		<div class="drop-message">
+			<wa-icon name="cloud-arrow-up" aria-hidden="true"></wa-icon>
+			<strong>ここにドロップ</strong>
+			<span>CSVファイルを読み込みます</span>
 		</div>
 	</div>
 {/if}
@@ -500,240 +568,151 @@
 		box-sizing: border-box;
 	}
 
+	:global(html),
 	:global(body) {
 		margin: 0;
-		background: #f5f3ee;
-		color: #24343b;
+		min-width: 0;
+		background: #f5f4f1;
+		color: #26363a;
 		font-family:
 			'DM Sans', 'Avenir Next', Avenir, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
 	}
 
 	:global(wa-card) {
-		--wa-card-border-color: #e5e1d8;
-		--wa-card-border-radius: 18px;
+		--wa-card-border-color: #e2e0d9;
+		--wa-card-border-radius: 12px;
 		--wa-card-padding: 0;
 		display: block;
+		min-width: 0;
 	}
 
 	:global(wa-button) {
-		--wa-button-border-radius: 10px;
+		--wa-button-border-radius: 8px;
 	}
 
 	:global(wa-progress-bar) {
-		--track-color: #ece7dd;
-		--indicator-color: #e87852;
+		--track-color: #e9e7e0;
+		--indicator-color: #d96e4d;
 	}
 
-	.page-shell {
-		position: relative;
-		min-height: 100vh;
-		overflow: hidden;
-		padding: 42px clamp(20px, 5vw, 80px) 72px;
-	}
-
-	.ambient {
-		position: absolute;
-		z-index: -1;
-		border-radius: 999px;
-		filter: blur(1px);
-		pointer-events: none;
-	}
-
-	.ambient-one {
-		top: -220px;
-		right: -130px;
-		width: 580px;
-		height: 580px;
-		background: #e7ece8;
-		opacity: 0.62;
-	}
-
-	.ambient-two {
-		bottom: 5%;
-		left: -390px;
-		width: 680px;
-		height: 680px;
-		background: #eee7dd;
-		opacity: 0.7;
-	}
-
-	.page-header,
-	.hero-grid,
-	.dashboard {
-		position: relative;
-		z-index: 1;
-		width: min(1180px, 100%);
+	.app-shell {
+		display: flex;
+		width: min(1120px, 100%);
+		min-height: 100dvh;
+		flex-direction: column;
+		gap: 16px;
 		margin: 0 auto;
+		padding: 16px clamp(12px, 3vw, 30px) 20px;
 	}
 
-	.page-header {
+	.topbar {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 28px;
-		margin-bottom: 58px;
+		gap: 12px;
+		flex: 0 0 auto;
 	}
 
-	.brand-lockup {
+	.topbar h1 {
 		display: flex;
 		align-items: center;
-		gap: 15px;
-	}
-
-	.brand-mark {
-		display: grid;
-		width: 44px;
-		height: 44px;
-		place-items: center;
-		border-radius: 13px;
-		background: #24343b;
-		color: #ffd7c6;
-		font-size: 21px;
-		transform: rotate(-5deg);
-	}
-
-	.brand-mark :global(wa-icon) {
-		transform: rotate(5deg);
-	}
-
-	.eyebrow {
-		margin: 0 0 7px;
-		color: #a26c52;
-		font-size: 10px;
+		gap: 8px;
+		margin: 0;
+		color: #26363a;
+		font-size: clamp(17px, 2.4vw, 21px);
 		font-weight: 700;
-		letter-spacing: 0.2em;
-	}
-
-	h1,
-	h2,
-	h3,
-	p {
-		margin-top: 0;
-	}
-
-	h1,
-	h2,
-	h3 {
 		letter-spacing: -0.04em;
 	}
 
-	h1 {
-		margin-bottom: 0;
-		font-size: clamp(20px, 2.3vw, 27px);
-		font-weight: 650;
+	.topbar h1 :global(wa-icon) {
+		color: #d96e4d;
+		font-size: 19px;
 	}
 
-	.header-note {
-		max-width: 250px;
-		margin: 0;
-		color: #7b8585;
-		font-size: 12px;
-		line-height: 1.6;
-		text-align: right;
-	}
-
-	.hero-grid {
-		display: grid;
-		grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
-		gap: clamp(26px, 5vw, 76px);
-		align-items: stretch;
-		margin-bottom: 84px;
-	}
-
-	.upload-card {
-		min-height: 480px;
-		background: #fffdfa;
-	}
-
-	.card-content {
-		padding: clamp(28px, 4vw, 47px);
-	}
-
-	.section-kicker {
+	.file-name {
 		display: flex;
+		min-width: 0;
 		align-items: center;
-		gap: 9px;
-		margin-bottom: 18px;
-		color: #a26c52;
-		font-size: 10px;
-		font-weight: 750;
-		letter-spacing: 0.18em;
-	}
-
-	.kicker-line {
-		display: inline-block;
-		width: 24px;
-		height: 2px;
-		background: #e87852;
-	}
-
-	h2 {
-		margin-bottom: 12px;
-		font-size: clamp(28px, 4vw, 42px);
-		line-height: 1.1;
-	}
-
-	.lede {
-		max-width: 410px;
-		margin-bottom: 30px;
-		color: #728083;
-		font-size: 14px;
-		line-height: 1.75;
-	}
-
-	.drop-zone {
-		position: relative;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		min-height: 222px;
-		padding: 24px;
-		border: 1.5px dashed #cdc7bb;
-		border-radius: 14px;
-		background: #faf8f3;
-		text-align: center;
-		transition:
-			border-color 160ms ease,
-			background 160ms ease,
-			transform 160ms ease;
-	}
-
-	.drop-zone-active {
-		border-color: #e87852;
-		background: #fff2eb;
-		transform: scale(1.01);
-	}
-
-	.upload-icon,
-	.empty-graphic {
-		display: grid;
-		width: 48px;
-		height: 48px;
-		place-items: center;
-		border-radius: 13px;
-		background: #f7d8c8;
-		color: #ba6347;
-		font-size: 22px;
-	}
-
-	.drop-title {
-		margin: 13px 0 4px;
-		color: #3b484d;
-		font-size: 15px;
-		font-weight: 650;
-	}
-
-	.drop-subtitle {
-		margin-bottom: 11px;
-		color: #9a9b94;
-		font-size: 12px;
-	}
-
-	.drop-help {
-		margin: 13px 0 0;
-		color: #969993;
+		gap: 6px;
+		overflow: hidden;
+		color: #77817f;
 		font-size: 11px;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.file-name :global(wa-icon) {
+		flex: 0 0 auto;
+		color: #d96e4d;
+	}
+
+	.dashboard-content {
+		display: flex;
+		min-width: 0;
+		flex-direction: column;
+		gap: 16px;
+		flex: 1 1 auto;
+	}
+
+	.app-shell:not(.loaded) .dashboard-content {
+		flex: 1 1 auto;
+	}
+
+	.picker-card {
+		min-width: 0;
+		flex: 0 0 auto;
+		background: #fffefa;
+	}
+
+	.app-shell:not(.loaded) .picker-card {
+		flex: 1 1 auto;
+	}
+
+	.picker {
+		display: flex;
+		min-width: 0;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 13px;
+		padding: clamp(18px, 3vw, 28px);
+	}
+
+	.app-shell:not(.loaded) .picker {
+		align-content: center;
+		justify-content: center;
+		min-height: 180px;
+	}
+
+	.picker-icon {
+		display: grid;
+		width: 40px;
+		height: 40px;
+		flex: 0 0 auto;
+		place-items: center;
+		border-radius: 10px;
+		background: #f9dfd3;
+		color: #c65f40;
+		font-size: 19px;
+	}
+
+	.picker h2 {
+		margin: 0 0 3px;
+		font-size: 16px;
+		letter-spacing: -0.03em;
+	}
+
+	.picker p {
+		margin: 0;
+		color: #88918e;
+		font-size: 11px;
+	}
+
+	.picker :global(wa-button) {
+		margin-left: auto;
+	}
+
+	.app-shell:not(.loaded) .picker :global(wa-button) {
+		margin-left: 0;
 	}
 
 	.file-input {
@@ -742,563 +721,297 @@
 		height: 1px;
 		overflow: hidden;
 		clip: rect(0 0 0 0);
-		white-space: nowrap;
 		clip-path: inset(50%);
-	}
-
-	.status-callout,
-	.loading-state {
-		margin-top: 19px;
-	}
-
-	.status-callout p {
-		margin: 5px 0 0;
-		font-size: 12px;
-	}
-
-	.state-heading {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		margin-bottom: 9px;
-		color: #697777;
-		font-size: 12px;
-	}
-
-	.state-heading :global(wa-icon) {
-		color: #e87852;
-	}
-
-	.hero-aside {
-		position: relative;
-		display: flex;
-		align-items: flex-end;
-		min-height: 480px;
-		overflow: hidden;
-		border-radius: 18px;
-		background: #2c4044;
-		color: #f8f1e9;
-	}
-
-	.hero-aside::before {
-		position: absolute;
-		top: 30%;
-		left: 25%;
-		width: 58%;
-		height: 58%;
-		border: 1px solid rgba(255, 226, 206, 0.18);
-		border-radius: 50%;
-		content: '';
-		transform: rotate(-25deg) scaleX(1.45);
-	}
-
-	.aside-content {
-		position: relative;
-		z-index: 1;
-		padding: 42px;
-	}
-
-	.aside-content .eyebrow {
-		color: #d79b82;
-	}
-
-	.aside-copy {
-		margin: 0 0 30px;
-		font-size: clamp(27px, 3.2vw, 39px);
-		font-weight: 400;
-		line-height: 1.22;
-		letter-spacing: -0.055em;
-	}
-
-	.aside-copy em {
-		color: #f2a27f;
-		font-style: normal;
-	}
-
-	.aside-detail {
-		display: flex;
-		align-items: center;
-		gap: 9px;
-		color: #b4c0be;
-		font-size: 11px;
-		line-height: 1.5;
-	}
-
-	.aside-detail :global(wa-icon) {
-		color: #f2a27f;
-		font-size: 15px;
-	}
-
-	.aside-stamp {
-		position: absolute;
-		top: 35px;
-		right: 35px;
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-		color: #78908c;
-		font-size: 9px;
-		font-weight: 700;
-		letter-spacing: 0.16em;
-		text-align: right;
-	}
-
-	.aside-stamp span:first-child {
-		color: #f2a27f;
-		font-family: Georgia, serif;
-		font-size: 24px;
-		font-weight: 400;
-		letter-spacing: 0;
-	}
-
-	.aside-orbit {
-		position: absolute;
-		border: 1px solid rgba(229, 178, 152, 0.15);
-		border-radius: 50%;
-		transform: rotate(31deg) scaleY(0.5);
-	}
-
-	.orbit-one {
-		right: -25%;
-		bottom: 8%;
-		width: 90%;
-		height: 60%;
-	}
-
-	.orbit-two {
-		right: -38%;
-		bottom: -5%;
-		width: 105%;
-		height: 64%;
-	}
-
-	.dashboard-heading {
-		display: flex;
-		align-items: flex-end;
-		justify-content: space-between;
-		gap: 20px;
-		margin-bottom: 23px;
-	}
-
-	.dashboard-heading .section-kicker {
-		margin-bottom: 14px;
-	}
-
-	.dashboard-heading h2 {
-		margin-bottom: 0;
-		font-size: clamp(26px, 3vw, 34px);
-	}
-
-	.file-badge {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		max-width: 280px;
-		padding: 9px 13px;
-		border: 1px solid #e4dfd5;
-		border-radius: 9px;
-		color: #8d928e;
-		font-size: 11px;
-		opacity: 0.7;
-	}
-
-	.file-badge-visible {
-		color: #a26c52;
-		opacity: 1;
-	}
-
-	.file-badge span {
-		overflow: hidden;
-		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
-	.empty-card {
-		background: rgba(255, 253, 250, 0.6);
+	.picker-status {
+		flex: 1 0 100%;
+		margin-top: 2px;
 	}
 
-	.empty-state {
-		display: flex;
-		min-height: 330px;
-		align-items: center;
-		justify-content: center;
-		flex-direction: column;
-		padding: 35px;
-		text-align: center;
+	.picker-status :global(wa-progress-bar) {
+		display: block;
+		margin-top: 7px;
 	}
 
-	.empty-state h3 {
-		margin: 19px 0 8px;
-		font-size: 19px;
+	.picker-status :global(p) {
+		font-size: 11px;
 	}
 
-	.empty-state p {
-		max-width: 360px;
-		margin-bottom: 0;
-		color: #8a918f;
-		font-size: 13px;
-		line-height: 1.65;
-	}
-
-	.empty-graphic-error {
-		background: #f5ddd8;
-		color: #b45d57;
-	}
-
-	.empty-graphic-warm {
-		background: #f5e5c9;
-		color: #af8052;
-	}
-
-	.loading-empty {
+	.charts-grid {
+		display: grid;
+		min-width: 0;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 16px;
 	}
 
-	.loading-empty :global(wa-progress-bar) {
-		width: min(250px, 100%);
-	}
-
-	.stats-grid {
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: 13px;
-		margin-bottom: 14px;
-	}
-
-	.stat-card {
-		display: flex;
-		position: relative;
-		align-items: center;
-		gap: 13px;
-		min-width: 0;
-		padding: 20px 17px;
-		border: 1px solid #e5e1d8;
-		border-radius: 14px;
-		background: rgba(255, 253, 250, 0.72);
-	}
-
-	.stat-card-featured {
-		border-color: transparent;
-		background: #e87852;
-		color: #fff8f2;
-	}
-
-	.stat-icon {
-		display: grid;
-		width: 34px;
-		height: 34px;
-		flex: 0 0 auto;
-		place-items: center;
-		border-radius: 10px;
-		background: rgba(255, 255, 255, 0.2);
-		font-size: 16px;
-	}
-
-	.stat-icon-muted {
-		background: #eeeae2;
-		color: #9d7562;
-	}
-
-	.stat-label {
-		margin: 0 0 5px;
-		color: #9b9890;
-		font-size: 10px;
-		font-weight: 650;
-		letter-spacing: 0.05em;
-	}
-
-	.stat-card-featured .stat-label {
-		color: rgba(255, 248, 242, 0.74);
-	}
-
-	.stat-value {
-		margin: 0;
-		font-size: clamp(17px, 2vw, 23px);
-		font-weight: 650;
-		letter-spacing: -0.04em;
-		white-space: nowrap;
-	}
-
-	.stat-value small {
-		margin-left: 3px;
-		font-size: 11px;
-		font-weight: 500;
-	}
-
-	.stat-value-date {
-		font-size: 12px;
-		letter-spacing: -0.02em;
-	}
-
-	.stat-value-date span {
-		padding: 0 2px;
-		color: #b4aaa0;
-	}
-
-	.stat-spark {
-		position: absolute;
-		top: 14px;
-		right: 15px;
-		color: rgba(255, 255, 255, 0.6);
-		font-size: 18px;
-	}
-
 	.chart-card {
+		min-width: 0;
 		overflow: hidden;
-		background: #fffdfa;
+		background: #fffefa;
 	}
 
-	.chart-header {
-		display: flex;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: 20px;
-		padding: 25px 28px 9px;
-	}
-
-	.chart-header h3 {
-		margin: 0 0 5px;
-		font-size: 19px;
-	}
-
-	.chart-header p {
+	.chart-card figure {
+		min-width: 0;
 		margin: 0;
-		color: #9a9d97;
-		font-size: 11px;
+		padding: 16px 16px 12px;
 	}
 
-	.chart-legend {
+	.chart-card figcaption {
 		display: flex;
-		align-items: center;
-		gap: 7px;
-		color: #929790;
-		font-size: 11px;
+		align-items: baseline;
+		gap: 9px;
+		margin-bottom: 10px;
 	}
 
-	.legend-dot {
-		display: inline-block;
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		background: #e87852;
-		box-shadow: 0 0 0 3px #fbe2d8;
+	.chart-card figcaption strong {
+		font-size: 14px;
+		letter-spacing: -0.025em;
 	}
 
-	.chart-wrap {
-		padding: 8px 22px 0;
+	.chart-card figcaption span {
+		color: #9ba19d;
+		font-size: 10px;
 	}
 
-	svg {
+	.chart-scroll {
+		width: 100%;
+		min-width: 0;
+		overflow-x: auto;
+		overflow-y: hidden;
+	}
+
+	.chart-svg {
 		display: block;
 		width: 100%;
+		min-width: 390px;
 		height: auto;
 		overflow: visible;
 	}
 
-	.grid-line {
-		stroke: #eeeae2;
+	.grid {
+		stroke: #ecebe5;
 		stroke-width: 1;
 	}
 
-	.axis-line {
-		stroke: #d9d4c9;
+	.axis {
+		stroke: #cfd1ca;
 		stroke-width: 1;
 	}
 
-	.axis-label {
-		fill: #a2a39d;
+	.axis-label,
+	.day-label,
+	.model-label,
+	.value-label {
+		fill: #99a19d;
 		font-family: 'DM Sans', Avenir, sans-serif;
+		font-size: 10px;
+	}
+
+	.day-label {
+		text-anchor: middle;
+	}
+
+	.bar-primary {
+		fill: #e98463;
+	}
+
+	.line {
+		fill: none;
+		stroke: #bd6044;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		stroke-width: 2;
+	}
+
+	.legend {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 5px 11px;
+		margin: -2px 0 7px;
+		color: #8e9792;
+		font-size: 9px;
+	}
+
+	.legend span {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+	}
+
+	.legend-color,
+	.color-bar-0 {
+		background: #e98463;
+	}
+
+	.color-1,
+	.color-bar-1 {
+		background: #75aaa2;
+	}
+
+	.color-2,
+	.color-bar-2 {
+		background: #d9a45e;
+	}
+
+	.color-3,
+	.color-bar-3 {
+		background: #8b8ac1;
+	}
+
+	.color-4,
+	.color-bar-4 {
+		background: #7ca0c4;
+	}
+
+	.legend-color {
+		display: inline-block;
+		width: 7px;
+		height: 7px;
+		border-radius: 2px;
+	}
+
+	.color-bar-0 {
+		fill: #e98463;
+	}
+
+	.color-bar-1 {
+		fill: #75aaa2;
+	}
+
+	.color-bar-2 {
+		fill: #d9a45e;
+	}
+
+	.color-bar-3 {
+		fill: #8b8ac1;
+	}
+
+	.color-bar-4 {
+		fill: #7ca0c4;
+	}
+
+	.track {
+		stroke: #eeece6;
+		stroke-linecap: round;
+		stroke-width: 18;
+	}
+
+	.hbar {
+		transition: opacity 150ms ease;
+	}
+
+	.hbar:hover {
+		opacity: 0.75;
+	}
+
+	.hbar-token {
+		fill: #75aaa2;
+	}
+
+	.hbar-cost {
+		fill: #e98463;
+	}
+
+	.model-label {
+		fill: #5d6969;
 		font-size: 11px;
 	}
 
-	.axis-date {
-		fill: #8b918b;
+	.value-label {
+		fill: #77827e;
 		font-size: 10px;
 	}
 
-	.chart-area {
-		fill: url(#chart-area-fill);
+	.overview {
+		flex: 0 0 auto;
+		padding: 15px 18px;
+		border: 1px solid #e2e0d9;
+		border-radius: 12px;
+		background: rgba(255, 254, 250, 0.72);
 	}
 
-	.chart-bar {
-		fill: url(#bar-fill);
-		opacity: 0.16;
-		transition: opacity 160ms ease;
+	.overview h2 {
+		margin: 0 0 4px;
+		font-size: 13px;
+		letter-spacing: -0.02em;
 	}
 
-	.chart-bar:hover {
-		opacity: 0.5;
-	}
-
-	.chart-line {
-		fill: none;
-		stroke: #e87852;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-		stroke-width: 3;
-	}
-
-	.chart-point {
-		fill: #fffdfa;
-		stroke: #e87852;
-		stroke-width: 3;
-	}
-
-	.chart-footer {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: space-between;
-		gap: 8px 16px;
-		padding: 3px 28px 20px;
-		color: #a1a39c;
-		font-size: 10px;
-		letter-spacing: 0.02em;
-	}
-
-	.sr-only {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		padding: 0;
-		overflow: hidden;
-		clip: rect(0, 0, 0, 0);
-		white-space: nowrap;
-		border: 0;
+	.overview p {
+		margin: 0;
+		color: #8b9490;
+		font-size: 11px;
+		line-height: 1.5;
 	}
 
 	.drop-overlay {
 		position: fixed;
-		z-index: 20;
+		z-index: 10;
 		inset: 0;
 		display: grid;
 		place-items: center;
-		padding: 30px;
-		background: rgba(36, 52, 59, 0.88);
-		backdrop-filter: blur(6px);
+		padding: 18px;
+		background: rgba(38, 54, 58, 0.87);
+		backdrop-filter: blur(4px);
 	}
 
-	.overlay-inner {
+	.drop-message {
 		display: flex;
 		align-items: center;
 		flex-direction: column;
-		justify-content: center;
-		width: min(580px, 100%);
-		min-height: 310px;
-		border: 2px dashed #f2a27f;
-		border-radius: 22px;
+		width: min(500px, 100%);
+		padding: 64px 24px;
+		border: 2px dashed #f2ad91;
+		border-radius: 16px;
 		color: #fff8f2;
 		text-align: center;
 	}
 
-	.overlay-icon {
-		display: grid;
-		width: 66px;
-		height: 66px;
-		margin-bottom: 20px;
-		place-items: center;
-		border-radius: 19px;
-		background: #f2a27f;
-		color: #2c4044;
-		font-size: 28px;
+	.drop-message :global(wa-icon) {
+		margin-bottom: 14px;
+		color: #f2ad91;
+		font-size: 30px;
 	}
 
-	.overlay-inner strong {
-		font-size: 23px;
-		font-weight: 550;
+	.drop-message strong {
+		font-size: 21px;
 		letter-spacing: -0.04em;
 	}
 
-	.overlay-inner span {
-		margin-top: 9px;
+	.drop-message span {
+		margin-top: 6px;
 		color: #c7d1ce;
-		font-size: 12px;
+		font-size: 11px;
 	}
 
-	@media (max-width: 880px) {
-		.page-shell {
-			padding-top: 28px;
-		}
-
-		.page-header {
-			margin-bottom: 38px;
-		}
-
-		.hero-grid {
-			grid-template-columns: 1fr;
-			margin-bottom: 60px;
-		}
-
-		.hero-aside {
-			min-height: 300px;
-		}
-
-		.stats-grid {
-			grid-template-columns: repeat(2, 1fr);
+	@media (max-width: 700px) {
+		.charts-grid {
+			grid-template-columns: minmax(0, 1fr);
 		}
 	}
 
-	@media (max-width: 520px) {
-		.page-header {
+	@media (max-width: 460px) {
+		.picker {
 			align-items: flex-start;
+		}
+
+		.picker :global(wa-button) {
+			margin-left: 53px;
+		}
+
+		.app-shell:not(.loaded) .picker :global(wa-button) {
+			margin-left: 0;
+		}
+
+		.chart-card figure {
+			padding-right: 10px;
+			padding-left: 10px;
+		}
+
+		.chart-card figcaption {
 			flex-direction: column;
-			gap: 16px;
-		}
-
-		.header-note {
-			max-width: 100%;
-			text-align: left;
-		}
-
-		.card-content {
-			padding: 25px 18px;
-		}
-
-		.hero-aside {
-			min-height: 330px;
-		}
-
-		.aside-content {
-			padding: 30px 25px;
-		}
-
-		.dashboard-heading {
-			align-items: flex-start;
-			flex-direction: column;
-		}
-
-		.file-badge {
-			max-width: 100%;
-		}
-
-		.stats-grid {
-			gap: 8px;
-		}
-
-		.stat-card {
-			align-items: flex-start;
-			flex-direction: column;
-			gap: 9px;
-			padding: 14px 12px;
-		}
-
-		.stat-value {
-			font-size: 16px;
-		}
-
-		.stat-value-date {
-			font-size: 10px;
-		}
-
-		.chart-header {
-			padding: 21px 16px 7px;
-		}
-
-		.chart-wrap {
-			padding: 7px 8px 0;
-		}
-
-		.chart-footer {
-			padding: 3px 16px 17px;
+			gap: 2px;
 		}
 	}
 </style>
