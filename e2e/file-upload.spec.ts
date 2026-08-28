@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 test('CSVファイルを添付すると解析結果が表示される', async ({ page }) => {
 	await page.goto('/');
 
+	await page.waitForLoadState('networkidle');
 	await page.locator('input[type="file"]').setInputFiles({
 		name: 'usage.csv',
 		mimeType: 'text/csv',
