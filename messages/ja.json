@@ -25,7 +25,7 @@
 	"unknown_model": "不明",
 	"cost_per_day_heading": "値段/日",
 	"daily_cost_subtitle": "日別のコスト",
-	"daily_cost_chart_aria": "日別コスト。{count}日分。Freeと空欄は0として集計。",
+	"daily_cost_chart_aria": "日別コスト。{count}日分。無料と空欄は0として集計。",
 	"daily_cost_value_title": "{date}: {value}",
 	"models_per_day_heading": "モデル/日",
 	"daily_model_cost_subtitle": "モデル別の日次コスト",
