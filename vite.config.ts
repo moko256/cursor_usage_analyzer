@@ -2,10 +2,12 @@ import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { defineConfig } from 'vitest/config';
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
+import inlangSettings from './project.inlang/settings.json' with { type: 'json' };
 
+type BasePath = '' | `/${string}`;
 const configuredBasePath = process.env.BASE_PATH ?? '';
-const basePath: '' | `/${string}` = configuredBasePath.startsWith('/')
-	? (configuredBasePath as `/${string}`)
+const basePath: BasePath = configuredBasePath.startsWith('/')
+	? (configuredBasePath as BasePath)
 	: '';
 
 export default defineConfig({
@@ -19,10 +21,8 @@ export default defineConfig({
 			adapter: adapter({
 				fallback: '404.html'
 			}),
-			prerender: {
-				crawl: false
-			},
 			paths: {
+				assets: 'https://example.com',
 				base: basePath
 			}
 		}),
@@ -30,7 +30,16 @@ export default defineConfig({
 		paraglideVitePlugin({
 			project: './project.inlang',
 			outdir: './src/lib/paraglide',
-			emitTsDeclarations: true
+			emitTsDeclarations: true,
+			strategy: ['url', 'preferredLanguage', 'baseLocale'],
+			urlPatterns: [
+				{
+					pattern: `${basePath}/:path(.*)?`,
+					localized: inlangSettings.locales.map((lang) => {
+						return [lang, `${basePath}/${lang}/:path(.*)?`];
+					})
+				}
+			]
 		})
 	],
 	test: {
