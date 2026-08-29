@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test';
 
 test('CSVファイルを添付すると解析結果が表示される', async ({ page }) => {
+	await page
+		.context()
+		.addCookies([{ name: 'PARAGLIDE_LOCALE', value: 'ja', domain: '127.0.0.1', path: '/' }]);
 	await page.goto('/');
 
 	await page.waitForLoadState('networkidle');
