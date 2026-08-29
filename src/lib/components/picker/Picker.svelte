@@ -19,13 +19,6 @@
 		if (browser) document.getElementById('csv-file-input')?.click();
 	}
 
-	function handlePickerKeydown(event: KeyboardEvent) {
-		if (event.key === 'Enter' || event.key === ' ') {
-			event.preventDefault();
-			openFilePicker();
-		}
-	}
-
 	function handleFileInput(event: Event) {
 		const input = event.currentTarget as HTMLInputElement;
 		onFileSelected(input.files?.[0]);
@@ -66,29 +59,17 @@
 	ondrop={handleDrop}
 />
 
-<wa-card
+<article
 	class:compact={status === 'success'}
 	class:initial={status !== 'success'}
 	class="picker-card"
 >
-	<div class="picker">
-		<div class="picker-icon" aria-hidden="true"><wa-icon name="cloud-arrow-up"></wa-icon></div>
-		<div>
-			<h2>{m.csv_picker_title()}</h2>
+	<section class="picker" aria-labelledby="picker-title">
+		<div class="picker-copy">
+			<h2 id="picker-title">{m.csv_picker_title()}</h2>
 			<p>{m.csv_picker_description()}</p>
 		</div>
-		<wa-button
-			variant="brand"
-			size="m"
-			type="button"
-			role="button"
-			tabindex="0"
-			onclick={openFilePicker}
-			onkeydown={handlePickerKeydown}
-		>
-			<wa-icon slot="start" name="folder-open"></wa-icon>
-			{m.select_file()}
-		</wa-button>
+		<button type="button" onclick={openFilePicker}>{m.select_file()}</button>
 		<input
 			id="csv-file-input"
 			class="file-input"
@@ -98,26 +79,24 @@
 			onchange={handleFileInput}
 		/>
 		{#if status === 'loading'}
-			<div class="picker-status" role="status">
+			<output class="picker-status" aria-live="polite">
 				<span>{m.parsing()}</span>
-				<wa-progress-bar indeterminate label={m.parsing_csv()}></wa-progress-bar>
-			</div>
+				<progress aria-label={m.parsing_csv()}></progress>
+			</output>
 		{:else if status === 'error'}
-			<wa-callout variant="danger" appearance="outlined" class="picker-status">
-				<wa-icon slot="icon" name="triangle-exclamation"></wa-icon>
+			<output class="picker-status" role="alert">
 				{errorMessage}
-			</wa-callout>
+			</output>
 		{:else if status === 'success'}
-			<wa-callout variant="success" appearance="outlined" class="picker-status">
-				<wa-icon slot="icon" name="circle-check"></wa-icon>
+			<output class="picker-status" aria-live="polite">
 				{m.csv_files_loaded({ count: pointCount })}
-			</wa-callout>
+			</output>
 		{/if}
-	</div>
-</wa-card>
+	</section>
+</article>
 
 {#if isDragging}
-	<div
+	<aside
 		class="drop-overlay"
 		role="status"
 		aria-live="assertive"
@@ -126,69 +105,33 @@
 		ondrop={handleDrop}
 	>
 		<div class="drop-message">
-			<wa-icon name="cloud-arrow-up" aria-hidden="true"></wa-icon>
 			<strong>{m.drop_here()}</strong>
 			<span>{m.load_csv()}</span>
 		</div>
-	</div>
+	</aside>
 {/if}
 
 <style>
 	.picker-card {
 		min-width: 0;
-		flex: 0 0 auto;
-		background: #fffefa;
 	}
 
 	.picker-card.initial {
-		flex: 1 1 auto;
-	}
-
-	.picker {
-		display: flex;
-		min-width: 0;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 13px;
-		padding: clamp(18px, 3vw, 28px);
-	}
-
-	.picker-card.initial .picker {
-		align-content: center;
-		justify-content: center;
 		min-height: 180px;
 	}
 
-	.picker-icon {
+	.picker {
+		min-width: 0;
+	}
+
+	.picker-card.initial .picker {
 		display: grid;
-		width: 40px;
-		height: 40px;
-		flex: 0 0 auto;
-		place-items: center;
-		border-radius: 10px;
-		background: #f9dfd3;
-		color: #c65f40;
-		font-size: 19px;
+		place-content: center;
+		min-height: inherit;
 	}
 
-	.picker h2 {
-		margin: 0 0 3px;
-		font-size: 16px;
-		letter-spacing: -0.03em;
-	}
-
-	.picker p {
-		margin: 0;
-		color: #88918e;
-		font-size: 11px;
-	}
-
-	.picker :global(wa-button) {
-		margin-left: auto;
-	}
-
-	.picker-card.initial .picker :global(wa-button) {
-		margin-left: 0;
+	.picker-copy {
+		min-width: 0;
 	}
 
 	.file-input {
@@ -202,17 +145,12 @@
 	}
 
 	.picker-status {
-		flex: 1 0 100%;
-		margin-top: 2px;
-	}
-
-	.picker-status :global(wa-progress-bar) {
 		display: block;
-		margin-top: 7px;
 	}
 
-	.picker-status :global(p) {
-		font-size: 11px;
+	.picker-status progress {
+		display: block;
+		width: 100%;
 	}
 
 	.drop-overlay {
@@ -221,51 +159,23 @@
 		inset: 0;
 		display: grid;
 		place-items: center;
-		padding: 18px;
-		background: rgba(38, 54, 58, 0.87);
-		backdrop-filter: blur(4px);
+		background: rgb(0 0 0 / 75%);
+		color: white;
 	}
 
 	.drop-message {
 		display: flex;
 		align-items: center;
 		flex-direction: column;
-		width: min(500px, 100%);
-		padding: 64px 24px;
-		border: 2px dashed #f2ad91;
-		border-radius: 16px;
-		color: #fff8f2;
+		gap: 0.5rem;
 		text-align: center;
 	}
 
-	.drop-message :global(wa-icon) {
-		margin-bottom: 14px;
-		color: #f2ad91;
-		font-size: 30px;
-	}
-
 	.drop-message strong {
-		font-size: 21px;
-		letter-spacing: -0.04em;
+		font-size: 1.25rem;
 	}
 
 	.drop-message span {
-		margin-top: 6px;
-		color: #c7d1ce;
-		font-size: 11px;
-	}
-
-	@media (max-width: 460px) {
-		.picker {
-			align-items: flex-start;
-		}
-
-		.picker :global(wa-button) {
-			margin-left: 53px;
-		}
-
-		.picker-card.initial .picker :global(wa-button) {
-			margin-left: 0;
-		}
+		font-size: 0.875rem;
 	}
 </style>

@@ -12,12 +12,14 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"test:unit": "vitest",
 		"test": "pnpm run test:unit -- --run",
+		"test:e2e": "playwright test",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write ."
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
 		"@inlang/paraglide-js": "^2.18.2",
+		"@playwright/test": "^1.62.1",
 		"@sveltejs/adapter-static": "^3.0.10",
 		"@sveltejs/kit": "^2.63.0",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
@@ -36,6 +38,7 @@
 		"vitest": "^4.1.8"
 	},
 	"dependencies": {
-		"@awesome.me/webawesome": "^3.11.0"
+		"@picocss/pico": "^2.1.1",
+		"layerchart": "^2.3.1"
 	}
 }

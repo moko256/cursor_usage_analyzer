@@ -3,7 +3,7 @@ export type CsvPoint = {
 	model: string;
 	cost: number | null;
 	tokens: number;
-	kind: 'amount' | 'free' | 'empty';
+	kind: 'amount' | 'included' | 'free' | 'empty';
 };
 
 export type CsvParseErrorCode =
@@ -64,21 +64,8 @@ export function parseCsvText(text: string): CsvPoint[] {
 
 		const model = record[modelIndex]?.trim() ?? '';
 		const tokens = parseTokens(record, tokenIndex, inputTokenIndex, outputTokenIndex);
-		const rawCost = record[costIndex]?.trim() ?? '';
-		if (rawCost === '') {
-			points.push({ date, model, cost: null, tokens, kind: 'empty' });
-			continue;
-		}
-
-		if (rawCost.toLowerCase() === 'free') {
-			points.push({ date, model, cost: null, tokens, kind: 'free' });
-			continue;
-		}
-
-		const cost = Number(rawCost);
-		if (Number.isFinite(cost)) {
-			points.push({ date, model, cost, tokens, kind: 'amount' });
-		}
+		const parsedCost = parseCost(record[costIndex]);
+		if (parsedCost !== null) points.push({ date, model, tokens, ...parsedCost });
 	}
 
 	if (points.length === 0) {
@@ -100,6 +87,23 @@ function findHeaderIndex(headers: string[], names: string[]) {
 	return names.map((name) => headers.indexOf(name)).find((index) => index !== -1) ?? -1;
 }
 
+function parseCost(value: string | undefined): Pick<CsvPoint, 'cost' | 'kind'> | null {
+	const rawCost = value?.trim() ?? '';
+	if (rawCost === '') return { cost: null, kind: 'empty' };
+
+	const normalized = rawCost.toLowerCase();
+	if (normalized === 'free') return { cost: null, kind: 'free' };
+	if (normalized === 'included') return { cost: null, kind: 'included' };
+
+	const cost = Number(rawCost);
+	return Number.isFinite(cost) ? { cost, kind: 'amount' } : null;
+}
+
+function parseNonNegativeNumber(value: string | undefined) {
+	const number = Number(value?.trim() ?? '');
+	return Number.isFinite(number) && number >= 0 ? number : 0;
+}
+
 function parseTokens(
 	record: string[],
 	tokenIndex: number,
@@ -114,14 +118,9 @@ function parseTokens(
 	);
 }
 
-function parseNonNegativeNumber(value: string | undefined) {
-	const number = Number(value?.trim() ?? '');
-	return Number.isFinite(number) && number >= 0 ? number : 0;
-}
-
 /**
  * Sends the file to a dedicated worker. The worker reads and parses the file,
- * returning only the Date, Model, Cost, and token fields needed by the dashboard.
+ * returning only the Date, Model, Cost, and Total Tokens fields needed by the dashboard.
  */
 export function parseCsvFile(file: Blob): Promise<CsvPoint[]> {
 	return new Promise((resolve, reject) => {
