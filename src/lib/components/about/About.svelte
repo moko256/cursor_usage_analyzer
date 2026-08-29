@@ -1,4 +1,8 @@
+<script lang="ts">
+	import * as m from '$lib/paraglide/messages';
+</script>
+
 <section class="overview" aria-labelledby="overview-title">
-	<h2 id="overview-title">概要</h2>
-	<p>コスト・モデル・トークンの傾向を、日別とモデル別で確認できます。</p>
+	<h2 id="overview-title">{m.overview_heading()}</h2>
+	<p>{m.overview_description()}</p>
 </section>

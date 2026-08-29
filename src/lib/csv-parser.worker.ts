@@ -1,4 +1,4 @@
-import { parseCsvText } from './csv-parser';
+import { CsvParseError, parseCsvText } from './csv-parser';
 
 self.onmessage = async (event: MessageEvent<Blob>) => {
 	try {
@@ -7,7 +7,7 @@ self.onmessage = async (event: MessageEvent<Blob>) => {
 	} catch (error) {
 		self.postMessage({
 			type: 'error',
-			message: error instanceof Error ? error.message : 'CSVを解析できませんでした。'
+			code: error instanceof CsvParseError ? error.code : 'parse_failed'
 		});
 	}
 };

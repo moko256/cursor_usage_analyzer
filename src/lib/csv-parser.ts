@@ -6,6 +6,22 @@ export type CsvPoint = {
 	kind: 'amount' | 'included' | 'free' | 'empty';
 };
 
+export type CsvParseErrorCode =
+	| 'empty'
+	| 'missing_columns'
+	| 'no_valid_data'
+	| 'background_parsing_unavailable'
+	| 'background_parsing_failed'
+	| 'unclosed_quotes'
+	| 'parse_failed';
+
+export class CsvParseError extends Error {
+	constructor(public readonly code: CsvParseErrorCode) {
+		super(code);
+		this.name = 'CsvParseError';
+	}
+}
+
 type WorkerSuccess = {
 	type: 'success';
 	points: CsvPoint[];
@@ -13,7 +29,7 @@ type WorkerSuccess = {
 
 type WorkerFailure = {
 	type: 'error';
-	message: string;
+	code: CsvParseErrorCode;
 };
 
 const isoDateTimePattern =
@@ -26,17 +42,19 @@ const isoDateTimePattern =
 export function parseCsvText(text: string): CsvPoint[] {
 	const records = parseRecords(text);
 	if (records.length === 0) {
-		throw new Error('CSVファイルにデータがありません。');
+		throw new CsvParseError('empty');
 	}
 
 	const headers = records[0].map((header) => normalizeHeader(header));
 	const dateIndex = headers.indexOf('date');
 	const costIndex = headers.indexOf('cost');
 	const modelIndex = headers.indexOf('model');
-	const tokenIndex = headers.indexOf('totaltokens');
+	const tokenIndex = findHeaderIndex(headers, ['tokens', 'token', 'totaltokens']);
+	const inputTokenIndex = findHeaderIndex(headers, ['inputtokens', 'inputtoken']);
+	const outputTokenIndex = findHeaderIndex(headers, ['outputtokens', 'outputtoken']);
 
 	if (dateIndex === -1 || costIndex === -1 || modelIndex === -1) {
-		throw new Error('CSVにDate列、Cost列、Model列が必要です。');
+		throw new CsvParseError('missing_columns');
 	}
 
 	const points: CsvPoint[] = [];
@@ -44,14 +62,14 @@ export function parseCsvText(text: string): CsvPoint[] {
 		const date = record[dateIndex]?.trim() ?? '';
 		if (!isIsoDateTime(date)) continue;
 
-		const model = record[modelIndex]?.trim() || 'Unknown';
-		const tokens = parseNonNegativeNumber(tokenIndex === -1 ? undefined : record[tokenIndex]);
+		const model = record[modelIndex]?.trim() ?? '';
+		const tokens = parseTokens(record, tokenIndex, inputTokenIndex, outputTokenIndex);
 		const parsedCost = parseCost(record[costIndex]);
 		if (parsedCost !== null) points.push({ date, model, tokens, ...parsedCost });
 	}
 
 	if (points.length === 0) {
-		throw new Error('有効なDateとCostのデータが見つかりません。');
+		throw new CsvParseError('no_valid_data');
 	}
 
 	return points.toSorted((left, right) => Date.parse(left.date) - Date.parse(right.date));
@@ -63,6 +81,10 @@ function normalizeHeader(value: string) {
 		.trim()
 		.toLowerCase()
 		.replace(/[^a-z0-9]/g, '');
+}
+
+function findHeaderIndex(headers: string[], names: string[]) {
+	return names.map((name) => headers.indexOf(name)).find((index) => index !== -1) ?? -1;
 }
 
 function parseCost(value: string | undefined): Pick<CsvPoint, 'cost' | 'kind'> | null {
@@ -82,6 +104,20 @@ function parseNonNegativeNumber(value: string | undefined) {
 	return Number.isFinite(number) && number >= 0 ? number : 0;
 }
 
+function parseTokens(
+	record: string[],
+	tokenIndex: number,
+	inputTokenIndex: number,
+	outputTokenIndex: number
+) {
+	if (tokenIndex !== -1) return parseNonNegativeNumber(record[tokenIndex]);
+
+	return (
+		parseNonNegativeNumber(record[inputTokenIndex]) +
+		parseNonNegativeNumber(record[outputTokenIndex])
+	);
+}
+
 /**
  * Sends the file to a dedicated worker. The worker reads and parses the file,
  * returning only the Date, Model, Cost, and Total Tokens fields needed by the dashboard.
@@ -89,7 +125,7 @@ function parseNonNegativeNumber(value: string | undefined) {
 export function parseCsvFile(file: Blob): Promise<CsvPoint[]> {
 	return new Promise((resolve, reject) => {
 		if (typeof Worker === 'undefined') {
-			reject(new Error('このブラウザではバックグラウンド解析を利用できません。'));
+			reject(new CsvParseError('background_parsing_unavailable'));
 			return;
 		}
 
@@ -103,12 +139,12 @@ export function parseCsvFile(file: Blob): Promise<CsvPoint[]> {
 			if (event.data.type === 'success') {
 				resolve(event.data.points);
 			} else {
-				reject(new Error(event.data.message));
+				reject(new CsvParseError(event.data.code));
 			}
 		};
 		worker.onerror = () => {
 			finish();
-			reject(new Error('CSVファイルをバックグラウンドで解析できませんでした。'));
+			reject(new CsvParseError('background_parsing_failed'));
 		};
 		worker.postMessage(file);
 	});
@@ -154,7 +190,7 @@ function parseRecords(text: string): string[][] {
 		}
 	}
 
-	if (insideQuotes) throw new Error('CSVの引用符が正しく閉じられていません。');
+	if (insideQuotes) throw new CsvParseError('unclosed_quotes');
 	if (field !== '' || record.length > 0) pushRecord();
 
 	return records;

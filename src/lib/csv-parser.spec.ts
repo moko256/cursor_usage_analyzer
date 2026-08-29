@@ -118,7 +118,15 @@ describe('parseCsvText', () => {
 
 	it('requires Date and Cost headers', () => {
 		expect(() => parseCsvText('Timestamp,Amount,Model\n2026-01-01T00:00:00Z,1,alpha')).toThrow(
-			'CSVにDate列、Cost列、Model列が必要です。'
+			'missing_columns'
 		);
+	});
+
+	it('sums input and output tokens when total tokens are not provided', () => {
+		const points = parseCsvText(
+			'Date,Cost,Model,Input Tokens,Output Tokens\n2026-05-01T10:00:00Z,1,alpha,12,8'
+		);
+
+		expect(points[0]?.tokens).toBe(20);
 	});
 });

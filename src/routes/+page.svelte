@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { parseCsvFile, type CsvPoint } from '$lib/csv-parser';
+	import { CsvParseError, parseCsvFile, type CsvPoint } from '$lib/csv-parser';
 	import About from '$lib/components/about/About.svelte';
 	import DailyCostChart from '$lib/components/graph/DailyCostChart.svelte';
 	import DailyModelCostChart from '$lib/components/graph/DailyModelCostChart.svelte';
@@ -7,6 +7,7 @@
 	import ModelCostChart from '$lib/components/graph/ModelCostChart.svelte';
 	import ModelTokenChart from '$lib/components/graph/ModelTokenChart.svelte';
 	import Picker from '$lib/components/picker/Picker.svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	type ViewState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -19,7 +20,7 @@
 
 		if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
 			status = 'error';
-			errorMessage = 'CSVファイルを選択してください。';
+			errorMessage = m.invalid_file_type();
 			return;
 		}
 
@@ -32,21 +33,39 @@
 			status = 'success';
 		} catch (error) {
 			status = 'error';
-			errorMessage =
-				error instanceof Error
-					? error.message
-					: 'CSVファイルを読み込めませんでした。もう一度お試しください。';
+			errorMessage = getErrorMessage(error);
+		}
+	}
+
+	function getErrorMessage(error: unknown) {
+		if (!(error instanceof CsvParseError)) return m.csv_read_failed();
+
+		switch (error.code) {
+			case 'empty':
+				return m.csv_empty();
+			case 'missing_columns':
+				return m.csv_missing_columns();
+			case 'no_valid_data':
+				return m.csv_no_valid_data();
+			case 'background_parsing_unavailable':
+				return m.background_parsing_unavailable();
+			case 'background_parsing_failed':
+				return m.background_parsing_failed();
+			case 'unclosed_quotes':
+				return m.csv_unclosed_quotes();
+			default:
+				return m.csv_parse_failed();
 		}
 	}
 </script>
 
 <svelte:head>
-	<title>CSVコスト分析</title>
-	<meta name="description" content="CSVのコスト、モデル、トークンをコンパクトに可視化します。" />
+	<title>{m.page_title()}</title>
+	<meta name="description" content={m.page_description()} />
 </svelte:head>
 
 <main class="container-fluid">
-	<section class="container" aria-label="CSV分析">
+	<section class="container" aria-label={m.dashboard_aria_label()}>
 		<Picker {status} {errorMessage} pointCount={points.length} onFileSelected={processFile} />
 
 		{#if status === 'success'}

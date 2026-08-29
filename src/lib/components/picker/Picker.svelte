@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import * as m from '$lib/paraglide/messages';
 
 	type ViewState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -65,22 +66,22 @@
 >
 	<section class="picker" aria-labelledby="picker-title">
 		<div class="picker-copy">
-			<h2 id="picker-title">CSVを選択</h2>
-			<p>CSVをドロップ、またはファイルを選択</p>
+			<h2 id="picker-title">{m.csv_picker_title()}</h2>
+			<p>{m.csv_picker_description()}</p>
 		</div>
-		<button type="button" onclick={openFilePicker}>選択</button>
+		<button type="button" onclick={openFilePicker}>{m.select_file()}</button>
 		<input
 			id="csv-file-input"
 			class="file-input"
 			type="file"
 			accept=".csv,text/csv"
-			aria-label="CSVファイルを選択"
+			aria-label={m.csv_file_input_label()}
 			onchange={handleFileInput}
 		/>
 		{#if status === 'loading'}
 			<output class="picker-status" aria-live="polite">
-				<span>解析中</span>
-				<progress aria-label="CSVを解析中"></progress>
+				<span>{m.parsing()}</span>
+				<progress aria-label={m.parsing_csv()}></progress>
 			</output>
 		{:else if status === 'error'}
 			<output class="picker-status" role="alert">
@@ -88,7 +89,7 @@
 			</output>
 		{:else if status === 'success'}
 			<output class="picker-status" aria-live="polite">
-				{pointCount}件を読み込みました
+				{m.csv_files_loaded({ count: pointCount })}
 			</output>
 		{/if}
 	</section>
@@ -104,8 +105,8 @@
 		ondrop={handleDrop}
 	>
 		<div class="drop-message">
-			<strong>ここにドロップ</strong>
-			<span>CSVファイルを読み込みます</span>
+			<strong>{m.drop_here()}</strong>
+			<span>{m.load_csv()}</span>
 		</div>
 	</aside>
 {/if}
