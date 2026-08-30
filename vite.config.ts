@@ -23,6 +23,9 @@ export default defineConfig({
 			}),
 			paths: {
 				base: basePath
+			},
+			output: {
+				bundleStrategy: 'inline'
 			}
 		}),
 

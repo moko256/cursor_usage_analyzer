@@ -40,7 +40,11 @@
 	}
 
 	function getErrorMessage(error: unknown) {
-		if (!(error instanceof CsvParseError)) return m.csv_read_failed();
+		if (!(error instanceof CsvParseError)) {
+			console.error(error);
+
+			return m.csv_read_failed();
+		}
 
 		switch (error.code) {
 			case 'empty':

@@ -1,3 +1,5 @@
+import CsvParserWorker from '$lib/csv-parser.worker?worker&inline';
+
 export type CsvPoint = {
 	date: string;
 	model: string;
@@ -129,9 +131,7 @@ export function parseCsvFile(file: Blob): Promise<CsvPoint[]> {
 			return;
 		}
 
-		const worker = new Worker(new URL('./csv-parser.worker.ts', import.meta.url), {
-			type: 'module'
-		});
+		const worker = new CsvParserWorker();
 
 		const finish = () => worker.terminate();
 		worker.onmessage = (event: MessageEvent<WorkerSuccess | WorkerFailure>) => {
