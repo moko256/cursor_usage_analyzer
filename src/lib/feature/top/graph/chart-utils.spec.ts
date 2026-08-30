@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CsvPoint } from '$lib/csv-parser';
-import { groupByDay, sumCost } from './chart-utils';
+import { buildTokenCalendar, groupByDay, sumCost } from './chart-utils';
 
 const noBreakdown = {
 	inputWithCacheWrite: 0,
@@ -104,5 +104,37 @@ describe('groupByDay', () => {
 				models: [{ model: 'alpha', cost: 0, tokens: 25 }]
 			}
 		]);
+	});
+});
+
+describe('buildTokenCalendar', () => {
+	it('pads the daily token data to complete Sunday-based weeks', () => {
+		const days = groupByDay([
+			{
+				date: '2026-08-25T10:00:00.000Z',
+				model: 'alpha',
+				cost: 1,
+				tokens: 100,
+				kind: 'amount',
+				...noBreakdown
+			},
+			{
+				date: '2026-08-27T10:00:00.000Z',
+				model: 'alpha',
+				cost: 1,
+				tokens: 300,
+				kind: 'amount',
+				...noBreakdown
+			}
+		]);
+
+		const calendar = buildTokenCalendar(days);
+
+		expect(calendar.range.start).toEqual(new Date(2025, 11, 28));
+		expect(calendar.range.end).toEqual(new Date(2027, 0, 3));
+		expect(calendar.data).toHaveLength(371);
+		expect(calendar.data.find(({ day }) => day === '2026-08-25')?.tokens).toBe(100);
+		expect(calendar.data.find(({ day }) => day === '2026-08-26')?.tokens).toBe(0);
+		expect(calendar.data.find(({ day }) => day === '2026-08-27')?.tokens).toBe(300);
 	});
 });

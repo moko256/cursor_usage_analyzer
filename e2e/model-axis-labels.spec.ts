@@ -32,7 +32,7 @@ async function readTickLabels(card: Locator) {
 }
 
 test.beforeEach(async ({ page }) => {
-	await page.goto('/');
+	await page.goto('/cursor_usage_analyzer/en/');
 	await page.waitForLoadState('networkidle');
 	await page.locator('input[type="file"]').setInputFiles({
 		name: 'usage.csv',
@@ -40,7 +40,7 @@ test.beforeEach(async ({ page }) => {
 		buffer: Buffer.from(csv)
 	});
 
-	await expect(page.locator('.chart-card')).toHaveCount(4);
+	await expect(page.locator('.chart-card')).toHaveCount(6);
 });
 
 test('モデル別の日次グラフが先頭に並ぶ', async ({ page }) => {
@@ -58,6 +58,22 @@ test('モデル別の日次グラフが先頭に並ぶ', async ({ page }) => {
 	);
 });
 
+test('tokenカレンダーと空のカードが7対3で並ぶ', async ({ page }) => {
+	const group = page.locator('.calendar-group');
+	const cards = group.locator('.chart-card');
+	const calendar = cards.nth(0);
+
+	await expect(cards).toHaveCount(2);
+	await expect(calendar.locator('figcaption strong')).toHaveText('');
+	await expect(calendar.locator('figcaption span')).toHaveText('');
+	await expect(calendar.locator('.lc-rect')).toHaveCount(371);
+
+	const widths = await cards.evaluateAll((elements) =>
+		elements.map((element) => element.getBoundingClientRect().width)
+	);
+	expect(widths[0]).toBeGreaterThan((widths[1] ?? 0) * 2);
+});
+
 test('横棒グラフの軸にモデル名が描画される', async ({ page }) => {
 	const cards = await page.locator('.chart-card.horizontal-card').all();
 	expect(cards).toHaveLength(2);
@@ -72,7 +88,7 @@ test('横棒グラフの軸にモデル名が描画される', async ({ page }) 
 });
 
 test('軸の目盛りラベルが切り取られない', async ({ page }) => {
-	const cards = await page.locator('.chart-card').all();
+	const cards = await page.locator('.chart-card:not(.calendar-card):not(.empty-card)').all();
 
 	for (const card of cards) {
 		const labels = await readTickLabels(card);

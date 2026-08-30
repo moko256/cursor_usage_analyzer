@@ -2,6 +2,9 @@
 	import { CsvParseError, parseCsvFile, type CsvPoint } from '$lib/csv-parser';
 	import DailyModelTokenChart from '$lib/feature/top/graph/DailyModelTokenChart.svelte';
 	import DailyModelCostChart from '$lib/feature/top/graph/DailyModelCostChart.svelte';
+	import CalendarGroup from '$lib/feature/top/graph/CalendarGroup.svelte';
+	import CalendarTokenChart from '$lib/feature/top/graph/CalendarTokenChart.svelte';
+	import ChartCard from '$lib/feature/top/graph/ChartCard.svelte';
 	import GraphGroup from '$lib/feature/top/graph/GraphGroup.svelte';
 	import ModelCostChart from '$lib/feature/top/graph/ModelCostChart.svelte';
 	import ModelTokenChart from '$lib/feature/top/graph/ModelTokenChart.svelte';
@@ -88,6 +91,12 @@
 				<ModelTokenChart {points} />
 				<ModelCostChart {points} />
 			</GraphGroup>
+			<CalendarGroup>
+				<CalendarTokenChart {points} />
+				<ChartCard title="" subtitle="" class="empty-card">
+					<div class="empty-chart" aria-hidden="true"></div>
+				</ChartCard>
+			</CalendarGroup>
 		{/if}
 	</section>
 
@@ -95,3 +104,9 @@
 </main>
 
 <Footer />
+
+<style>
+	.empty-chart {
+		min-height: 140px;
+	}
+</style>

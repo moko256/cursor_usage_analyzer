@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test('CSVファイルを添付すると解析結果が表示される', async ({ page }) => {
-	await page.goto('/ja/');
+	await page.goto('/cursor_usage_analyzer/ja/');
 
 	await page.waitForLoadState('networkidle');
 	await page.locator('input[type="file"]').setInputFiles({

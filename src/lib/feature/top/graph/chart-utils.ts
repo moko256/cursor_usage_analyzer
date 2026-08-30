@@ -21,6 +21,17 @@ export type ModelValue = {
 	tokens: number;
 };
 
+export type TokenCalendarDay = {
+	day: string;
+	date: Date;
+	tokens: number;
+};
+
+export type TokenCalendarRange = {
+	start: Date;
+	end: Date;
+};
+
 export const TOKEN_BREAKDOWN_LABELS = [
 	'Input (w/ Cache Write)',
 	'Input (w/o Cache Write)',
@@ -121,6 +132,31 @@ export function groupByModel(points: CsvPoint[]): ModelValue[] {
 	return Array.from(byModel.entries())
 		.sort(([left], [right]) => left.localeCompare(right))
 		.map(([model, value]) => ({ model, ...value }));
+}
+
+export function buildTokenCalendar(days: DailyValue[]): {
+	data: TokenCalendarDay[];
+	range: TokenCalendarRange;
+} {
+	if (days.length === 0) {
+		const today = new Date();
+		const start = startOfWeek(today);
+		return { data: [], range: { start, end: addDays(start, 7) } };
+	}
+
+	const values = new Map(days.map((day) => [day.day, day.tokens]));
+	const firstDay = parseCalendarDay(days[0].day);
+	const lastDay = parseCalendarDay(days[days.length - 1].day);
+	const start = startOfWeek(new Date(firstDay.getFullYear(), 0, 1));
+	const end = addDays(startOfWeek(new Date(lastDay.getFullYear() + 1, 0, 1)), 7);
+	const data: TokenCalendarDay[] = [];
+
+	for (let date = new Date(start); date < end; date = addDays(date, 1)) {
+		const day = formatCalendarDay(date);
+		data.push({ day, date, tokens: values.get(day) ?? 0 });
+	}
+
+	return { data, range: { start, end } };
 }
 
 const emptyBreakdown = {
@@ -248,6 +284,29 @@ export function modelAxisPadding(models: string[]) {
 
 function measureLabel(text: string) {
 	return getStringWidth(text, tickLabelStyle) ?? text.length * 6;
+}
+
+function parseCalendarDay(value: string) {
+	const [year, month, day] = value.split('-').map(Number);
+	return new Date(year, month - 1, day);
+}
+
+function formatCalendarDay(date: Date) {
+	return [
+		date.getFullYear().toString().padStart(4, '0'),
+		(date.getMonth() + 1).toString().padStart(2, '0'),
+		date.getDate().toString().padStart(2, '0')
+	].join('-');
+}
+
+function startOfWeek(date: Date) {
+	return addDays(new Date(date.getFullYear(), date.getMonth(), date.getDate()), -date.getDay());
+}
+
+function addDays(date: Date, count: number) {
+	const result = new Date(date);
+	result.setDate(result.getDate() + count);
+	return result;
 }
 
 export function formatDay(value: string) {
