@@ -2,12 +2,7 @@
 	import type { CsvPoint } from '$lib/csv-parser';
 	import * as m from '$lib/paraglide/messages';
 	import { BarChart, Tooltip } from 'layerchart';
-	import {
-		formatDay,
-		groupByDay,
-		groupByModel,
-		type DailyValue
-	} from './chart-utils';
+	import { formatDay, groupByDay, groupByModel, type DailyValue } from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
 
 	interface Props {
