@@ -9,7 +9,7 @@ const csv = [
 
 test('グラフのcopyボタンで画像をクリップボードにコピーできる', async ({ page }) => {
 	await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-	await page.goto('/');
+	await page.goto('/cursor_usage_analyzer/en/');
 	await page.waitForLoadState('networkidle');
 	await page.locator('input[type="file"]').setInputFiles({
 		name: 'usage.csv',
