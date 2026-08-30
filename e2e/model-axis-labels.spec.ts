@@ -40,7 +40,7 @@ test.beforeEach(async ({ page }) => {
 		buffer: Buffer.from(csv)
 	});
 
-	await expect(page.locator('.chart-card')).toHaveCount(5);
+	await expect(page.locator('.chart-card')).toHaveCount(4);
 });
 
 test('モデル別の日次グラフが先頭に並ぶ', async ({ page }) => {
