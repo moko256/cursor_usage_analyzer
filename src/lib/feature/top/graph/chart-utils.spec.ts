@@ -110,8 +110,22 @@ describe('groupByDay', () => {
 describe('buildTokenCalendar', () => {
 	it('pads the daily token data to complete Sunday-based weeks', () => {
 		const days = groupByDay([
-			{ date: '2026-08-25T10:00:00.000Z', model: 'alpha', cost: 1, tokens: 100, kind: 'amount' },
-			{ date: '2026-08-27T10:00:00.000Z', model: 'alpha', cost: 1, tokens: 300, kind: 'amount' }
+			{
+				date: '2026-08-25T10:00:00.000Z',
+				model: 'alpha',
+				cost: 1,
+				tokens: 100,
+				kind: 'amount',
+				...noBreakdown
+			},
+			{
+				date: '2026-08-27T10:00:00.000Z',
+				model: 'alpha',
+				cost: 1,
+				tokens: 300,
+				kind: 'amount',
+				...noBreakdown
+			}
 		]);
 
 		const calendar = buildTokenCalendar(days);
