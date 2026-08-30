@@ -27,7 +27,7 @@
 			value: (day: DailyValue) => day.models.find((value) => value.model === model)?.tokens ?? 0
 		}))
 	);
-	const padding = { top: 4, right: 24, bottom: 20, left: 20 };
+	const padding = { top: 4, right: 24, bottom: 20, left: 41 };
 </script>
 
 <ChartCard title={m.tokens_per_day_heading()} subtitle={m.daily_model_token_subtitle()}>
