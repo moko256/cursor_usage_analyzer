@@ -4,6 +4,7 @@
 	"page_description": "Visualize usage data from a CSV downloaded from Cursor.",
 	"dashboard_aria_label": "CSV analysis",
 	"charts_aria_label": "Cost charts",
+	"on_demand_usage": "On-demand usage: {value}",
 	"csv_picker_description": "Drop a CSV or choose a file",
 	"select_file": "Choose file",
 	"csv_file_input_label": "Choose a CSV file",
