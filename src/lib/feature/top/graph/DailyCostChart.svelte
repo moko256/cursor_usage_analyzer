@@ -2,7 +2,7 @@
 	import type { CsvPoint } from '$lib/csv-parser';
 	import * as m from '$lib/paraglide/messages';
 	import { BarChart, Tooltip } from 'layerchart';
-	import { formatDay, groupByDay } from './chart-utils';
+	import { formatClipboardData, formatDay, groupByDay } from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
 
 	interface Props {
@@ -21,9 +21,19 @@
 			label: formatDay(day.day)
 		}))
 	);
+	let copyText = $derived(
+		formatClipboardData(
+			['day', 'cost'],
+			dayValues.map((day) => [day.day, day.cost])
+		)
+	);
 </script>
 
-<ChartCard title={m.cost_per_day_heading()} subtitle={m.daily_cost_subtitle()}>
+<ChartCard
+	title={m.cost_per_day_heading()}
+	subtitle={m.daily_cost_subtitle()}
+	{copyText}
+>
 	<div role="img" aria-label={m.daily_cost_chart_aria({ count: dayValues.length })}>
 		<BarChart data={dayValues} x="label" y="cost" height={270}>
 			{#snippet tooltip({ context })}
