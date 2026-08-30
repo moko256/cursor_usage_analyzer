@@ -53,17 +53,11 @@ describe('buildTokenCalendar', () => {
 
 		const calendar = buildTokenCalendar(days);
 
-		expect(calendar.range.start).toEqual(new Date(2026, 7, 23));
-		expect(calendar.range.end).toEqual(new Date(2026, 7, 30));
-		expect(calendar.data).toHaveLength(7);
-		expect(calendar.data.map(({ day, tokens }) => ({ day, tokens }))).toEqual([
-			{ day: '2026-08-23', tokens: 0 },
-			{ day: '2026-08-24', tokens: 0 },
-			{ day: '2026-08-25', tokens: 100 },
-			{ day: '2026-08-26', tokens: 0 },
-			{ day: '2026-08-27', tokens: 300 },
-			{ day: '2026-08-28', tokens: 0 },
-			{ day: '2026-08-29', tokens: 0 }
-		]);
+		expect(calendar.range.start).toEqual(new Date(2025, 11, 28));
+		expect(calendar.range.end).toEqual(new Date(2027, 0, 3));
+		expect(calendar.data).toHaveLength(371);
+		expect(calendar.data.find(({ day }) => day === '2026-08-25')?.tokens).toBe(100);
+		expect(calendar.data.find(({ day }) => day === '2026-08-26')?.tokens).toBe(0);
+		expect(calendar.data.find(({ day }) => day === '2026-08-27')?.tokens).toBe(300);
 	});
 });

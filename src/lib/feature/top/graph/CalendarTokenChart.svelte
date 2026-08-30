@@ -17,7 +17,7 @@
 	});
 	const tokenThresholds = [1, 10_000, 50_000, 100_000];
 	const tokenColors = [
-		'var(--pico-muted-border-color)',
+		'color-mix(in srgb, var(--pico-muted-color) 18%, var(--pico-background-color))',
 		'color-mix(in srgb, var(--pico-primary) 25%, var(--pico-background-color))',
 		'color-mix(in srgb, var(--pico-primary) 45%, var(--pico-background-color))',
 		'color-mix(in srgb, var(--pico-primary) 70%, var(--pico-background-color))',

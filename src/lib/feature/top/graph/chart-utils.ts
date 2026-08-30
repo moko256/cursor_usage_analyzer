@@ -123,8 +123,8 @@ export function buildTokenCalendar(days: DailyValue[]): {
 	const values = new Map(days.map((day) => [day.day, day.tokens]));
 	const firstDay = parseCalendarDay(days[0].day);
 	const lastDay = parseCalendarDay(days[days.length - 1].day);
-	const start = startOfWeek(firstDay);
-	const end = addDays(lastDay, 7 - lastDay.getDay());
+	const start = startOfWeek(new Date(firstDay.getFullYear(), 0, 1));
+	const end = addDays(startOfWeek(new Date(lastDay.getFullYear() + 1, 0, 1)), 7);
 	const data: TokenCalendarDay[] = [];
 
 	for (let date = new Date(start); date < end; date = addDays(date, 1)) {
