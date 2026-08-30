@@ -1,1 +1,0 @@
-import{r as e}from"./D_Nfgmxe.js";function t(e){return e}function n(e,...n){return r(e,t,t,n)}function r(t,n,r,i){return(function t(a,o){if(o>=i.length)return r(a);let s=new e,c=i[o++],l=-1;for(let e of a){let t=c(e,++l,a),n=s.get(t);n?n.push(e):s.set(t,[e])}for(let[e,n]of s)s.set(e,t(n,o));return n(s)})(t,0)}export{n as t};
