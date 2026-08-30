@@ -81,7 +81,6 @@ jobs:
 
       - name: Build static site
         env:
-          BASE_PATH: /${{ github.event.repository.name }}
           GH_TOKEN: ''
           GITHUB_TOKEN: ''
         run: ./scripts/build-static-site.sh

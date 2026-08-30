@@ -3,12 +3,7 @@ import { defineConfig } from 'vitest/config';
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 import inlangSettings from './project.inlang/settings.json' with { type: 'json' };
-
-type BasePath = '' | `/${string}`;
-const configuredBasePath = process.env.BASE_PATH ?? '';
-const basePath: BasePath = configuredBasePath.startsWith('/')
-	? (configuredBasePath as BasePath)
-	: '';
+import { siteBase, siteHost, siteProtocol } from './site-url.ts';
 
 export default defineConfig({
 	plugins: [
@@ -22,7 +17,8 @@ export default defineConfig({
 				fallback: '404.html'
 			}),
 			paths: {
-				base: basePath
+				assets: `${siteProtocol}://${siteHost}`,
+				base: siteBase
 			},
 			output: {
 				bundleStrategy: 'inline'
@@ -36,9 +32,9 @@ export default defineConfig({
 			strategy: ['url', 'preferredLanguage', 'baseLocale'],
 			urlPatterns: [
 				{
-					pattern: `${basePath}/:path(.*)?`,
+					pattern: `${siteBase}/:path(.*)?`,
 					localized: inlangSettings.locales.map((lang) => {
-						return [lang, `${basePath}/${lang}/:path(.*)?`];
+						return [lang, `${siteBase}/${lang}/:path(.*)?`];
 					})
 				}
 			]

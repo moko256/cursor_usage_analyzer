@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { baseLocale, locales, localizeHref } from '$lib/paraglide/runtime';
-	import { currentPageAbsoluteUrl } from '$lib/site-url';
+	import { currentPageAbsoluteUrl } from '$lib/site-url-resolver';
 
 	let absoluteUrl = $derived(currentPageAbsoluteUrl());
 	let absoluteUrlString = $derived(absoluteUrl.toString());
