@@ -44,11 +44,7 @@
 	);
 </script>
 
-<ChartCard
-	title={m.models_per_day_heading()}
-	subtitle={m.daily_model_cost_subtitle()}
-	{copyText}
->
+<ChartCard title={m.models_per_day_heading()} subtitle={m.daily_model_cost_subtitle()} {copyText}>
 	<div
 		role="img"
 		aria-label={m.daily_model_cost_chart_aria({

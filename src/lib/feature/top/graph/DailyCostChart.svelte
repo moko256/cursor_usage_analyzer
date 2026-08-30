@@ -29,11 +29,7 @@
 	);
 </script>
 
-<ChartCard
-	title={m.cost_per_day_heading()}
-	subtitle={m.daily_cost_subtitle()}
-	{copyText}
->
+<ChartCard title={m.cost_per_day_heading()} subtitle={m.daily_cost_subtitle()} {copyText}>
 	<div role="img" aria-label={m.daily_cost_chart_aria({ count: dayValues.length })}>
 		<BarChart data={dayValues} x="label" y="cost" height={270}>
 			{#snippet tooltip({ context })}
