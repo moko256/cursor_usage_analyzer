@@ -21,6 +21,30 @@ export type ModelValue = {
 	tokens: number;
 };
 
+export const TOKEN_BREAKDOWN_LABELS = [
+	'Input (w/ Cache Write)',
+	'Input (w/o Cache Write)',
+	'Cache Read',
+	'Output Tokens'
+] as const;
+
+export type TokenBreakdownLabel = (typeof TOKEN_BREAKDOWN_LABELS)[number];
+
+export type ModelBreakdownValue = {
+	model: string;
+	cost: number;
+	tokens: number;
+	inputWithCacheWrite: number;
+	inputWithoutCacheWrite: number;
+	cacheRead: number;
+	outputTokens: number;
+	errorMinus: number;
+	errorPlus: number;
+};
+
+export const errorMinusColor = 'light-dark(' + '#868e96, #adb5bd)';
+export const errorPlusColor = 'light-dark(' + '#e03131, #ff6b6b)';
+
 // Source: https://picocss.com/docs/colors
 // VSCodeでプレビューできるように+で結合している
 const dailyModelColors = [
@@ -97,6 +121,92 @@ export function groupByModel(points: CsvPoint[]): ModelValue[] {
 	return Array.from(byModel.entries())
 		.sort(([left], [right]) => left.localeCompare(right))
 		.map(([model, value]) => ({ model, ...value }));
+}
+
+const emptyBreakdown = {
+	inputWithCacheWrite: 0,
+	inputWithoutCacheWrite: 0,
+	cacheRead: 0,
+	outputTokens: 0
+};
+
+export function tokenBreakdownSum(
+	breakdown: Pick<ModelBreakdownValue, keyof typeof emptyBreakdown>
+) {
+	return (
+		breakdown.inputWithCacheWrite +
+		breakdown.inputWithoutCacheWrite +
+		breakdown.cacheRead +
+		breakdown.outputTokens
+	);
+}
+
+export function computeTokenBreakdownErrors(
+	tokens: number,
+	breakdown: Pick<ModelBreakdownValue, keyof typeof emptyBreakdown>
+) {
+	const breakdownSum = tokenBreakdownSum(breakdown);
+
+	return {
+		errorMinus: Math.max(0, tokens - breakdownSum),
+		errorPlus: Math.max(0, breakdownSum - tokens)
+	};
+}
+
+export function groupByModelBreakdown(points: CsvPoint[]): ModelBreakdownValue[] {
+	const byModel = new Map<string, { cost: number; tokens: number } & typeof emptyBreakdown>();
+
+	for (const point of points) {
+		const model = point.model || m.unknown_model();
+		const value = byModel.get(model) ?? { cost: 0, tokens: 0, ...emptyBreakdown };
+
+		value.cost += point.cost ?? 0;
+		value.tokens += point.tokens;
+		value.inputWithCacheWrite += point.inputWithCacheWrite;
+		value.inputWithoutCacheWrite += point.inputWithoutCacheWrite;
+		value.cacheRead += point.cacheRead;
+		value.outputTokens += point.outputTokens;
+		byModel.set(model, value);
+	}
+
+	return Array.from(byModel.entries())
+		.sort(([left], [right]) => left.localeCompare(right))
+		.map(([model, value]) => ({
+			model,
+			...value,
+			...computeTokenBreakdownErrors(value.tokens, value)
+		}));
+}
+
+export function tokenBreakdownValue(row: ModelBreakdownValue, label: TokenBreakdownLabel): number {
+	switch (label) {
+		case 'Input (w/ Cache Write)':
+			return row.inputWithCacheWrite;
+		case 'Input (w/o Cache Write)':
+			return row.inputWithoutCacheWrite;
+		case 'Cache Read':
+			return row.cacheRead;
+		case 'Output Tokens':
+			return row.outputTokens;
+	}
+}
+
+export function tokenBreakdownCost(row: ModelBreakdownValue, label: TokenBreakdownLabel): number {
+	if (row.tokens === 0) return 0;
+
+	return (row.cost * tokenBreakdownValue(row, label)) / row.tokens;
+}
+
+export function tokenErrorMinusCost(row: ModelBreakdownValue): number {
+	if (row.tokens === 0 || row.errorMinus === 0) return 0;
+
+	return (row.cost * row.errorMinus) / row.tokens;
+}
+
+export function tokenErrorPlusCost(row: ModelBreakdownValue): number {
+	if (row.tokens === 0 || row.errorPlus === 0) return 0;
+
+	return (-row.cost * row.errorPlus) / row.tokens;
 }
 
 /**

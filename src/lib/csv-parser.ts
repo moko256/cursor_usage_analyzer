@@ -1,12 +1,19 @@
 import CsvParserWorker from '$lib/csv-parser.worker?worker&inline';
 
+export type TokenBreakdown = {
+	inputWithCacheWrite: number;
+	inputWithoutCacheWrite: number;
+	cacheRead: number;
+	outputTokens: number;
+};
+
 export type CsvPoint = {
 	date: string;
 	model: string;
 	cost: number | null;
 	tokens: number;
 	kind: 'amount' | 'included' | 'free' | 'empty';
-};
+} & TokenBreakdown;
 
 export type CsvParseErrorCode =
 	| 'empty'
@@ -54,6 +61,9 @@ export function parseCsvText(text: string): CsvPoint[] {
 	const tokenIndex = findHeaderIndex(headers, ['tokens', 'token', 'totaltokens']);
 	const inputTokenIndex = findHeaderIndex(headers, ['inputtokens', 'inputtoken']);
 	const outputTokenIndex = findHeaderIndex(headers, ['outputtokens', 'outputtoken']);
+	const inputWithCacheWriteIndex = headers.indexOf('inputwcachewrite');
+	const inputWithoutCacheWriteIndex = headers.indexOf('inputwocachewrite');
+	const cacheReadIndex = headers.indexOf('cacheread');
 
 	if (dateIndex === -1 || costIndex === -1 || modelIndex === -1) {
 		throw new CsvParseError('missing_columns');
@@ -66,8 +76,14 @@ export function parseCsvText(text: string): CsvPoint[] {
 
 		const model = record[modelIndex]?.trim() ?? '';
 		const tokens = parseTokens(record, tokenIndex, inputTokenIndex, outputTokenIndex);
+		const tokenBreakdown = parseTokenBreakdown(record, {
+			inputWithCacheWriteIndex,
+			inputWithoutCacheWriteIndex,
+			cacheReadIndex,
+			outputTokenIndex
+		});
 		const parsedCost = parseCost(record[costIndex]);
-		if (parsedCost !== null) points.push({ date, model, tokens, ...parsedCost });
+		if (parsedCost !== null) points.push({ date, model, tokens, ...tokenBreakdown, ...parsedCost });
 	}
 
 	if (points.length === 0) {
@@ -118,6 +134,27 @@ function parseTokens(
 		parseNonNegativeNumber(record[inputTokenIndex]) +
 		parseNonNegativeNumber(record[outputTokenIndex])
 	);
+}
+
+function parseTokenBreakdown(
+	record: string[],
+	indices: {
+		inputWithCacheWriteIndex: number;
+		inputWithoutCacheWriteIndex: number;
+		cacheReadIndex: number;
+		outputTokenIndex: number;
+	}
+): TokenBreakdown {
+	return {
+		inputWithCacheWrite: parseOptionalColumn(record, indices.inputWithCacheWriteIndex),
+		inputWithoutCacheWrite: parseOptionalColumn(record, indices.inputWithoutCacheWriteIndex),
+		cacheRead: parseOptionalColumn(record, indices.cacheReadIndex),
+		outputTokens: parseOptionalColumn(record, indices.outputTokenIndex)
+	};
+}
+
+function parseOptionalColumn(record: string[], index: number) {
+	return index === -1 ? 0 : parseNonNegativeNumber(record[index]);
 }
 
 /**
