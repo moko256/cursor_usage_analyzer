@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CsvPoint } from '$lib/csv-parser';
-import { groupByDay, sumCost } from './chart-utils';
+import { buildTokenCalendar, groupByDay, sumCost } from './chart-utils';
 
 describe('sumCost', () => {
 	it('sums numeric costs and treats null as 0', () => {
@@ -40,6 +40,30 @@ describe('groupByDay', () => {
 				tokens: 25,
 				models: [{ model: 'alpha', cost: 0, tokens: 25 }]
 			}
+		]);
+	});
+});
+
+describe('buildTokenCalendar', () => {
+	it('pads the daily token data to complete Sunday-based weeks', () => {
+		const days = groupByDay([
+			{ date: '2026-08-25T10:00:00.000Z', model: 'alpha', cost: 1, tokens: 100, kind: 'amount' },
+			{ date: '2026-08-27T10:00:00.000Z', model: 'alpha', cost: 1, tokens: 300, kind: 'amount' }
+		]);
+
+		const calendar = buildTokenCalendar(days);
+
+		expect(calendar.range.start).toEqual(new Date(2026, 7, 23));
+		expect(calendar.range.end).toEqual(new Date(2026, 7, 30));
+		expect(calendar.data).toHaveLength(7);
+		expect(calendar.data.map(({ day, tokens }) => ({ day, tokens }))).toEqual([
+			{ day: '2026-08-23', tokens: 0 },
+			{ day: '2026-08-24', tokens: 0 },
+			{ day: '2026-08-25', tokens: 100 },
+			{ day: '2026-08-26', tokens: 0 },
+			{ day: '2026-08-27', tokens: 300 },
+			{ day: '2026-08-28', tokens: 0 },
+			{ day: '2026-08-29', tokens: 0 }
 		]);
 	});
 });

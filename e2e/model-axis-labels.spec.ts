@@ -40,7 +40,7 @@ test.beforeEach(async ({ page }) => {
 		buffer: Buffer.from(csv)
 	});
 
-	await expect(page.locator('.chart-card')).toHaveCount(4);
+	await expect(page.locator('.chart-card')).toHaveCount(6);
 });
 
 test('モデル別の日次グラフが先頭に並ぶ', async ({ page }) => {
@@ -72,7 +72,7 @@ test('横棒グラフの軸にモデル名が描画される', async ({ page }) 
 });
 
 test('軸の目盛りラベルが切り取られない', async ({ page }) => {
-	const cards = await page.locator('.chart-card').all();
+	const cards = await page.locator('.chart-card:not(.calendar-card):not(.empty-card)').all();
 
 	for (const card of cards) {
 		const labels = await readTickLabels(card);

@@ -17,8 +17,8 @@ test('グラフのcopyボタンで画像をクリップボードにコピーで�
 		buffer: Buffer.from(csv)
 	});
 
-	await expect(page.locator('.chart-card')).toHaveCount(4);
-	await expect(page.getByRole('button', { name: 'copy' })).toHaveCount(4);
+	await expect(page.locator('.chart-card')).toHaveCount(6);
+	await expect(page.getByRole('button', { name: 'copy' })).toHaveCount(6);
 
 	await page.getByRole('button', { name: 'copy' }).first().click();
 
