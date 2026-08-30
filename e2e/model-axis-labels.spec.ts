@@ -3,7 +3,7 @@ import { expect, test, type Locator } from '@playwright/test';
 const csv = [
 	'Date,Model,Total Tokens,Cost',
 	'2026-08-25T10:00:00.000Z,claude-4.5-sonnet-thinking,120000,1.42',
-	'2026-08-26T11:00:00.000Z,gpt-5.6-luna-high,80000,0.92',
+	'2026-08-25T11:00:00.000Z,gpt-5.6-luna-high,80000,0.92',
 	'2026-08-27T12:00:00.000Z,composer-2.5,30000,0.15'
 ].join('\n');
 
@@ -40,7 +40,22 @@ test.beforeEach(async ({ page }) => {
 		buffer: Buffer.from(csv)
 	});
 
-	await expect(page.locator('.chart-card')).toHaveCount(4);
+	await expect(page.locator('.chart-card')).toHaveCount(5);
+});
+
+test('モデル別の日次グラフが先頭に並ぶ', async ({ page }) => {
+	const cards = page.locator('.chart-card');
+
+	await expect(cards.nth(0).locator('figcaption strong')).toHaveText('Tokens / model / day');
+	await expect(cards.nth(0).locator('[role="img"]')).toHaveAttribute(
+		'aria-label',
+		/Daily tokens by model/
+	);
+	await expect(cards.nth(1).locator('figcaption strong')).toHaveText('Cost / model / day');
+	await expect(cards.nth(1).locator('[role="img"]')).toHaveAttribute(
+		'aria-label',
+		/Daily cost by model/
+	);
 });
 
 test('横棒グラフの軸にモデル名が描画される', async ({ page }) => {
