@@ -44,5 +44,9 @@
 	"model_token_subtitle": "Tokens by model",
 	"model_token_chart_aria": "Tokens by model. Bars increase from left to right.",
 	"model_token_value_title": "{model}: {value} tokens",
-	"footer_source_link_title": "Source code"
+	"privacy_notice_description_1": "Dropped and selected files are not sent externally and are processed only in the browser.\nBefore use, we recommend removing columns containing sensitive information from the CSV file.",
+	"privacy_notice_description_2_example": "e.g.",
+	"privacy_notice_description_3_offline_guide": "You can use this offline by downloading this HTML in advance and opening it in a browser as a file, without an internet connection.",
+	"footer_source_link_title": "Source code",
+	"footer_download_link_title": "Download this HTML"
 }

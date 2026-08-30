@@ -4,6 +4,14 @@
 
 <footer class="container">
 	<nav>
-		<a href="https://github.com/moko256/cursor_usage_analyzer">{m.footer_source_link_title()}</a>
+		<ul>
+			<li>
+				<a href="https://github.com/moko256/cursor_usage_analyzer">{m.footer_source_link_title()}</a
+				>
+			</li>
+			<li>
+				<a href="." download="cursor_usage_analyzer.html">{m.footer_download_link_title()}</a>
+			</li>
+		</ul>
 	</nav>
 </footer>

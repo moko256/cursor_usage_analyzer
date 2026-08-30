@@ -10,6 +10,7 @@
 	import Footer from './Footer.svelte';
 	import Picker from './Picker.svelte';
 	import Usage from './Usage.svelte';
+	import PrivacyNotice from './PrivacyNotice.svelte';
 
 	type ViewState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -86,6 +87,8 @@
 			</GraphGroup>
 		{/if}
 	</section>
+
+	<PrivacyNotice />
 </main>
 
 <Footer />
