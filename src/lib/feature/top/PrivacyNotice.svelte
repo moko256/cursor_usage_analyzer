@@ -4,7 +4,7 @@
 
 <section>
 	<p>
-		{#each m.privacy_notice_description_1().split('\n') as line}
+		{#each m.privacy_notice_description_1().split('\n') as line, index (line + index)}
 			{line}<br />
 		{/each}
 	</p>

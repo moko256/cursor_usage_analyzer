@@ -1,4 +1,6 @@
 <script>
+	import { base, resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { m } from '$lib/paraglide/messages';
 </script>
 
@@ -10,7 +12,10 @@
 				>
 			</li>
 			<li>
-				<a href="." download="cursor_usage_analyzer.html">{m.footer_download_link_title()}</a>
+				<a
+					href={resolve(page.url.pathname.slice(base.length) || '/')}
+					download="cursor_usage_analyzer.html">{m.footer_download_link_title()}</a
+				>
 			</li>
 		</ul>
 	</nav>
