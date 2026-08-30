@@ -46,6 +46,8 @@
 	"model_token_value_title": "{model}: {value} tokens",
 	"token_calendar_group_aria": "トークンカレンダーと追加チャート",
 	"token_calendar_chart_aria": "日別トークン使用量カレンダー。{dayCount}日分。",
+	"token_error_minus": "誤差-",
+	"token_error_plus": "誤差+",
 	"privacy_notice_description_1": "ドロップ、選択したファイルは外部に送信されず、ブラウザ上でのみ処理されます\n利用前に、CSVファイルからセンシティブな情報を含む列を削除することを推奨します",
 	"privacy_notice_description_2_example": "例:",
 	"privacy_notice_description_3_offline_guide": "事前にこのHTMLをダウンロードして、ファイルとしてブラウザで開くことで、インターネット通信の無い状態で利用できます",

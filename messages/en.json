@@ -46,6 +46,8 @@
 	"model_token_value_title": "{model}: {value} tokens",
 	"token_calendar_group_aria": "Token calendar and additional chart",
 	"token_calendar_chart_aria": "Daily token usage calendar. {dayCount} days.",
+	"token_error_minus": "Error-",
+	"token_error_plus": "Error+",
 	"privacy_notice_description_1": "Dropped and selected files are not sent externally and are processed only in the browser.\nBefore use, we recommend removing columns containing sensitive information from the CSV file.",
 	"privacy_notice_description_2_example": "e.g.",
 	"privacy_notice_description_3_offline_guide": "You can use this offline by downloading this HTML in advance and opening it in a browser as a file, without an internet connection.",
