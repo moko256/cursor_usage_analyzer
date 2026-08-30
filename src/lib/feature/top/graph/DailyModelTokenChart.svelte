@@ -3,13 +3,16 @@
 	import * as m from '$lib/paraglide/messages';
 	import { BarChart, Tooltip } from 'layerchart';
 	import {
-		dailyModelColors,
 		formatDay,
+		getDailyModelColors,
 		groupByDay,
 		groupByModel,
 		type DailyValue
 	} from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
+	import { MediaQuery } from 'svelte/reactivity';
+
+	const isDark = new MediaQuery('(prefers-color-scheme: dark)');
 
 	interface Props {
 		points: CsvPoint[];
@@ -30,7 +33,7 @@
 	let series = $derived(
 		models.map((model, index) => ({
 			key: model,
-			color: dailyModelColors[index % dailyModelColors.length],
+			color: getDailyModelColors(index, models.length, isDark.current),
 			value: (day: DailyValue) => day.models.find((value) => value.model === model)?.tokens ?? 0
 		}))
 	);

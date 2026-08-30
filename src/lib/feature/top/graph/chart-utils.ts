@@ -21,18 +21,31 @@ export type ModelValue = {
 	tokens: number;
 };
 
-export const dailyModelColors = [
-	'#4e79a7',
-	'#f28e2c',
-	'#e15759',
-	'#76b7b2',
-	'#59a14f',
-	'#edc949',
-	'#af7aa1',
-	'#ff9da7',
-	'#9c755f',
-	'#bab0ab'
+// Source: https://picocss.com/docs/colors
+// VSCodeでプレビューできるように+で結合している
+const dailyModelColors = [
+	'light-dark(' + '#748BF8, #3C71F7)',
+	'light-dark(' + '#5C7EF8, #5C7EF8)',
+	'light-dark(' + '#3C71F7, #748BF8)',
+	'light-dark(' + '#2060DF, #8999F9)',
+	'light-dark(' + '#1D59D0, #9CA7FA)',
+	'light-dark(' + '#184EB8, #AEB5FB)',
+	'light-dark(' + '#1343A0, #BFC3FA)',
+	'light-dark(' + '#0F3888, #D0D2FA)',
+	'light-dark(' + '#0F2D70, #E0E1FA)',
+	'light-dark(' + '#0E2358, #F0F0FB)'
 ] as const;
+
+export function getDailyModelColors(
+	modelIndex: number,
+	modelLength: number,
+	isDark: boolean
+): string {
+	// dailyModelColorsの先頭から選び、かつ、黒に近い方がグラフの下側に選ばれるようにする
+	const index = isDark ? modelIndex : modelLength - modelIndex;
+
+	return dailyModelColors[index % dailyModelColors.length];
+}
 
 export function sumCost(points: CsvPoint[]): number {
 	return points.reduce((sum, point) => sum + (point.cost ?? 0), 0);

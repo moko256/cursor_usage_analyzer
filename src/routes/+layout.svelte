@@ -1,5 +1,5 @@
 <script module lang="ts">
-	import '@picocss/pico/css/pico.min.css';
+	import '@picocss/pico/css/pico.blue.min.css';
 </script>
 
 <script lang="ts">
