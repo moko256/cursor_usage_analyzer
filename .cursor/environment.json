@@ -1,0 +1,4 @@
+{
+	"name": "cursor-usage-analyzer",
+	"install": "./.cursor/cloud-agent-install.sh"
+}

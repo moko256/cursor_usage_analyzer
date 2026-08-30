@@ -19,6 +19,7 @@
 - Dev: `pnpm dev`
 - Check: `pnpm check`
 - Test: `pnpm test`
+- E2E: `pnpm test:e2e` (Playwright; Chromium is installed during Cloud Agent setup)
 - Lint: `pnpm lint`
 - Build: `pnpm build`
 
