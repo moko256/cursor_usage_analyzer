@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { CsvParseError, parseCsvFile, type CsvPoint } from '$lib/csv-parser';
-	import About from '$lib/components/about/About.svelte';
-	import DailyCostChart from '$lib/components/graph/DailyCostChart.svelte';
-	import DailyModelCostChart from '$lib/components/graph/DailyModelCostChart.svelte';
-	import GraphGroup from '$lib/components/graph/GraphGroup.svelte';
-	import ModelCostChart from '$lib/components/graph/ModelCostChart.svelte';
-	import ModelTokenChart from '$lib/components/graph/ModelTokenChart.svelte';
-	import Picker from '$lib/components/picker/Picker.svelte';
+	import About from '$lib/feature/top/About.svelte';
+	import DailyCostChart from '$lib/feature/top/graph/DailyCostChart.svelte';
+	import DailyModelCostChart from '$lib/feature/top/graph/DailyModelCostChart.svelte';
+	import GraphGroup from '$lib/feature/top/graph/GraphGroup.svelte';
+	import ModelCostChart from '$lib/feature/top/graph/ModelCostChart.svelte';
+	import ModelTokenChart from '$lib/feature/top/graph/ModelTokenChart.svelte';
+	import Picker from '$lib/feature/top/Picker.svelte';
 	import * as m from '$lib/paraglide/messages';
 
 	type ViewState = 'idle' | 'loading' | 'success' | 'error';
