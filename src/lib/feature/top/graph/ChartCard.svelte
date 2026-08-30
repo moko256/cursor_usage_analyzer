@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { getChartImageBlob } from 'layerchart';
 
 	interface Props {
 		title: string;
@@ -9,15 +10,31 @@
 	}
 
 	let { title, subtitle, children, class: className = '' }: Props = $props();
+	let chartRef = $state<HTMLElement>();
+
+	async function copyChartImage() {
+		if (!chartRef) return;
+
+		const background = getComputedStyle(chartRef)
+			.getPropertyValue('--pico-background-color')
+			.trim();
+		const blob = await getChartImageBlob(chartRef, { format: 'png', background });
+		await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+	}
 </script>
 
 <article class={['chart-card', className]}>
 	<figure>
 		<figcaption>
-			<strong>{title}</strong>
-			<span>{subtitle}</span>
+			<div>
+				<strong>{title}</strong>
+				<span>{subtitle}</span>
+			</div>
+			<button type="button" onclick={copyChartImage}>copy</button>
 		</figcaption>
-		{@render children()}
+		<div bind:this={chartRef}>
+			{@render children()}
+		</div>
 	</figure>
 </article>
 
@@ -30,5 +47,14 @@
 	 */
 	.chart-card :global(svg.lc-text-svg) {
 		overflow: visible;
+	}
+
+	figcaption {
+		display: flex;
+		align-items: baseline;
+	}
+
+	figcaption button {
+		margin-inline-start: auto;
 	}
 </style>
