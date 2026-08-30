@@ -9,6 +9,7 @@
 	import * as m from '$lib/paraglide/messages';
 	import Footer from './Footer.svelte';
 	import Picker from './Picker.svelte';
+	import Usage from './Usage.svelte';
 
 	type ViewState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -72,6 +73,7 @@
 
 	<section class="container" aria-label={m.dashboard_aria_label()}>
 		{#if status === 'success'}
+			<Usage {points} />
 			<GraphGroup>
 				<DailyCostChart {points} />
 				<DailyModelCostChart {points} />
