@@ -31,11 +31,6 @@
 </script>
 
 <ChartCard title={m.models_per_day_heading()} subtitle={m.daily_model_cost_subtitle()}>
-	<div class="legend" aria-label={m.model_legend_aria()}>
-		{#each models as model, index (model)}
-			<span><i class={`legend-color color-${index % 5}`}></i>{model}</span>
-		{/each}
-	</div>
 	<div
 		role="img"
 		aria-label={m.daily_model_cost_chart_aria({
