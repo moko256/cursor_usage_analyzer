@@ -58,6 +58,22 @@ test('モデル別の日次グラフが先頭に並ぶ', async ({ page }) => {
 	);
 });
 
+test('tokenカレンダーと空のカードが7対3で並ぶ', async ({ page }) => {
+	const group = page.locator('.calendar-group');
+	const cards = group.locator('.chart-card');
+	const calendar = cards.nth(0);
+
+	await expect(cards).toHaveCount(2);
+	await expect(calendar.locator('figcaption strong')).toHaveText('');
+	await expect(calendar.locator('figcaption span')).toHaveText('');
+	await expect(calendar.locator('.lc-rect')).toHaveCount(371);
+
+	const widths = await cards.evaluateAll((elements) =>
+		elements.map((element) => element.getBoundingClientRect().width)
+	);
+	expect(widths[0]).toBeGreaterThan((widths[1] ?? 0) * 2);
+});
+
 test('横棒グラフの軸にモデル名が描画される', async ({ page }) => {
 	const cards = await page.locator('.chart-card.horizontal-card').all();
 	expect(cards).toHaveLength(2);
