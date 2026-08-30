@@ -27,6 +27,7 @@
 			value: (day: DailyValue) => day.models.find((value) => value.model === model)?.tokens ?? 0
 		}))
 	);
+	const padding = { top: 4, right: 24, bottom: 20, left: 20 };
 </script>
 
 <ChartCard title={m.tokens_per_day_heading()} subtitle={m.daily_model_token_subtitle()}>
@@ -37,7 +38,7 @@
 			dayCount: dayValues.length
 		})}
 	>
-		<BarChart data={dayValues} x="label" {series} seriesLayout="stack" height={270}>
+		<BarChart data={dayValues} x="label" {series} seriesLayout="stack" height={270} {padding}>
 			{#snippet tooltip()}
 				<Tooltip.Root>
 					{#snippet children({ data })}
