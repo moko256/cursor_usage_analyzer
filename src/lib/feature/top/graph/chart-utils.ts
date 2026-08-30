@@ -21,6 +21,19 @@ export type ModelValue = {
 	tokens: number;
 };
 
+export const dailyModelColors = [
+	'#4e79a7',
+	'#f28e2c',
+	'#e15759',
+	'#76b7b2',
+	'#59a14f',
+	'#edc949',
+	'#af7aa1',
+	'#ff9da7',
+	'#9c755f',
+	'#bab0ab'
+] as const;
+
 export function sumCost(points: CsvPoint[]): number {
 	return points.reduce((sum, point) => sum + (point.cost ?? 0), 0);
 }

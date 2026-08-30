@@ -16,10 +16,9 @@
 	}
 
 	let { points }: Props = $props();
-	const currency = new Intl.NumberFormat('en-US', {
-		style: 'currency',
-		currency: 'USD',
-		maximumFractionDigits: 2
+	const compactNumber = new Intl.NumberFormat('en-US', {
+		notation: 'compact',
+		maximumFractionDigits: 1
 	});
 	let dayValues = $derived(
 		groupByDay(points).map((day) => ({
@@ -32,29 +31,30 @@
 		models.map((model, index) => ({
 			key: model,
 			color: dailyModelColors[index % dailyModelColors.length],
-			value: (day: DailyValue) => day.models.find((value) => value.model === model)?.cost ?? 0
+			value: (day: DailyValue) => day.models.find((value) => value.model === model)?.tokens ?? 0
 		}))
 	);
+	const padding = { top: 4, right: 24, bottom: 20, left: 41 };
 </script>
 
-<ChartCard title={m.models_per_day_heading()} subtitle={m.daily_model_cost_subtitle()}>
+<ChartCard title={m.tokens_per_day_heading()} subtitle={m.daily_model_token_subtitle()}>
 	<div
 		role="img"
-		aria-label={m.daily_model_cost_chart_aria({
+		aria-label={m.daily_model_token_chart_aria({
 			modelCount: models.length,
 			dayCount: dayValues.length
 		})}
 	>
-		<BarChart data={dayValues} x="label" {series} seriesLayout="stack" height={270}>
+		<BarChart data={dayValues} x="label" {series} seriesLayout="stack" height={270} {padding}>
 			{#snippet tooltip()}
 				<Tooltip.Root>
 					{#snippet children({ data })}
 						{#each data.models as model (model.model)}
 							<Tooltip.Header>
-								{m.daily_model_cost_value_title({
+								{m.daily_model_token_value_title({
 									date: formatDay(data.day),
 									model: model.model,
-									value: currency.format(model.cost)
+									value: compactNumber.format(model.tokens)
 								})}
 							</Tooltip.Header>
 						{/each}
