@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { type Pathname } from '$app/types';
 	import { locales, localizeHref } from '$lib/paraglide/runtime';
 
 	export const prerender = true;
@@ -13,14 +11,14 @@
 			? locales.map((locale) => {
 					return {
 						locale: locale,
-						link: localizeHref(resolve(page.route.id ?? ('' as Pathname)), { locale })
+						link: localizeHref(page.url.pathname, { locale })
 					};
 				})
 			: []
 	);
 </script>
 
-<div style="display:none">
+<div data-sveltekit-reload>
 	{#each localesAndLinks as localeAndLink}
 		<a href={localeAndLink.link}>{localeAndLink.locale}</a>
 	{/each}
