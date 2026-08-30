@@ -28,9 +28,10 @@
 		<figcaption>
 			<div>
 				<strong>{title}</strong>
+				<br />
 				<span>{subtitle}</span>
 			</div>
-			<button type="button" onclick={copyChartImage}>copy</button>
+			<button type="button" onclick={copyChartImage} class="outline secondary">Copy</button>
 		</figcaption>
 		<div bind:this={chartRef}>
 			{@render children()}
