@@ -25,12 +25,6 @@ export function sumCost(points: CsvPoint[]): number {
 	return points.reduce((sum, point) => sum + (point.cost ?? 0), 0);
 }
 
-export function formatClipboardData(headers: string[], rows: Array<Array<string | number>>) {
-	return [headers, ...rows]
-		.map((row) => row.map((value) => String(value).replaceAll(/[\t\r\n]/g, ' ')).join('\t'))
-		.join('\n');
-}
-
 export function groupByDay(points: CsvPoint[]): DailyValue[] {
 	const byDay = new Map<
 		string,

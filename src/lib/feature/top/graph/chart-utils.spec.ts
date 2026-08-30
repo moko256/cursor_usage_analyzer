@@ -1,24 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CsvPoint } from '$lib/csv-parser';
-import { formatClipboardData, sumCost } from './chart-utils';
-
-describe('formatClipboardData', () => {
-	it('formats chart rows as tab-separated clipboard data', () => {
-		expect(
-			formatClipboardData(
-				['model', 'cost'],
-				[
-					['alpha', 1.25],
-					['beta', 0]
-				]
-			)
-		).toBe('model\tcost\nalpha\t1.25\nbeta\t0');
-	});
-
-	it('replaces control characters that would break rows or columns', () => {
-		expect(formatClipboardData(['model'], [['alpha\tbeta\n']])).toBe('model\nalpha beta ');
-	});
-});
+import { sumCost } from './chart-utils';
 
 describe('sumCost', () => {
 	it('sums numeric costs and treats null as 0', () => {

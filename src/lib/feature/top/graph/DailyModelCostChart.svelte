@@ -3,7 +3,6 @@
 	import * as m from '$lib/paraglide/messages';
 	import { BarChart, Tooltip } from 'layerchart';
 	import {
-		formatClipboardData,
 		formatDay,
 		groupByDay,
 		groupByModel,
@@ -34,17 +33,9 @@
 			value: (day: DailyValue) => day.models.find((value) => value.model === model)?.cost ?? 0
 		}))
 	);
-	let copyText = $derived(
-		formatClipboardData(
-			['day', 'model', 'cost'],
-			dayValues.flatMap((day) =>
-				day.models.map((model) => [day.day, model.model, model.cost] as Array<string | number>)
-			)
-		)
-	);
 </script>
 
-<ChartCard title={m.models_per_day_heading()} subtitle={m.daily_model_cost_subtitle()} {copyText}>
+<ChartCard title={m.models_per_day_heading()} subtitle={m.daily_model_cost_subtitle()}>
 	<div
 		role="img"
 		aria-label={m.daily_model_cost_chart_aria({

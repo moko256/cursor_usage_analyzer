@@ -1,18 +1,25 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { getChartImageBlob } from 'layerchart';
 
 	interface Props {
 		title: string;
 		subtitle: string;
-		copyText: string;
 		children: Snippet;
 		class?: string;
 	}
 
-	let { title, subtitle, copyText, children, class: className = '' }: Props = $props();
+	let { title, subtitle, children, class: className = '' }: Props = $props();
+	let chartRef = $state<HTMLElement>();
 
-	async function copyChartData() {
-		await navigator.clipboard.writeText(copyText);
+	async function copyChartImage() {
+		if (!chartRef) return;
+
+		const background = getComputedStyle(chartRef)
+			.getPropertyValue('--pico-background-color')
+			.trim();
+		const blob = await getChartImageBlob(chartRef, { format: 'png', background });
+		await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
 	}
 </script>
 
@@ -23,9 +30,11 @@
 				<strong>{title}</strong>
 				<span>{subtitle}</span>
 			</div>
-			<button type="button" onclick={copyChartData}>copy</button>
+			<button type="button" onclick={copyChartImage}>copy</button>
 		</figcaption>
-		{@render children()}
+		<div bind:this={chartRef}>
+			{@render children()}
+		</div>
 	</figure>
 </article>
 
