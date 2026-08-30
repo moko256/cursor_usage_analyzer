@@ -7,7 +7,7 @@ const csv = [
 	'2026-08-27T12:00:00.000Z,composer-2.5,30000,0.15'
 ].join('\n');
 
-test('グラフのcopyボタンで集計データをクリップボードにコピーできる', async ({ page }) => {
+test('グラフのcopyボタンで画像をクリップボードにコピーできる', async ({ page }) => {
 	await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
 	await page.goto('/');
 	await page.waitForLoadState('networkidle');
@@ -23,6 +23,14 @@ test('グラフのcopyボタンで集計データをクリップボードにコ�
 	await page.getByRole('button', { name: 'copy' }).first().click();
 
 	await expect
-		.poll(() => page.evaluate(() => navigator.clipboard.readText()))
-		.toBe('day\tcost\n2026-08-25\t1.42\n2026-08-26\t0.92\n2026-08-27\t0.15');
+		.poll(() =>
+			page.evaluate(async () => {
+				const [item] = await navigator.clipboard.read();
+				if (!item?.types.includes('image/png')) return null;
+
+				const blob = await item.getType('image/png');
+				return { type: blob.type, hasData: blob.size > 0 };
+			})
+		)
+		.toEqual({ type: 'image/png', hasData: true });
 });
