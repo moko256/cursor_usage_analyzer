@@ -22,7 +22,6 @@ export default defineConfig({
 				fallback: '404.html'
 			}),
 			paths: {
-				assets: 'https://example.com',
 				base: basePath
 			}
 		}),
