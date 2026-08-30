@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { CsvPoint } from '$lib/csv-parser';
 	import * as m from '$lib/paraglide/messages';
-	import { BarChart, Tooltip } from 'layerchart';
+	import { BarChart, Tooltip } from 'layerchart/svg';
 	import { groupByModel, modelAxisPadding, truncateModelLabel } from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
 
