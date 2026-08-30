@@ -1,7 +1,3 @@
-<script module lang="ts">
-	import '@picocss/pico/css/pico.blue.min.css';
-</script>
-
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.svg';
 	import LocaleAnchor from '$lib/components/LocaleAnchor.svelte';
@@ -22,3 +18,8 @@
 {@render children()}
 
 <LocaleAnchor />
+
+<style>
+	@import 'kiso.css';
+	@import '@picocss/pico/css/pico.blue.min.css';
+</style>
