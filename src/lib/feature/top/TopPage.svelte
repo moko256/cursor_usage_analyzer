@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { CsvParseError, parseCsvFile, type CsvPoint } from '$lib/csv-parser';
 	import DailyCostChart from '$lib/feature/top/graph/DailyCostChart.svelte';
+	import DailyModelTokenChart from '$lib/feature/top/graph/DailyModelTokenChart.svelte';
 	import DailyModelCostChart from '$lib/feature/top/graph/DailyModelCostChart.svelte';
 	import GraphGroup from '$lib/feature/top/graph/GraphGroup.svelte';
 	import ModelCostChart from '$lib/feature/top/graph/ModelCostChart.svelte';
@@ -79,8 +80,9 @@
 		{#if status === 'success'}
 			<Usage {points} />
 			<GraphGroup>
-				<DailyCostChart {points} />
+				<DailyModelTokenChart {points} />
 				<DailyModelCostChart {points} />
+				<DailyCostChart {points} />
 				<ModelTokenChart {points} />
 				<ModelCostChart {points} />
 			</GraphGroup>
