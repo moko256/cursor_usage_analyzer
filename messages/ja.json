@@ -4,6 +4,7 @@
 	"page_description": "Cursorからダウンロードした使用量のCSVを可視化します",
 	"dashboard_aria_label": "CSV分析",
 	"charts_aria_label": "コストチャート",
+	"on_demand_usage": "On-demand使用料: {value}",
 	"csv_picker_description": "CSVをドロップ、またはファイルを選択",
 	"select_file": "選択",
 	"csv_file_input_label": "CSVファイルを選択",
