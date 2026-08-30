@@ -1,10 +1,9 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
-	"page_title": "CSVコスト分析",
-	"page_description": "CSVのコスト、モデル、トークンをコンパクトに可視化します。",
+	"page_title": "Cursor Usage Analyzer",
+	"page_description": "Cursorからダウンロードした使用量のCSVを可視化します",
 	"dashboard_aria_label": "CSV分析",
 	"charts_aria_label": "コストチャート",
-	"csv_picker_title": "CSVを選択",
 	"csv_picker_description": "CSVをドロップ、またはファイルを選択",
 	"select_file": "選択",
 	"csv_file_input_label": "CSVファイルを選択",
@@ -40,6 +39,5 @@
 	"model_token_subtitle": "モデル別トークン数",
 	"model_token_chart_aria": "モデル別トークン数。バーは左から右へ増加します。",
 	"model_token_value_title": "{model}: {value} tokens",
-	"overview_heading": "概要",
-	"overview_description": "コスト・モデル・トークンの傾向を、日別とモデル別で確認できます。"
+	"footer_source_link_title": "ソースコード"
 }
