@@ -93,6 +93,7 @@ export function truncateModelLabel(model: string) {
  * LayerChart reserves a fixed 20px on the left of a chart, which fits the short numeric ticks of a
  * vertical chart but not the model names a horizontal one puts there: tick labels are drawn
  * right-aligned from the plot origin, so anything wider lands outside the SVG and is clipped away.
+ * Top and bottom repeat LayerChart's own defaults, which have to be restated once `padding` is set.
  */
 export function modelAxisPadding(models: string[]) {
 	const labelWidth = models.reduce((widest, model) => Math.max(widest, measureLabel(model)), 0);
