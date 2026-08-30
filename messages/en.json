@@ -48,5 +48,6 @@
 	"privacy_notice_description_2_example": "e.g.",
 	"privacy_notice_description_3_offline_guide": "You can use this offline by downloading this HTML in advance and opening it in a browser as a file, without an internet connection.",
 	"footer_source_link_title": "Source code",
-	"footer_download_link_title": "Download this HTML"
+	"footer_download_link_title": "Download this HTML",
+	"noscript_description": "Note: Please enable JavaScript."
 }

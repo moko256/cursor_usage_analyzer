@@ -48,5 +48,6 @@
 	"privacy_notice_description_2_example": "例:",
 	"privacy_notice_description_3_offline_guide": "事前にこのHTMLをダウンロードして、ファイルとしてブラウザで開くことで、インターネット通信の無い状態で利用できます",
 	"footer_source_link_title": "ソースコード",
-	"footer_download_link_title": "このHTMLをダウンロード"
+	"footer_download_link_title": "このHTMLをダウンロード",
+	"noscript_description": "※JavaScriptを有効にしてください"
 }

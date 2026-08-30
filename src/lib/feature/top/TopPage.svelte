@@ -11,6 +11,7 @@
 	import Picker from './Picker.svelte';
 	import Usage from './Usage.svelte';
 	import PrivacyNotice from './PrivacyNotice.svelte';
+	import NoScript from '$lib/components/NoScript.svelte';
 
 	type ViewState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -74,6 +75,8 @@
 <Header />
 
 <main class="container">
+	<NoScript />
+
 	<Picker {status} {errorMessage} pointCount={points.length} onFileSelected={processFile} />
 
 	<section class="container" aria-label={m.dashboard_aria_label()}>
