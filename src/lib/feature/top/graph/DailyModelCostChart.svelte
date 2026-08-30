@@ -2,7 +2,13 @@
 	import type { CsvPoint } from '$lib/csv-parser';
 	import * as m from '$lib/paraglide/messages';
 	import { BarChart, Tooltip } from 'layerchart';
-	import { formatDay, groupByDay, groupByModel, type DailyValue } from './chart-utils';
+	import {
+		dailyModelColors,
+		formatDay,
+		groupByDay,
+		groupByModel,
+		type DailyValue
+	} from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
 
 	interface Props {
@@ -23,8 +29,9 @@
 	);
 	let models = $derived(groupByModel(points).map((value) => value.model));
 	let series = $derived(
-		models.map((model) => ({
+		models.map((model, index) => ({
 			key: model,
+			color: dailyModelColors[index % dailyModelColors.length],
 			value: (day: DailyValue) => day.models.find((value) => value.model === model)?.cost ?? 0
 		}))
 	);
