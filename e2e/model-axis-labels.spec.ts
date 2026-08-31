@@ -72,6 +72,29 @@ test('tokenカレンダーと空のカードが7対3で並ぶ', async ({ page })
 		new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
 	);
 
+	const edgeCells = await calendar.locator('.lc-rect').evaluateAll((elements) => {
+		const svg = elements[0]?.closest('svg');
+		const svgBox = svg?.getBoundingClientRect();
+
+		return [elements[0], elements.at(-2), elements.at(-1)].map((element) => {
+			const box = element?.getBoundingClientRect();
+			return {
+				left: box?.left ?? 0,
+				right: box?.right ?? 0,
+				top: box?.top ?? 0,
+				bottom: box?.bottom ?? 0,
+				insideSvg:
+					!!svgBox &&
+					(box?.left ?? 0) >= svgBox.left &&
+					(box?.right ?? 0) <= svgBox.right &&
+					(box?.top ?? 0) >= svgBox.top &&
+					(box?.bottom ?? 0) <= svgBox.bottom
+			};
+		});
+	});
+	expect(edgeCells).toHaveLength(3);
+	expect(edgeCells.every((cell) => cell.insideSvg)).toBe(true);
+
 	const widths = await cards.evaluateAll((elements) =>
 		elements.map((element) => element.getBoundingClientRect().width)
 	);

@@ -25,37 +25,6 @@
 	] as const;
 	const tokenScale = scaleThreshold<number, string>().unknown('transparent');
 	let calendar = $derived(buildTokenCalendar(groupByDay(points)));
-
-	// #region agent log
-	function debugCalendarCells(
-		cells: Array<{ data: { day?: string; date?: Date } }>,
-		cellSize: [number, number]
-	) {
-		console.info(
-			JSON.stringify({
-				hypothesisId: 'A,B,D',
-				location: 'CalendarTokenChart.svelte:34',
-				message: 'LayerChart calendar cells rendered',
-				data: {
-					cellCount: cells.length,
-					firstCell: cells[0]?.data.day ?? cells[0]?.data.date?.toISOString(),
-					lastCell: cells.at(-1)?.data.day ?? cells.at(-1)?.data.date?.toISOString(),
-					cellSize,
-					edgeCells: [0, 1, 28, 29, 30].map((index) => {
-						const cell = cells[index];
-						return {
-							index,
-							day: cell?.data.day,
-							date: cell?.data.date?.toISOString(),
-							tokens: (cell?.data as { tokens?: number }).tokens
-						};
-					})
-				},
-				timestamp: Date.now()
-			})
-		);
-	}
-	// #endregion
 </script>
 
 <ChartCard title="" subtitle="" class="calendar-card">
@@ -76,7 +45,6 @@
 				<Layer>
 					<Calendar start={calendar.range.start} end={calendar.range.end}>
 						{#snippet children({ cells, cellSize })}
-							{@const debugCells = debugCalendarCells(cells, cellSize)}
 							{#each cells as cell (cell.data.day)}
 								{@const padding = 1}
 								<Rect

@@ -141,17 +141,6 @@ export function buildTokenCalendar(
 	data: TokenCalendarDay[];
 	range: TokenCalendarRange;
 } {
-	// #region agent log
-	console.info(
-		JSON.stringify({
-			hypothesisId: 'A,B,C',
-			location: 'chart-utils.ts:145',
-			message: 'buildTokenCalendar entry',
-			data: { dayCount: days.length, firstDay: days[0]?.day, lastDay: days.at(-1)?.day, today: today.toISOString() },
-			timestamp: Date.now()
-		})
-	);
-	// #endregion
 	if (days.length === 0) {
 		const start = startOfWeek(today);
 		return { data: [], range: { start, end: addDays(start, 7) } };
@@ -167,23 +156,6 @@ export function buildTokenCalendar(
 		? new Date(Math.min(currentMonthStart.getTime(), oldestDataMonthStart.getTime()))
 		: oldestDataMonthStart;
 	const end = hasCurrentMonthData ? addDays(startOfDay(today), 1) : startOfNextMonth(lastDay);
-	// #region agent log
-	console.info(
-		JSON.stringify({
-			hypothesisId: 'A,C',
-			location: 'chart-utils.ts:174',
-			message: 'calendar range before data expansion',
-			data: {
-				hasCurrentMonthData,
-				start: start.toISOString(),
-				end: end.toISOString(),
-				currentMonthStart: currentMonthStart.toISOString(),
-				oldestDataMonthStart: oldestDataMonthStart.toISOString()
-			},
-			timestamp: Date.now()
-		})
-	);
-	// #endregion
 	const data: TokenCalendarDay[] = [];
 
 	for (let date = new Date(start); date < end; date = addDays(date, 1)) {
@@ -191,17 +163,6 @@ export function buildTokenCalendar(
 		data.push({ day, date, tokens: values.get(day) ?? 0 });
 	}
 
-	// #region agent log
-	console.info(
-		JSON.stringify({
-			hypothesisId: 'A,B',
-			location: 'chart-utils.ts:193',
-			message: 'calendar data expanded',
-			data: { dataCount: data.length, firstDay: data[0]?.day, lastDay: data.at(-1)?.day },
-			timestamp: Date.now()
-		})
-	);
-	// #endregion
 	return { data, range: { start, end } };
 }
 
