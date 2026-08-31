@@ -40,7 +40,16 @@
 					cellCount: cells.length,
 					firstCell: cells[0]?.data.day ?? cells[0]?.data.date?.toISOString(),
 					lastCell: cells.at(-1)?.data.day ?? cells.at(-1)?.data.date?.toISOString(),
-					cellSize
+					cellSize,
+					edgeCells: [0, 1, 28, 29, 30].map((index) => {
+						const cell = cells[index];
+						return {
+							index,
+							day: cell?.data.day,
+							date: cell?.data.date?.toISOString(),
+							tokens: (cell?.data as { tokens?: number }).tokens
+						};
+					})
 				},
 				timestamp: Date.now()
 			})
