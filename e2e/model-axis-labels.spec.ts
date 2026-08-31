@@ -1,10 +1,12 @@
 import { expect, test, type Locator } from '@playwright/test';
 
+const today = new Date();
+const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 const csv = [
 	'Date,Model,Total Tokens,Cost',
-	'2026-08-25T10:00:00.000Z,claude-4.5-sonnet-thinking,120000,1.42',
-	'2026-08-25T11:00:00.000Z,gpt-5.6-luna-high,80000,0.92',
-	'2026-08-27T12:00:00.000Z,composer-2.5,30000,0.15'
+	`${currentMonthStart.toISOString()},claude-4.5-sonnet-thinking,120000,1.42`,
+	`${new Date(currentMonthStart.getTime() + 86_400_000).toISOString()},gpt-5.6-luna-high,80000,0.92`,
+	`${new Date(currentMonthStart.getTime() + 2 * 86_400_000).toISOString()},composer-2.5,30000,0.15`
 ].join('\n');
 
 const models = ['claude-4.5-sonnet-thinking', 'gpt-5.6-luna-high', 'composer-2.5'];
@@ -66,7 +68,9 @@ test('tokenカレンダーと空のカードが7対3で並ぶ', async ({ page })
 	await expect(cards).toHaveCount(2);
 	await expect(calendar.locator('figcaption strong')).toHaveText('');
 	await expect(calendar.locator('figcaption span')).toHaveText('');
-	await expect(calendar.locator('.lc-rect')).toHaveCount(371);
+	await expect(calendar.locator('.lc-rect')).toHaveCount(
+		new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
+	);
 
 	const widths = await cards.evaluateAll((elements) =>
 		elements.map((element) => element.getBoundingClientRect().width)
