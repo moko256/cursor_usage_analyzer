@@ -7,6 +7,11 @@ const csv = [
 	'2026-08-27T12:00:00.000Z,composer-2.5,30000,0.15'
 ].join('\n');
 
+const breakdownCsv = [
+	'Date,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost',
+	'2026-08-25T10:00:00.000Z,alpha,0,20,0,80,100,1.00'
+].join('\n');
+
 const models = ['claude-4.5-sonnet-thinking', 'gpt-5.6-luna-high', 'composer-2.5'];
 
 /**
@@ -95,5 +100,35 @@ test('軸の目盛りラベルが切り取られない', async ({ page }) => {
 
 		expect(labels.length).toBeGreaterThan(0);
 		expect(labels.filter((label) => label.clippedBy.length > 0)).toEqual([]);
+	}
+});
+
+test('モデル別ツールチップに0のトークン内訳とコスト内訳を表示する', async ({ page }) => {
+	await page.locator('input[type="file"]').setInputFiles({
+		name: 'breakdown.csv',
+		mimeType: 'text/csv',
+		buffer: Buffer.from(breakdownCsv)
+	});
+
+	const cards = page.locator('.chart-card.horizontal-card');
+	await expect(cards).toHaveCount(2);
+
+	for (const [index, card] of (await cards.all()).entries()) {
+		await card.locator('.lc-tooltip-rect').hover();
+
+		const tooltip = page.locator('.lc-tooltip-root:not([inert])');
+		await expect(tooltip).toBeVisible();
+		await expect(tooltip.locator('.lc-tooltip-item-label')).toHaveText([
+			'Input (w/ Cache Write)',
+			'Input (w/o Cache Write)',
+			'Cache Read',
+			'Output Tokens'
+		]);
+		await expect(tooltip.locator('.lc-tooltip-item-value')).toHaveText([
+			index === 0 ? '0' : '$0.00',
+			index === 0 ? '20' : '$0.20',
+			index === 0 ? '0' : '$0.00',
+			index === 0 ? '80' : '$0.80'
+		]);
 	}
 });
