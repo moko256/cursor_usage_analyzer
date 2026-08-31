@@ -98,9 +98,7 @@
 						<Tooltip.Header>{data.model}</Tooltip.Header>
 						{#each series as item (item.key)}
 							{@const value = seriesCost(data, item.key)}
-							{#if value !== 0}
-								<Tooltip.Item label={item.key} value={currency.format(value)} color={item.color} />
-							{/if}
+							<Tooltip.Item label={item.key} value={currency.format(value)} color={item.color} />
 						{/each}
 					{/snippet}
 				</Tooltip.Root>

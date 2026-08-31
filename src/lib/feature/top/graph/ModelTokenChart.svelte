@@ -95,13 +95,11 @@
 						<Tooltip.Header>{data.model}</Tooltip.Header>
 						{#each series as item (item.key)}
 							{@const value = seriesValue(data, item.key)}
-							{#if value !== 0}
-								<Tooltip.Item
-									label={item.key}
-									value={compactNumber.format(Math.abs(value))}
-									color={item.color}
-								/>
-							{/if}
+							<Tooltip.Item
+								label={item.key}
+								value={compactNumber.format(Math.abs(value))}
+								color={item.color}
+							/>
 						{/each}
 					{/snippet}
 				</Tooltip.Root>
