@@ -108,16 +108,22 @@ export function formatTokenAxis(value: number): string {
 	const absoluteValue = Math.abs(value);
 	const prefix = siPrefixes.find(({ value: prefixValue }) => absoluteValue >= prefixValue);
 
-	if (!prefix) return `${Math.round(absoluteValue)}`;
+	if (!prefix) return `${sign}${Math.round(absoluteValue)}`;
 
-	const roundedValue = Math.round(absoluteValue / prefix.value);
+	let roundedValue = Math.round((absoluteValue / prefix.value) * 10) / 10;
 	if (roundedValue >= 1000) {
 		const nextPrefix = siPrefixes[siPrefixes.indexOf(prefix) - 1];
-		if (nextPrefix)
-			return `${sign}${Math.round(absoluteValue / nextPrefix.value)}${nextPrefix.symbol}`;
+		if (nextPrefix) {
+			roundedValue = Math.round((absoluteValue / nextPrefix.value) * 10) / 10;
+			return `${sign}${formatRoundedNumber(roundedValue)}${nextPrefix.symbol}`;
+		}
 	}
 
-	return `${sign}${roundedValue}${prefix.symbol}`;
+	return `${sign}${formatRoundedNumber(roundedValue)}${prefix.symbol}`;
+}
+
+function formatRoundedNumber(value: number) {
+	return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
 export function groupByDay(points: CsvPoint[]): DailyValue[] {
