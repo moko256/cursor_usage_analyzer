@@ -14,7 +14,9 @@
 
 <section>
 	<strong>{m.on_demand_usage({ value: `$${total.toFixed(1)}` })}</strong>
-	<strong class="total-tokens">{m.total_tokens({ value: totalTokens.toLocaleString('en-US') })}</strong>
+	<strong class="total-tokens"
+		>{m.total_tokens({ value: totalTokens.toLocaleString('en-US') })}</strong
+	>
 </section>
 
 <style>
