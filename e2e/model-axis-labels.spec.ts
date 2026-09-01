@@ -65,6 +65,17 @@ test('モデル別の日次グラフが先頭に並ぶ', async ({ page }) => {
 	);
 });
 
+test('トークン軸の目盛りラベルがSI接頭辞で丸められる', async ({ page }) => {
+	const cards = page.locator('.chart-card');
+	const dailyTokenLabels = await cards.nth(0).locator('text.lc-axis-tick-label').allTextContents();
+	const modelTokenLabels = await cards.nth(2).locator('text.lc-axis-tick-label').allTextContents();
+
+	expect(dailyTokenLabels.some((label) => /^\d+[kMGT]$/.test(label))).toBe(true);
+	expect(modelTokenLabels.some((label) => /^\d+[kMGT]$/.test(label))).toBe(true);
+	expect(dailyTokenLabels.some((label) => /^\d{4,}$/.test(label))).toBe(false);
+	expect(modelTokenLabels.some((label) => /^\d{4,}$/.test(label))).toBe(false);
+});
+
 test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) => {
 	const group = page.locator('.graph-group');
 	const calendar = group.locator('.calendar-card');
