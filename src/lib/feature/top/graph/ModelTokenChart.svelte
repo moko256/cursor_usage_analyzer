@@ -7,6 +7,7 @@
 		errorMinusColor,
 		errorPlusColor,
 		getDailyModelColors,
+		formatTokenAxis,
 		groupByModelBreakdown,
 		TOKEN_BREAKDOWN_LABELS,
 		tokenBreakdownValue,
@@ -87,7 +88,10 @@
 			orientation="horizontal"
 			height={horizontalChartHeight}
 			{padding}
-			props={{ yAxis: { format: truncateModelLabel } }}
+			props={{
+				xAxis: { format: formatTokenAxis },
+				yAxis: { format: truncateModelLabel }
+			}}
 		>
 			{#snippet tooltip()}
 				<Tooltip.Root>

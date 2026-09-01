@@ -4,6 +4,7 @@
 	import { BarChart, Tooltip } from 'layerchart/svg';
 	import {
 		formatDay,
+		formatTokenAxis,
 		getDailyModelColors,
 		groupByDay,
 		groupByModel,
@@ -48,7 +49,15 @@
 			dayCount: dayValues.length
 		})}
 	>
-		<BarChart data={dayValues} x="label" {series} seriesLayout="stack" height={270} {padding}>
+		<BarChart
+			data={dayValues}
+			x="label"
+			{series}
+			seriesLayout="stack"
+			height={270}
+			{padding}
+			props={{ yAxis: { format: formatTokenAxis } }}
+		>
 			{#snippet tooltip()}
 				<Tooltip.Root>
 					{#snippet children({ data })}
