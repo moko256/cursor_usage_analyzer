@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { CsvPoint } from '$lib/csv-parser';
-import { buildTokenCalendar, formatTokenAxis, groupByDay, sumCost, sumTokens } from './chart-utils';
+import {
+	buildTokenCalendar,
+	formatTokenAxis,
+	groupByDay,
+	groupByHour,
+	sumCost,
+	sumTokens
+} from './chart-utils';
 
 const noBreakdown = {
 	inputWithCacheWrite: 0,
@@ -146,6 +153,101 @@ describe('groupByDay', () => {
 				models: [{ model: 'alpha', cost: 0, tokens: 25 }]
 			}
 		]);
+	});
+});
+
+describe('groupByHour', () => {
+	it('aggregates every date into 24 local hour-of-day buckets', () => {
+		const points: CsvPoint[] = [
+			{
+				date: '2026-08-28T00:05:00.000Z',
+				model: 'alpha',
+				cost: 1,
+				tokens: 10,
+				kind: 'amount',
+				...noBreakdown
+			},
+			{
+				date: '2026-08-28T01:00:00.000Z',
+				model: 'alpha',
+				cost: 1,
+				tokens: 100,
+				kind: 'amount',
+				...noBreakdown
+			},
+			{
+				date: '2026-08-28T01:59:59.999Z',
+				model: 'alpha',
+				cost: 1,
+				tokens: 50,
+				kind: 'amount',
+				...noBreakdown
+			},
+			{
+				date: '2026-08-28T02:00:00.000Z',
+				model: 'alpha',
+				cost: 1,
+				tokens: 20,
+				kind: 'amount',
+				...noBreakdown
+			},
+			{
+				date: '2026-08-28T10:30:00+09:00',
+				model: 'alpha',
+				cost: 1,
+				tokens: 25,
+				kind: 'amount',
+				...noBreakdown
+			},
+			{
+				date: '2026-08-28T23:59:59.999Z',
+				model: 'alpha',
+				cost: 1,
+				tokens: 30,
+				kind: 'amount',
+				...noBreakdown
+			},
+			{
+				date: '2026-08-29T00:00:00.000Z',
+				model: 'alpha',
+				cost: 1,
+				tokens: 40,
+				kind: 'amount',
+				...noBreakdown
+			},
+			{
+				date: '2026-08-30T01:30:00.000Z',
+				model: 'alpha',
+				cost: 1,
+				tokens: 60,
+				kind: 'amount',
+				...noBreakdown
+			}
+		];
+
+		const hours = groupByHour(points);
+		const expectedTokensByHour = new Map<number, number>();
+		for (const point of points) {
+			const hour = new Date(point.date).getHours();
+			expectedTokensByHour.set(hour, (expectedTokensByHour.get(hour) ?? 0) + point.tokens);
+		}
+
+		expect(hours).toHaveLength(24);
+		expect(hours.map((hour) => hour.hour)).toEqual(Array.from({ length: 24 }, (_, hour) => hour));
+		expect(hours).toEqual(
+			Array.from({ length: 24 }, (_, hour) => ({
+				hour,
+				tokens: expectedTokensByHour.get(hour) ?? 0
+			}))
+		);
+		expect(hours.reduce((sum, hour) => sum + hour.tokens, 0)).toBe(335);
+	});
+
+	it('returns zero-valued buckets when there are no points', () => {
+		const hours = groupByHour([]);
+
+		expect(hours).toHaveLength(24);
+		expect(hours.every((hour) => hour.tokens === 0)).toBe(true);
 	});
 });
 
