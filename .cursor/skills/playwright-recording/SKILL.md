@@ -20,7 +20,7 @@ Or enable it for the whole Playwright project in `playwright.config.ts`:
 
 ```ts
 use: {
-	video: 'on'
+	video: 'on';
 }
 ```
 
