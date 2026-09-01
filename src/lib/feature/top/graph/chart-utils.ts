@@ -33,7 +33,7 @@ export type TokenCalendarRange = {
 };
 
 export type HourlyValue = {
-	hour: string;
+	hour: number;
 	tokens: number;
 };
 
@@ -139,41 +139,22 @@ export function groupByModel(points: CsvPoint[]): ModelValue[] {
 		.map(([model, value]) => ({ model, ...value }));
 }
 
-/**
- * Returns the latest 24 UTC one-hour buckets represented by the points.
- * The reference date is included in its hour, so historical CSV files remain useful.
- */
-export function groupByHour(points: CsvPoint[], referenceDate?: Date): HourlyValue[] {
-	const timestamps = points
-		.map((point) => Date.parse(point.date))
-		.filter((timestamp) => Number.isFinite(timestamp));
-	const referenceTimestamp = referenceDate?.getTime() ?? Math.max(...timestamps);
-
-	if (!Number.isFinite(referenceTimestamp)) return [];
-
-	const hourInMilliseconds = 60 * 60 * 1000;
-	const lastHour = Math.floor(referenceTimestamp / hourInMilliseconds) * hourInMilliseconds;
-	const firstHour = lastHour - 23 * hourInMilliseconds;
-	const tokensByHour = new Map<string, number>();
+/** Returns cumulative token counts for every UTC hour of the day. */
+export function groupByHour(points: CsvPoint[]): HourlyValue[] {
+	const tokensByHour = new Map<number, number>();
 
 	for (const point of points) {
 		const timestamp = Date.parse(point.date);
-		if (
-			Number.isFinite(timestamp) &&
-			timestamp >= firstHour &&
-			timestamp < lastHour + hourInMilliseconds
-		) {
-			const hour = new Date(
-				Math.floor(timestamp / hourInMilliseconds) * hourInMilliseconds
-			).toISOString();
-			tokensByHour.set(hour, (tokensByHour.get(hour) ?? 0) + point.tokens);
-		}
+		if (!Number.isFinite(timestamp)) continue;
+
+		const hour = new Date(timestamp).getUTCHours();
+		tokensByHour.set(hour, (tokensByHour.get(hour) ?? 0) + point.tokens);
 	}
 
-	return Array.from({ length: 24 }, (_, index) => {
-		const hour = new Date(firstHour + index * hourInMilliseconds).toISOString();
-		return { hour, tokens: tokensByHour.get(hour) ?? 0 };
-	});
+	return Array.from({ length: 24 }, (_, hour) => ({
+		hour,
+		tokens: tokensByHour.get(hour) ?? 0
+	}));
 }
 
 export function buildTokenCalendar(
@@ -393,9 +374,6 @@ function utcDay(value: string) {
 	return Number.isNaN(date.getTime()) ? value.slice(0, 10) : date.toISOString().slice(0, 10);
 }
 
-export function formatHour(value: string) {
-	const date = new Date(value);
-	return Number.isNaN(date.getTime())
-		? value
-		: `${date.getUTCHours().toString().padStart(2, '0')}:00`;
+export function formatHour(value: number) {
+	return `${value.toString().padStart(2, '0')}:00`;
 }

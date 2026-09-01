@@ -108,7 +108,7 @@ describe('groupByDay', () => {
 });
 
 describe('groupByHour', () => {
-	it('returns 24 UTC buckets and includes points at each bucket boundary', () => {
+	it('aggregates every date into 24 UTC hour-of-day buckets', () => {
 		const points: CsvPoint[] = [
 			{
 				date: '2026-08-28T00:05:00.000Z',
@@ -165,34 +165,12 @@ describe('groupByHour', () => {
 				tokens: 40,
 				kind: 'amount',
 				...noBreakdown
-			}
-		];
-
-		const hours = groupByHour(points, new Date('2026-08-29T00:45:00.000Z'));
-
-		expect(hours).toHaveLength(24);
-		expect(hours[0]).toEqual({ hour: '2026-08-28T01:00:00.000Z', tokens: 175 });
-		expect(hours[1]).toEqual({ hour: '2026-08-28T02:00:00.000Z', tokens: 20 });
-		expect(hours[22]).toEqual({ hour: '2026-08-28T23:00:00.000Z', tokens: 30 });
-		expect(hours[23]).toEqual({ hour: '2026-08-29T00:00:00.000Z', tokens: 40 });
-		expect(hours.slice(2, 22).every((hour) => hour.tokens === 0)).toBe(true);
-	});
-
-	it('uses the latest valid point as the end of the window', () => {
-		const points: CsvPoint[] = [
-			{
-				date: '2026-08-28T23:00:00.000Z',
-				model: 'alpha',
-				cost: 1,
-				tokens: 10,
-				kind: 'amount',
-				...noBreakdown
 			},
 			{
-				date: '2026-08-29T03:15:00.000Z',
+				date: '2026-08-30T01:30:00.000Z',
 				model: 'alpha',
 				cost: 1,
-				tokens: 20,
+				tokens: 60,
 				kind: 'amount',
 				...noBreakdown
 			}
@@ -200,8 +178,20 @@ describe('groupByHour', () => {
 
 		const hours = groupByHour(points);
 
-		expect(hours[0]?.hour).toBe('2026-08-28T04:00:00.000Z');
-		expect(hours.at(-1)).toEqual({ hour: '2026-08-29T03:00:00.000Z', tokens: 20 });
+		expect(hours).toHaveLength(24);
+		expect(hours.map((hour) => hour.hour)).toEqual(Array.from({ length: 24 }, (_, hour) => hour));
+		expect(hours.find(({ hour }) => hour === 0)?.tokens).toBe(50);
+		expect(hours.find(({ hour }) => hour === 1)?.tokens).toBe(235);
+		expect(hours.find(({ hour }) => hour === 2)?.tokens).toBe(20);
+		expect(hours.find(({ hour }) => hour === 23)?.tokens).toBe(30);
+		expect(hours.reduce((sum, hour) => sum + hour.tokens, 0)).toBe(335);
+	});
+
+	it('returns zero-valued buckets when there are no points', () => {
+		const hours = groupByHour([]);
+
+		expect(hours).toHaveLength(24);
+		expect(hours.every((hour) => hour.tokens === 0)).toBe(true);
 	});
 });
 

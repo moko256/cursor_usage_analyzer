@@ -104,7 +104,13 @@ test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) =
 	const hourly = group.locator('.hourly-token-card');
 	await expect(hourly).toHaveCount(1);
 	await expect(hourly.locator('figcaption strong')).toHaveText('Tokens / hour');
-	await expect(hourly.locator('[role="img"]')).toHaveAttribute('aria-label', /24 one-hour periods/);
+	await expect(hourly.locator('figcaption span')).toHaveText(
+		'Cumulative token usage by hour of day'
+	);
+	await expect(hourly.locator('[role="img"]')).toHaveAttribute(
+		'aria-label',
+		/Cumulative token usage by UTC hour across all data\. 24 one-hour periods\./
+	);
 	await expect(hourly.locator('.lc-bar')).toHaveCount(24);
 });
 

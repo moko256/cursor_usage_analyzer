@@ -3,7 +3,7 @@
 	import * as m from '$lib/paraglide/messages';
 	import { BarChart, Tooltip } from 'layerchart/svg';
 	import ChartCard from './ChartCard.svelte';
-	import { formatDay, formatHour, groupByHour, type HourlyValue } from './chart-utils';
+	import { formatHour, groupByHour, type HourlyValue } from './chart-utils';
 
 	interface Props {
 		points: CsvPoint[];
@@ -29,8 +29,8 @@
 		}))
 	);
 
-	function formatHourTitle(value: string) {
-		return `${formatDay(value.slice(0, 10))} ${formatHour(value)} UTC`;
+	function formatHourTitle(value: number) {
+		return `${formatHour(value)} UTC`;
 	}
 </script>
 
