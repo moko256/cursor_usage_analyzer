@@ -44,7 +44,6 @@
 	"model_token_subtitle": "Tokens by model",
 	"model_token_chart_aria": "Tokens by model. Bars increase from left to right.",
 	"model_token_value_title": "{model}: {value} tokens",
-	"token_calendar_group_aria": "Token calendar and additional chart",
 	"token_calendar_chart_aria": "Daily token usage calendar. {dayCount} days.",
 	"token_error_minus": "Error-",
 	"token_error_plus": "Error+",

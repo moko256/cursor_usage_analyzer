@@ -1,12 +1,12 @@
 import { expect, test, type Locator } from '@playwright/test';
 
 const today = new Date();
-const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+const chartMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
 const csv = [
 	'Date,Model,Total Tokens,Cost',
-	`${currentMonthStart.toISOString()},claude-4.5-sonnet-thinking,120000,1.42`,
-	`${new Date(currentMonthStart.getTime() + 86_400_000).toISOString()},gpt-5.6-luna-high,80000,0.92`,
-	`${new Date(currentMonthStart.getTime() + 2 * 86_400_000).toISOString()},composer-2.5,30000,0.15`
+	`${chartMonthStart.toISOString()},claude-4.5-sonnet-thinking,120000,1.42`,
+	`${new Date(chartMonthStart.getTime() + 86_400_000).toISOString()},gpt-5.6-luna-high,80000,0.92`,
+	`${new Date(chartMonthStart.getTime() + 2 * 86_400_000).toISOString()},composer-2.5,30000,0.15`
 ].join('\n');
 
 const breakdownCsv = [
@@ -47,7 +47,7 @@ test.beforeEach(async ({ page }) => {
 		buffer: Buffer.from(csv)
 	});
 
-	await expect(page.locator('.chart-card')).toHaveCount(6);
+	await expect(page.locator('.chart-card')).toHaveCount(5);
 });
 
 test('モデル別の日次グラフが先頭に並ぶ', async ({ page }) => {
@@ -65,16 +65,17 @@ test('モデル別の日次グラフが先頭に並ぶ', async ({ page }) => {
 	);
 });
 
-test('tokenカレンダーと空のカードが7対3で並ぶ', async ({ page }) => {
-	const group = page.locator('.calendar-group');
-	const cards = group.locator('.chart-card');
-	const calendar = cards.nth(0);
+test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) => {
+	const group = page.locator('.graph-group');
+	const calendar = group.locator('.calendar-card');
 
-	await expect(cards).toHaveCount(2);
+	await expect(group.locator('.chart-card')).toHaveCount(5);
+	await expect(page.locator('.calendar-group')).toHaveCount(0);
+	await expect(calendar).toHaveCount(1);
 	await expect(calendar.locator('figcaption strong')).toHaveText('');
 	await expect(calendar.locator('figcaption span')).toHaveText('');
 	await expect(calendar.locator('.lc-rect')).toHaveCount(
-		new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
+		new Date(chartMonthStart.getFullYear(), chartMonthStart.getMonth() + 1, 0).getDate()
 	);
 
 	const edgeCells = await calendar.locator('.lc-rect').evaluateAll((elements) => {
@@ -99,11 +100,6 @@ test('tokenカレンダーと空のカードが7対3で並ぶ', async ({ page })
 	});
 	expect(edgeCells).toHaveLength(3);
 	expect(edgeCells.every((cell) => cell.insideSvg)).toBe(true);
-
-	const widths = await cards.evaluateAll((elements) =>
-		elements.map((element) => element.getBoundingClientRect().width)
-	);
-	expect(widths[0]).toBeGreaterThan((widths[1] ?? 0) * 2);
 });
 
 test('横棒グラフの軸にモデル名が描画される', async ({ page }) => {

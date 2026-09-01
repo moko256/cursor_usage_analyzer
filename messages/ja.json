@@ -44,7 +44,6 @@
 	"model_token_subtitle": "モデル別トークン数",
 	"model_token_chart_aria": "モデル別トークン数。バーは左から右へ増加します。",
 	"model_token_value_title": "{model}: {value} tokens",
-	"token_calendar_group_aria": "トークンカレンダーと追加チャート",
 	"token_calendar_chart_aria": "日別トークン使用量カレンダー。{dayCount}日分。",
 	"token_error_minus": "誤差-",
 	"token_error_plus": "誤差+",
