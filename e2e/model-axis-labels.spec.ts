@@ -1,12 +1,12 @@
 import { expect, test, type Locator } from '@playwright/test';
 
 const today = new Date();
-const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+const chartMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
 const csv = [
 	'Date,Model,Total Tokens,Cost',
-	`${currentMonthStart.toISOString()},claude-4.5-sonnet-thinking,120000,1.42`,
-	`${new Date(currentMonthStart.getTime() + 86_400_000).toISOString()},gpt-5.6-luna-high,80000,0.92`,
-	`${new Date(currentMonthStart.getTime() + 2 * 86_400_000).toISOString()},composer-2.5,30000,0.15`
+	`${chartMonthStart.toISOString()},claude-4.5-sonnet-thinking,120000,1.42`,
+	`${new Date(chartMonthStart.getTime() + 86_400_000).toISOString()},gpt-5.6-luna-high,80000,0.92`,
+	`${new Date(chartMonthStart.getTime() + 2 * 86_400_000).toISOString()},composer-2.5,30000,0.15`
 ].join('\n');
 
 const breakdownCsv = [
@@ -75,7 +75,7 @@ test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) =
 	await expect(calendar.locator('figcaption strong')).toHaveText('');
 	await expect(calendar.locator('figcaption span')).toHaveText('');
 	await expect(calendar.locator('.lc-rect')).toHaveCount(
-		new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
+		new Date(chartMonthStart.getFullYear(), chartMonthStart.getMonth() + 1, 0).getDate()
 	);
 
 	const edgeCells = await calendar.locator('.lc-rect').evaluateAll((elements) => {
