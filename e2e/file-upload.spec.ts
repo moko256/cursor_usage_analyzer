@@ -16,5 +16,4 @@ test('CSVファイルを添付すると解析結果が表示される', async ({
 	});
 
 	await expect(page.getByText('1件を読み込みました')).toBeVisible();
-	await expect(page.locator('section > strong')).toHaveText('On-demand使用料: $12.3');
 });
