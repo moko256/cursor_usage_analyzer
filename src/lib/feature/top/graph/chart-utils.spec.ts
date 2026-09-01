@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CsvPoint } from '$lib/csv-parser';
-import { buildTokenCalendar, groupByDay, sumCost, sumTokens } from './chart-utils';
+import { buildTokenCalendar, formatTokenAxis, groupByDay, sumCost, sumTokens } from './chart-utils';
 
 const noBreakdown = {
 	inputWithCacheWrite: 0,
@@ -80,6 +80,21 @@ describe('sumTokens', () => {
 		];
 
 		expect(sumTokens(points)).toBe(350);
+	});
+});
+
+describe('formatTokenAxis', () => {
+	it.each([
+		[0, '0'],
+		[999, '999'],
+		[1_000, '1k'],
+		[1_500, '2k'],
+		[999_500, '1M'],
+		[1_234_567, '1M'],
+		[-1_500, '-2k'],
+		[1e9, '1G']
+	])('formats %s as %s', (value, expected) => {
+		expect(formatTokenAxis(value)).toBe(expected);
 	});
 });
 

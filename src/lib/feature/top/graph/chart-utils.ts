@@ -90,6 +90,36 @@ export function sumTokens(points: CsvPoint[]): number {
 	return points.reduce((sum, point) => sum + point.tokens, 0);
 }
 
+const siPrefixes = [
+	{ value: 1e24, symbol: 'Y' },
+	{ value: 1e21, symbol: 'Z' },
+	{ value: 1e18, symbol: 'E' },
+	{ value: 1e15, symbol: 'P' },
+	{ value: 1e12, symbol: 'T' },
+	{ value: 1e9, symbol: 'G' },
+	{ value: 1e6, symbol: 'M' },
+	{ value: 1e3, symbol: 'k' }
+] as const;
+
+export function formatTokenAxis(value: number): string {
+	if (!Number.isFinite(value)) return String(value);
+
+	const sign = value < 0 ? '-' : '';
+	const absoluteValue = Math.abs(value);
+	const prefix = siPrefixes.find(({ value: prefixValue }) => absoluteValue >= prefixValue);
+
+	if (!prefix) return `${Math.round(absoluteValue)}`;
+
+	const roundedValue = Math.round(absoluteValue / prefix.value);
+	if (roundedValue >= 1000) {
+		const nextPrefix = siPrefixes[siPrefixes.indexOf(prefix) - 1];
+		if (nextPrefix)
+			return `${sign}${Math.round(absoluteValue / nextPrefix.value)}${nextPrefix.symbol}`;
+	}
+
+	return `${sign}${roundedValue}${prefix.symbol}`;
+}
+
 export function groupByDay(points: CsvPoint[]): DailyValue[] {
 	const byDay = new Map<
 		string,
