@@ -134,12 +134,14 @@ export function groupByModel(points: CsvPoint[]): ModelValue[] {
 		.map(([model, value]) => ({ model, ...value }));
 }
 
-export function buildTokenCalendar(days: DailyValue[]): {
+export function buildTokenCalendar(
+	days: DailyValue[],
+	today = new Date()
+): {
 	data: TokenCalendarDay[];
 	range: TokenCalendarRange;
 } {
 	if (days.length === 0) {
-		const today = new Date();
 		const start = startOfWeek(today);
 		return { data: [], range: { start, end: addDays(start, 7) } };
 	}
@@ -147,8 +149,13 @@ export function buildTokenCalendar(days: DailyValue[]): {
 	const values = new Map(days.map((day) => [day.day, day.tokens]));
 	const firstDay = parseCalendarDay(days[0].day);
 	const lastDay = parseCalendarDay(days[days.length - 1].day);
-	const start = startOfWeek(new Date(firstDay.getFullYear(), 0, 1));
-	const end = addDays(startOfWeek(new Date(lastDay.getFullYear() + 1, 0, 1)), 7);
+	const currentMonthStart = startOfMonth(today);
+	const oldestDataMonthStart = startOfMonth(firstDay);
+	const hasCurrentMonthData = days.some((day) => day.day.startsWith(formatCalendarMonth(today)));
+	const start = hasCurrentMonthData
+		? new Date(Math.min(currentMonthStart.getTime(), oldestDataMonthStart.getTime()))
+		: oldestDataMonthStart;
+	const end = hasCurrentMonthData ? addDays(startOfDay(today), 1) : startOfNextMonth(lastDay);
 	const data: TokenCalendarDay[] = [];
 
 	for (let date = new Date(start); date < end; date = addDays(date, 1)) {
@@ -289,6 +296,25 @@ function measureLabel(text: string) {
 function parseCalendarDay(value: string) {
 	const [year, month, day] = value.split('-').map(Number);
 	return new Date(year, month - 1, day);
+}
+
+function startOfDay(date: Date) {
+	return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function startOfMonth(date: Date) {
+	return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function startOfNextMonth(date: Date) {
+	return new Date(date.getFullYear(), date.getMonth() + 1, 1);
+}
+
+function formatCalendarMonth(date: Date) {
+	return [
+		date.getFullYear().toString().padStart(4, '0'),
+		(date.getMonth() + 1).toString().padStart(2, '0')
+	].join('-');
 }
 
 function formatCalendarDay(date: Date) {

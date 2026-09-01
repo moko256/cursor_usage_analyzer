@@ -108,7 +108,7 @@ describe('groupByDay', () => {
 });
 
 describe('buildTokenCalendar', () => {
-	it('pads the daily token data to complete Sunday-based weeks', () => {
+	it('shows the oldest data month through today when the current month has data', () => {
 		const days = groupByDay([
 			{
 				date: '2026-08-25T10:00:00.000Z',
@@ -128,13 +128,92 @@ describe('buildTokenCalendar', () => {
 			}
 		]);
 
-		const calendar = buildTokenCalendar(days);
+		const calendar = buildTokenCalendar(days, new Date(2026, 7, 31, 12));
 
-		expect(calendar.range.start).toEqual(new Date(2025, 11, 28));
-		expect(calendar.range.end).toEqual(new Date(2027, 0, 3));
-		expect(calendar.data).toHaveLength(371);
+		expect(calendar.range.start).toEqual(new Date(2026, 7, 1));
+		expect(calendar.range.end).toEqual(new Date(2026, 8, 1));
+		expect(calendar.data).toHaveLength(31);
+		expect(calendar.data[0]?.day).toBe('2026-08-01');
 		expect(calendar.data.find(({ day }) => day === '2026-08-25')?.tokens).toBe(100);
 		expect(calendar.data.find(({ day }) => day === '2026-08-26')?.tokens).toBe(0);
 		expect(calendar.data.find(({ day }) => day === '2026-08-27')?.tokens).toBe(300);
+		expect(calendar.data.at(-1)?.day).toBe('2026-08-31');
+	});
+
+	it('shows the oldest data month through today when older data also exists', () => {
+		const days = groupByDay([
+			{
+				date: '2026-07-15T10:00:00.000Z',
+				model: 'alpha',
+				cost: 1,
+				tokens: 100,
+				kind: 'amount',
+				...noBreakdown
+			},
+			{
+				date: '2026-08-02T10:00:00.000Z',
+				model: 'alpha',
+				cost: 1,
+				tokens: 300,
+				kind: 'amount',
+				...noBreakdown
+			}
+		]);
+
+		const calendar = buildTokenCalendar(days, new Date(2026, 7, 31, 12));
+
+		expect(calendar.range.start).toEqual(new Date(2026, 6, 1));
+		expect(calendar.range.end).toEqual(new Date(2026, 8, 1));
+		expect(calendar.data).toHaveLength(62);
+		expect(calendar.data[0]?.day).toBe('2026-07-01');
+		expect(calendar.data.at(-1)?.day).toBe('2026-08-31');
+	});
+
+	it('shows complete data months when the current month has no data', () => {
+		const days = groupByDay([
+			{
+				date: '2026-06-15T10:00:00.000Z',
+				model: 'alpha',
+				cost: 1,
+				tokens: 100,
+				kind: 'amount',
+				...noBreakdown
+			},
+			{
+				date: '2026-08-27T10:00:00.000Z',
+				model: 'alpha',
+				cost: 1,
+				tokens: 300,
+				kind: 'amount',
+				...noBreakdown
+			}
+		]);
+
+		const calendar = buildTokenCalendar(days, new Date(2026, 7, 31, 12));
+
+		expect(calendar.range.start).toEqual(new Date(2026, 5, 1));
+		expect(calendar.range.end).toEqual(new Date(2026, 8, 1));
+		expect(calendar.data).toHaveLength(92);
+		expect(calendar.data[0]?.day).toBe('2026-06-01');
+		expect(calendar.data.find(({ day }) => day === '2026-08-31')?.tokens).toBe(0);
+		expect(calendar.data.at(-1)?.day).toBe('2026-08-31');
+	});
+
+	it('treats a current-month day with zero tokens as current-month data', () => {
+		const days = groupByDay([
+			{
+				date: '2026-08-02T10:00:00.000Z',
+				model: 'alpha',
+				cost: 1,
+				tokens: 0,
+				kind: 'amount',
+				...noBreakdown
+			}
+		]);
+
+		const calendar = buildTokenCalendar(days, new Date(2026, 7, 31, 12));
+
+		expect(calendar.range.start).toEqual(new Date(2026, 7, 1));
+		expect(calendar.range.end).toEqual(new Date(2026, 8, 1));
 	});
 });

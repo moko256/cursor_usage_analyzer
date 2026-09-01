@@ -1,10 +1,12 @@
 import { expect, test, type Locator } from '@playwright/test';
 
+const today = new Date();
+const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 const csv = [
 	'Date,Model,Total Tokens,Cost',
-	'2026-08-25T10:00:00.000Z,claude-4.5-sonnet-thinking,120000,1.42',
-	'2026-08-25T11:00:00.000Z,gpt-5.6-luna-high,80000,0.92',
-	'2026-08-27T12:00:00.000Z,composer-2.5,30000,0.15'
+	`${currentMonthStart.toISOString()},claude-4.5-sonnet-thinking,120000,1.42`,
+	`${new Date(currentMonthStart.getTime() + 86_400_000).toISOString()},gpt-5.6-luna-high,80000,0.92`,
+	`${new Date(currentMonthStart.getTime() + 2 * 86_400_000).toISOString()},composer-2.5,30000,0.15`
 ].join('\n');
 
 const breakdownCsv = [
@@ -70,7 +72,34 @@ test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) =
 	await expect(group.locator('.chart-card')).toHaveCount(5);
 	await expect(page.locator('.calendar-group')).toHaveCount(0);
 	await expect(calendar).toHaveCount(1);
-	await expect(calendar.locator('.lc-rect')).toHaveCount(371);
+	await expect(calendar.locator('figcaption strong')).toHaveText('');
+	await expect(calendar.locator('figcaption span')).toHaveText('');
+	await expect(calendar.locator('.lc-rect')).toHaveCount(
+		new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
+	);
+
+	const edgeCells = await calendar.locator('.lc-rect').evaluateAll((elements) => {
+		const svg = elements[0]?.closest('svg');
+		const svgBox = svg?.getBoundingClientRect();
+
+		return [elements[0], elements.at(-2), elements.at(-1)].map((element) => {
+			const box = element?.getBoundingClientRect();
+			return {
+				left: box?.left ?? 0,
+				right: box?.right ?? 0,
+				top: box?.top ?? 0,
+				bottom: box?.bottom ?? 0,
+				insideSvg:
+					!!svgBox &&
+					(box?.left ?? 0) >= svgBox.left &&
+					(box?.right ?? 0) <= svgBox.right &&
+					(box?.top ?? 0) >= svgBox.top &&
+					(box?.bottom ?? 0) <= svgBox.bottom
+			};
+		});
+	});
+	expect(edgeCells).toHaveLength(3);
+	expect(edgeCells.every((cell) => cell.insideSvg)).toBe(true);
 });
 
 test('横棒グラフの軸にモデル名が描画される', async ({ page }) => {
