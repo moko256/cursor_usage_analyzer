@@ -33,9 +33,5 @@
 
 ## Cursor Cloud specific instructions
 
-### Browser walkthrough recordings
-
-- Playwright may be used instead of `computerUse` when the walkthrough consists only of interactions inside the browser. Enable video recording with `test.use({ video: 'on' })` for a test or `use.video: 'on'` in `playwright.config.ts`.
-- After `pnpm test:e2e`, successful recordings are written under `test-results/**/video.webm`. Copy the concise, successful recording to `/opt/cursor/artifacts/` with a descriptive unique filename before referencing it in the final response.
-- Playwright records the browser viewport only. It does not capture the desktop, terminal, editor, or OS-level interactions, so it is not a replacement for `computerUse` or `RecordScreen` when those are part of the requested manual GUI test.
-- Do not publish videos from failed tests. Review the selected video with the `videoReview` subagent before referencing it as a walkthrough artifact.
+- Read `.cursor/skills/playwright-recording/SKILL.md` for browser walkthrough recording guidance.
+- Playwright can replace `computerUse` only for browser-only interactions; desktop, terminal, editor, and OS-level recording still require `computerUse` or `RecordScreen`.
