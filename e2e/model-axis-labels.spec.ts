@@ -47,7 +47,7 @@ test.beforeEach(async ({ page }) => {
 		buffer: Buffer.from(csv)
 	});
 
-	await expect(page.locator('.chart-card')).toHaveCount(5);
+	await expect(page.locator('.chart-card')).toHaveCount(6);
 });
 
 test('モデル別の日次グラフが先頭に並ぶ', async ({ page }) => {
@@ -69,7 +69,7 @@ test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) =
 	const group = page.locator('.graph-group');
 	const calendar = group.locator('.calendar-card');
 
-	await expect(group.locator('.chart-card')).toHaveCount(5);
+	await expect(group.locator('.chart-card')).toHaveCount(6);
 	await expect(page.locator('.calendar-group')).toHaveCount(0);
 	await expect(calendar).toHaveCount(1);
 	await expect(calendar.locator('figcaption strong')).toHaveText('');
@@ -100,6 +100,18 @@ test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) =
 	});
 	expect(edgeCells).toHaveLength(3);
 	expect(edgeCells.every((cell) => cell.insideSvg)).toBe(true);
+
+	const hourly = group.locator('.hourly-token-card');
+	await expect(hourly).toHaveCount(1);
+	await expect(hourly.locator('figcaption strong')).toHaveText('Tokens / hour');
+	await expect(hourly.locator('figcaption span')).toHaveText(
+		'Cumulative token usage by local hour of day'
+	);
+	await expect(hourly.locator('[role="img"]')).toHaveAttribute(
+		'aria-label',
+		/Cumulative token usage by local hour across all data\. 24 one-hour periods\./
+	);
+	await expect(hourly.locator('.lc-bar')).toHaveCount(24);
 });
 
 test('横棒グラフの軸にモデル名が描画される', async ({ page }) => {

@@ -4,6 +4,7 @@
 	import DailyModelCostChart from '$lib/feature/top/graph/DailyModelCostChart.svelte';
 	import CalendarTokenChart from '$lib/feature/top/graph/CalendarTokenChart.svelte';
 	import GraphGroup from '$lib/feature/top/graph/GraphGroup.svelte';
+	import HourlyTokenChart from '$lib/feature/top/graph/HourlyTokenChart.svelte';
 	import ModelCostChart from '$lib/feature/top/graph/ModelCostChart.svelte';
 	import ModelTokenChart from '$lib/feature/top/graph/ModelTokenChart.svelte';
 	import Header from '$lib/feature/top/Header.svelte';
@@ -89,6 +90,7 @@
 				<ModelTokenChart {points} />
 				<ModelCostChart {points} />
 				<CalendarTokenChart {points} />
+				<HourlyTokenChart {points} />
 			</GraphGroup>
 		{/if}
 	</section>

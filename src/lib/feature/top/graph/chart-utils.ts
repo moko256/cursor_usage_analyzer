@@ -32,6 +32,11 @@ export type TokenCalendarRange = {
 	end: Date;
 };
 
+export type HourlyValue = {
+	hour: number;
+	tokens: number;
+};
+
 export const TOKEN_BREAKDOWN_LABELS = [
 	'Input (w/ Cache Write)',
 	'Input (w/o Cache Write)',
@@ -136,6 +141,24 @@ export function groupByModel(points: CsvPoint[]): ModelValue[] {
 	return Array.from(byModel.entries())
 		.sort(([left], [right]) => left.localeCompare(right))
 		.map(([model, value]) => ({ model, ...value }));
+}
+
+/** Returns cumulative token counts for every local hour of the day. */
+export function groupByHour(points: CsvPoint[]): HourlyValue[] {
+	const tokensByHour = new Map<number, number>();
+
+	for (const point of points) {
+		const timestamp = Date.parse(point.date);
+		if (!Number.isFinite(timestamp)) continue;
+
+		const hour = new Date(timestamp).getHours();
+		tokensByHour.set(hour, (tokensByHour.get(hour) ?? 0) + point.tokens);
+	}
+
+	return Array.from({ length: 24 }, (_, hour) => ({
+		hour,
+		tokens: tokensByHour.get(hour) ?? 0
+	}));
 }
 
 export function buildTokenCalendar(
@@ -353,4 +376,8 @@ export function formatDay(value: string) {
 function utcDay(value: string) {
 	const date = new Date(value);
 	return Number.isNaN(date.getTime()) ? value.slice(0, 10) : date.toISOString().slice(0, 10);
+}
+
+export function formatHour(value: number) {
+	return `${value.toString().padStart(2, '0')}:00`;
 }
