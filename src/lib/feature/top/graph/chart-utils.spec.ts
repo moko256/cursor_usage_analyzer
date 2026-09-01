@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CsvPoint } from '$lib/csv-parser';
-import { buildTokenCalendar, groupByDay } from './chart-utils';
+import { buildTokenCalendar, groupByDay, sumCost } from './chart-utils';
 
 const noBreakdown = {
 	inputWithCacheWrite: 0,
@@ -8,6 +8,55 @@ const noBreakdown = {
 	cacheRead: 0,
 	outputTokens: 0
 };
+
+describe('sumCost', () => {
+	it('sums numeric costs and treats non-numeric costs as 0', () => {
+		const points: CsvPoint[] = [
+			{
+				date: '2026-08-28T17:00:00.000Z',
+				model: 'alpha',
+				cost: 10.05,
+				tokens: 1,
+				kind: 'amount',
+				...noBreakdown
+			},
+			{
+				date: '2026-08-28T18:00:00.000Z',
+				model: 'alpha',
+				cost: 2.25,
+				tokens: 1,
+				kind: 'amount',
+				...noBreakdown
+			},
+			{
+				date: '2026-08-28T19:00:00.000Z',
+				model: 'alpha',
+				cost: null,
+				tokens: 1,
+				kind: 'included',
+				...noBreakdown
+			},
+			{
+				date: '2026-08-28T20:00:00.000Z',
+				model: 'alpha',
+				cost: null,
+				tokens: 1,
+				kind: 'free',
+				...noBreakdown
+			},
+			{
+				date: '2026-08-28T21:00:00.000Z',
+				model: 'alpha',
+				cost: null,
+				tokens: 1,
+				kind: 'empty',
+				...noBreakdown
+			}
+		];
+
+		expect(sumCost(points)).toBe(12.3);
+	});
+});
 
 describe('groupByDay', () => {
 	it('aggregates tokens and costs independently by UTC day and model', () => {

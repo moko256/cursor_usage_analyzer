@@ -82,6 +82,10 @@ export function getDailyModelColors(
 	return dailyModelColors[index % dailyModelColors.length];
 }
 
+export function sumCost(points: CsvPoint[]): number {
+	return points.reduce((sum, point) => sum + (point.cost ?? 0), 0);
+}
+
 export function groupByDay(points: CsvPoint[]): DailyValue[] {
 	const byDay = new Map<
 		string,

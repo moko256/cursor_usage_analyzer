@@ -10,6 +10,7 @@
 	import * as m from '$lib/paraglide/messages';
 	import Footer from './Footer.svelte';
 	import Picker from './Picker.svelte';
+	import Usage from './Usage.svelte';
 	import PrivacyNotice from './PrivacyNotice.svelte';
 	import NoScript from '$lib/components/NoScript.svelte';
 
@@ -81,6 +82,7 @@
 
 	<section class="container" aria-label={m.dashboard_aria_label()}>
 		{#if status === 'success'}
+			<Usage {points} />
 			<GraphGroup>
 				<DailyModelTokenChart {points} />
 				<DailyModelCostChart {points} />
