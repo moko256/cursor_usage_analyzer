@@ -110,7 +110,7 @@ function parseCost(value: string | undefined): Pick<CsvPoint, 'cost' | 'kind'> |
 	if (rawCost === '') return { cost: null, kind: 'empty' };
 
 	const normalized = rawCost.toLowerCase();
-	if (normalized === 'free') return { cost: null, kind: 'free' };
+	if (normalized === 'free' || normalized === '-') return { cost: null, kind: 'free' };
 	if (normalized === 'included') return { cost: null, kind: 'included' };
 
 	const cost = Number(rawCost);
