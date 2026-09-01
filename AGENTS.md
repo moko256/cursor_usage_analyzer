@@ -34,4 +34,3 @@
 ## Cursor Cloud specific instructions
 
 - Read `.cursor/skills/playwright-recording/SKILL.md` for browser walkthrough recording guidance.
-- Playwright can replace `computerUse` only for browser-only interactions; desktop, terminal, editor, and OS-level recording still require `computerUse` or `RecordScreen`.
