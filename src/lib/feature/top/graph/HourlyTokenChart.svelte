@@ -28,10 +28,6 @@
 			label: formatHour(hour.hour)
 		}))
 	);
-
-	function formatHourTitle(value: number) {
-		return `${formatHour(value)} UTC`;
-	}
 </script>
 
 <ChartCard
@@ -46,7 +42,7 @@
 					{#snippet children({ data })}
 						<Tooltip.Header>
 							{m.hourly_token_value_title({
-								hour: formatHourTitle(data.hour),
+								hour: formatHour(data.hour),
 								value: compactNumber.format(data.tokens)
 							})}
 						</Tooltip.Header>

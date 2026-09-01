@@ -108,7 +108,7 @@ describe('groupByDay', () => {
 });
 
 describe('groupByHour', () => {
-	it('aggregates every date into 24 UTC hour-of-day buckets', () => {
+	it('aggregates every date into 24 local hour-of-day buckets', () => {
 		const points: CsvPoint[] = [
 			{
 				date: '2026-08-28T00:05:00.000Z',
@@ -177,13 +177,20 @@ describe('groupByHour', () => {
 		];
 
 		const hours = groupByHour(points);
+		const expectedTokensByHour = new Map<number, number>();
+		for (const point of points) {
+			const hour = new Date(point.date).getHours();
+			expectedTokensByHour.set(hour, (expectedTokensByHour.get(hour) ?? 0) + point.tokens);
+		}
 
 		expect(hours).toHaveLength(24);
 		expect(hours.map((hour) => hour.hour)).toEqual(Array.from({ length: 24 }, (_, hour) => hour));
-		expect(hours.find(({ hour }) => hour === 0)?.tokens).toBe(50);
-		expect(hours.find(({ hour }) => hour === 1)?.tokens).toBe(235);
-		expect(hours.find(({ hour }) => hour === 2)?.tokens).toBe(20);
-		expect(hours.find(({ hour }) => hour === 23)?.tokens).toBe(30);
+		expect(hours).toEqual(
+			Array.from({ length: 24 }, (_, hour) => ({
+				hour,
+				tokens: expectedTokensByHour.get(hour) ?? 0
+			}))
+		);
 		expect(hours.reduce((sum, hour) => sum + hour.tokens, 0)).toBe(335);
 	});
 

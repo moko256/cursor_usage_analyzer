@@ -139,7 +139,7 @@ export function groupByModel(points: CsvPoint[]): ModelValue[] {
 		.map(([model, value]) => ({ model, ...value }));
 }
 
-/** Returns cumulative token counts for every UTC hour of the day. */
+/** Returns cumulative token counts for every local hour of the day. */
 export function groupByHour(points: CsvPoint[]): HourlyValue[] {
 	const tokensByHour = new Map<number, number>();
 
@@ -147,7 +147,7 @@ export function groupByHour(points: CsvPoint[]): HourlyValue[] {
 		const timestamp = Date.parse(point.date);
 		if (!Number.isFinite(timestamp)) continue;
 
-		const hour = new Date(timestamp).getUTCHours();
+		const hour = new Date(timestamp).getHours();
 		tokensByHour.set(hour, (tokensByHour.get(hour) ?? 0) + point.tokens);
 	}
 
