@@ -156,13 +156,22 @@ describe('parseCsvText', () => {
 				'Date,Cost,Model,Total Tokens',
 				'not-a-date,5,alpha,10',
 				'2026-04-01T10:00:00Z,not-a-number,alpha,10',
-				'2026-04-02T10:00:00Z,Free,alpha,10'
+				'2026-04-02T10:00:00Z,Free,alpha,10',
+				'2026-04-03T10:00:00Z,-,alpha,10'
 			].join('\n')
 		);
 
 		expect(points).toEqual([
 			{
 				date: '2026-04-02T10:00:00Z',
+				model: 'alpha',
+				cost: null,
+				tokens: 10,
+				kind: 'free',
+				...noBreakdown
+			},
+			{
+				date: '2026-04-03T10:00:00Z',
 				model: 'alpha',
 				cost: null,
 				tokens: 10,
