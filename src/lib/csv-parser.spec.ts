@@ -200,4 +200,33 @@ describe('parseCsvText', () => {
 			outputTokens: 8
 		});
 	});
+
+	it('keeps quoted field content when quotes appear inside an unquoted value', () => {
+		const points = parseCsvText('Date,Cost,Model\n2026-08-28T17:00:00.000Z,1.5,"al"pha');
+
+		expect(points[0]?.model).toBe('alpha');
+	});
+
+	it('parses a trailing comma without dropping the row', () => {
+		const points = parseCsvText('Date,Cost,Model,\n2026-08-28T17:00:00.000Z,1.5,alpha,\n');
+
+		expect(points).toHaveLength(1);
+		expect(points[0]).toMatchObject({
+			date: '2026-08-28T17:00:00.000Z',
+			model: 'alpha',
+			cost: 1.5,
+			kind: 'amount'
+		});
+	});
+
+	it('throws when a quoted field is left open', () => {
+		expect(() => parseCsvText('Date,Cost,Model\n"2026-08-28T17:00:00.000Z,1.5,alpha')).toThrow(
+			'unclosed_quotes'
+		);
+	});
+
+	it('throws when the file has no records', () => {
+		expect(() => parseCsvText('')).toThrow('empty');
+		expect(() => parseCsvText('\n\n')).toThrow('empty');
+	});
 });
