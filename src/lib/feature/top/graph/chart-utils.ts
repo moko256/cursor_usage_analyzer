@@ -41,14 +41,46 @@ export const DAY_RANGES = [1, 7, 30, 'all'] as const;
 
 export type DayRange = (typeof DAY_RANGES)[number];
 
-export const TOKEN_BREAKDOWN_LABELS = [
-	'Input (w/ Cache Write)',
-	'Input (w/o Cache Write)',
-	'Cache Read',
-	'Output Tokens'
+export type ChartMetric = 'tokens' | 'cost';
+
+export const verticalChartPadding = { top: 4, right: 24, bottom: 20, left: 41 } as const;
+export const verticalChartHeight = 270;
+
+export const compactNumberFormat = new Intl.NumberFormat('en-US', {
+	notation: 'compact',
+	maximumFractionDigits: 1
+});
+
+export const currencyFormat = new Intl.NumberFormat('en-US', {
+	style: 'currency',
+	currency: 'USD',
+	maximumFractionDigits: 2
+});
+
+export const TOKEN_BREAKDOWN_KEYS = [
+	'inputWithCacheWrite',
+	'inputWithoutCacheWrite',
+	'cacheRead',
+	'outputTokens'
 ] as const;
 
-export type TokenBreakdownLabel = (typeof TOKEN_BREAKDOWN_LABELS)[number];
+export type TokenBreakdownKey = (typeof TOKEN_BREAKDOWN_KEYS)[number];
+
+export const TOKEN_BREAKDOWN_LABELS: Record<TokenBreakdownKey, string> = {
+	inputWithCacheWrite: 'Input (w/ Cache Write)',
+	inputWithoutCacheWrite: 'Input (w/o Cache Write)',
+	cacheRead: 'Cache Read',
+	outputTokens: 'Output Tokens'
+};
+
+export type ModelBreakdownSeriesKey = TokenBreakdownKey | 'errorMinus' | 'errorPlus';
+
+export type ModelBreakdownSeries = {
+	key: ModelBreakdownSeriesKey;
+	label: string;
+	color: string;
+	value: (row: ModelBreakdownValue) => number;
+};
 
 export type ModelBreakdownValue = {
 	model: string;
@@ -133,6 +165,21 @@ export function formatTokenAxis(value: number): string {
 
 function formatRoundedNumber(value: number) {
 	return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+export function formatCostAxis(value: number): string {
+	if (!Number.isFinite(value)) return String(value);
+
+	const formatted = formatTokenAxis(value);
+	return formatted.startsWith('-') ? `-$${formatted.slice(1)}` : `$${formatted}`;
+}
+
+export function formatChartAxis(value: number, metric: ChartMetric): string {
+	return metric === 'tokens' ? formatTokenAxis(value) : formatCostAxis(value);
+}
+
+export function formatChartValue(value: number, metric: ChartMetric): string {
+	return metric === 'tokens' ? compactNumberFormat.format(value) : currencyFormat.format(value);
 }
 
 /**
@@ -321,23 +368,14 @@ export function groupByModelBreakdown(points: CsvPoint[]): ModelBreakdownValue[]
 		}));
 }
 
-export function tokenBreakdownValue(row: ModelBreakdownValue, label: TokenBreakdownLabel): number {
-	switch (label) {
-		case 'Input (w/ Cache Write)':
-			return row.inputWithCacheWrite;
-		case 'Input (w/o Cache Write)':
-			return row.inputWithoutCacheWrite;
-		case 'Cache Read':
-			return row.cacheRead;
-		case 'Output Tokens':
-			return row.outputTokens;
-	}
+export function tokenBreakdownValue(row: ModelBreakdownValue, key: TokenBreakdownKey): number {
+	return row[key];
 }
 
-export function tokenBreakdownCost(row: ModelBreakdownValue, label: TokenBreakdownLabel): number {
+export function tokenBreakdownCost(row: ModelBreakdownValue, key: TokenBreakdownKey): number {
 	if (row.tokens === 0) return 0;
 
-	return (row.cost * tokenBreakdownValue(row, label)) / row.tokens;
+	return (row.cost * tokenBreakdownValue(row, key)) / row.tokens;
 }
 
 export function tokenErrorMinusCost(row: ModelBreakdownValue): number {
@@ -350,6 +388,54 @@ export function tokenErrorPlusCost(row: ModelBreakdownValue): number {
 	if (row.tokens === 0 || row.errorPlus === 0) return 0;
 
 	return (-row.cost * row.errorPlus) / row.tokens;
+}
+
+export function modelsFromDays(days: DailyValue[]): string[] {
+	return [...new Set(days.flatMap((day) => day.models.map((value) => value.model)))].sort(
+		(left, right) => left.localeCompare(right)
+	);
+}
+
+export function buildDailyModelSeries(models: string[], metric: ChartMetric, isDark: boolean) {
+	return models.map((model, index) => ({
+		key: model,
+		color: getDailyModelColors(index, models.length, isDark),
+		value: (day: DailyValue) => day.models.find((value) => value.model === model)?.[metric] ?? 0
+	}));
+}
+
+export function buildModelBreakdownSeries(
+	rows: ModelBreakdownValue[],
+	metric: ChartMetric,
+	isDark: boolean
+): ModelBreakdownSeries[] {
+	const series: ModelBreakdownSeries[] = TOKEN_BREAKDOWN_KEYS.map((key, index) => ({
+		key,
+		label: TOKEN_BREAKDOWN_LABELS[key],
+		color: getDailyModelColors(index, TOKEN_BREAKDOWN_KEYS.length, isDark),
+		value: (row) =>
+			metric === 'tokens' ? tokenBreakdownValue(row, key) : tokenBreakdownCost(row, key)
+	}));
+
+	if (rows.some((row) => row.errorMinus > 0)) {
+		series.push({
+			key: 'errorMinus',
+			label: m.token_error_minus(),
+			color: errorMinusColor,
+			value: (row) => (metric === 'tokens' ? row.errorMinus : tokenErrorMinusCost(row))
+		});
+	}
+
+	if (rows.some((row) => row.errorPlus > 0)) {
+		series.push({
+			key: 'errorPlus',
+			label: m.token_error_plus(),
+			color: errorPlusColor,
+			value: (row) => (metric === 'tokens' ? -row.errorPlus : tokenErrorPlusCost(row))
+		});
+	}
+
+	return series;
 }
 
 /**

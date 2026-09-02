@@ -1,12 +1,10 @@
 <script lang="ts">
 	import { CsvParseError, parseCsvFile, type CsvPoint } from '$lib/csv-parser';
-	import DailyModelTokenChart from '$lib/feature/top/graph/DailyModelTokenChart.svelte';
-	import DailyModelCostChart from '$lib/feature/top/graph/DailyModelCostChart.svelte';
 	import CalendarTokenChart from '$lib/feature/top/graph/CalendarTokenChart.svelte';
+	import DailyModelChart from '$lib/feature/top/graph/DailyModelChart.svelte';
 	import GraphGroup from '$lib/feature/top/graph/GraphGroup.svelte';
 	import HourlyTokenChart from '$lib/feature/top/graph/HourlyTokenChart.svelte';
-	import ModelCostChart from '$lib/feature/top/graph/ModelCostChart.svelte';
-	import ModelTokenChart from '$lib/feature/top/graph/ModelTokenChart.svelte';
+	import ModelBreakdownChart from '$lib/feature/top/graph/ModelBreakdownChart.svelte';
 	import RangeSwitcher from '$lib/feature/top/graph/RangeSwitcher.svelte';
 	import { filterPointsByDays, type DayRange } from '$lib/feature/top/graph/chart-utils';
 	import Header from '$lib/feature/top/Header.svelte';
@@ -90,10 +88,10 @@
 			<Usage {points} />
 			<RangeSwitcher bind:days={rangeDays} />
 			<GraphGroup>
-				<DailyModelTokenChart points={chartPoints} />
-				<DailyModelCostChart points={chartPoints} />
-				<ModelTokenChart points={chartPoints} />
-				<ModelCostChart points={chartPoints} />
+				<DailyModelChart points={chartPoints} metric="tokens" />
+				<DailyModelChart points={chartPoints} metric="cost" />
+				<ModelBreakdownChart points={chartPoints} metric="tokens" />
+				<ModelBreakdownChart points={chartPoints} metric="cost" />
 				<CalendarTokenChart points={chartPoints} />
 				<HourlyTokenChart points={chartPoints} />
 			</GraphGroup>
