@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { compile } from 'sass';
+import { compile } from 'sass-embedded';
 import { describe, expect, it } from 'vitest';
 
 const entry = fileURLToPath(new URL('./pico.scss', import.meta.url));
