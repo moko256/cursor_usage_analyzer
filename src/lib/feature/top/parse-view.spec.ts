@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { csvPoint } from '$lib/csv-point.fixture';
 import { toPickerView, type ParseView } from './parse-view';
 
 describe('toPickerView', () => {
@@ -15,18 +16,7 @@ describe('toPickerView', () => {
 	it('exposes only the record count on success', () => {
 		const view: ParseView = {
 			status: 'success',
-			points: [
-				{
-					date: '2026-08-28T12:00:00.000Z',
-					model: 'alpha',
-					cost: 1,
-					tokens: 10,
-					inputWithCacheWrite: 0,
-					inputWithoutCacheWrite: 0,
-					cacheRead: 0,
-					outputTokens: 0
-				}
-			]
+			points: [csvPoint({ tokens: 10 })]
 		};
 
 		expect(toPickerView(view)).toEqual({ status: 'success', pointCount: 1 });

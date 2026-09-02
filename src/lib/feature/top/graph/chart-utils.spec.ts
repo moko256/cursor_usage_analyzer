@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CsvPoint } from '$lib/csv-parser';
+import { csvPoint, modelBreakdown } from '$lib/csv-point.fixture';
 import {
 	buildModelBreakdownSeries,
 	buildTokenCalendar,
@@ -14,82 +14,31 @@ import {
 	sumCost,
 	sumTokens,
 	TOKEN_BREAKDOWN_KEYS,
-	TOKEN_BREAKDOWN_LABELS,
-	type DailyValue,
-	type ModelBreakdownValue
+	TOKEN_BREAKDOWN_LABELS
 } from './chart-utils';
-
-const noBreakdown = {
-	inputWithCacheWrite: 0,
-	inputWithoutCacheWrite: 0,
-	cacheRead: 0,
-	outputTokens: 0
-};
 
 describe('sumCost', () => {
 	it('sums numeric costs and treats null as 0', () => {
-		const points: CsvPoint[] = [
-			{
-				date: '2026-08-28T17:00:00.000Z',
-				model: 'alpha',
-				cost: 10.05,
-				tokens: 1,
-				...noBreakdown
-			},
-			{
-				date: '2026-08-28T18:00:00.000Z',
-				model: 'alpha',
-				cost: 2.25,
-				tokens: 1,
-				...noBreakdown
-			},
-			{
-				date: '2026-08-28T19:00:00.000Z',
-				model: 'alpha',
-				cost: null,
-				tokens: 1,
-				...noBreakdown
-			},
-			{
-				date: '2026-08-28T20:00:00.000Z',
-				model: 'alpha',
-				cost: null,
-				tokens: 1,
-				...noBreakdown
-			},
-			{
-				date: '2026-08-28T21:00:00.000Z',
-				model: 'alpha',
-				cost: null,
-				tokens: 1,
-				...noBreakdown
-			}
-		];
-
-		expect(sumCost(points)).toBe(12.3);
+		expect(
+			sumCost([
+				csvPoint({ date: '2026-08-28T17:00:00.000Z', cost: 10.05, tokens: 1 }),
+				csvPoint({ date: '2026-08-28T18:00:00.000Z', cost: 2.25, tokens: 1 }),
+				csvPoint({ date: '2026-08-28T19:00:00.000Z', cost: null, tokens: 1 }),
+				csvPoint({ date: '2026-08-28T20:00:00.000Z', cost: null, tokens: 1 }),
+				csvPoint({ date: '2026-08-28T21:00:00.000Z', cost: null, tokens: 1 })
+			])
+		).toBe(12.3);
 	});
 });
 
 describe('sumTokens', () => {
 	it('sums tokens across all points', () => {
-		const points: CsvPoint[] = [
-			{
-				date: '2026-08-28T17:00:00.000Z',
-				model: 'alpha',
-				cost: 1,
-				tokens: 100,
-				...noBreakdown
-			},
-			{
-				date: '2026-08-28T18:00:00.000Z',
-				model: 'alpha',
-				cost: null,
-				tokens: 250,
-				...noBreakdown
-			}
-		];
-
-		expect(sumTokens(points)).toBe(350);
+		expect(
+			sumTokens([
+				csvPoint({ date: '2026-08-28T17:00:00.000Z', tokens: 100 }),
+				csvPoint({ date: '2026-08-28T18:00:00.000Z', cost: null, tokens: 250 })
+			])
+		).toBe(350);
 	});
 });
 
@@ -137,54 +86,46 @@ describe('formatChartValue', () => {
 
 describe('modelsFromDays', () => {
 	it('returns unique model names sorted by locale', () => {
-		const days: DailyValue[] = [
-			{
-				day: '2026-08-28',
-				cost: 1,
-				tokens: 10,
-				models: [
-					{ model: 'zeta', cost: 1, tokens: 4 },
-					{ model: 'alpha', cost: 0, tokens: 6 }
-				]
-			},
-			{
-				day: '2026-08-29',
-				cost: 2,
-				tokens: 5,
-				models: [{ model: 'alpha', cost: 2, tokens: 5 }]
-			}
-		];
-
-		expect(modelsFromDays(days)).toEqual(['alpha', 'zeta']);
+		expect(
+			modelsFromDays([
+				{
+					day: '2026-08-28',
+					cost: 1,
+					tokens: 10,
+					models: [
+						{ model: 'zeta', cost: 1, tokens: 4 },
+						{ model: 'alpha', cost: 0, tokens: 6 }
+					]
+				},
+				{
+					day: '2026-08-29',
+					cost: 2,
+					tokens: 5,
+					models: [{ model: 'alpha', cost: 2, tokens: 5 }]
+				}
+			])
+		).toEqual(['alpha', 'zeta']);
 	});
 });
 
 describe('buildModelBreakdownSeries', () => {
-	const row = (overrides: Partial<ModelBreakdownValue> = {}): ModelBreakdownValue => ({
-		model: 'alpha',
-		cost: 10,
-		tokens: 100,
-		inputWithCacheWrite: 40,
-		inputWithoutCacheWrite: 20,
-		cacheRead: 30,
-		outputTokens: 10,
-		errorMinus: 0,
-		errorPlus: 0,
-		...overrides
-	});
-
 	it('uses stable keys and display labels for the token breakdown', () => {
-		const series = buildModelBreakdownSeries([row()], 'tokens', false);
+		const series = buildModelBreakdownSeries([modelBreakdown()], 'tokens', false);
 
 		expect(series.map((item) => item.key)).toEqual([...TOKEN_BREAKDOWN_KEYS]);
 		expect(series.map((item) => item.label)).toEqual(
 			TOKEN_BREAKDOWN_KEYS.map((key) => TOKEN_BREAKDOWN_LABELS[key])
 		);
-		expect(series[0]?.value(row())).toBe(40);
+		expect(series[0]?.value(modelBreakdown())).toBe(40);
 	});
 
 	it('adds error series with stable keys and a negative Error+ value', () => {
-		const withErrors = row({ tokens: 80, errorMinus: 20, errorPlus: 10, outputTokens: 0 });
+		const withErrors = modelBreakdown({
+			tokens: 80,
+			errorMinus: 20,
+			errorPlus: 10,
+			outputTokens: 0
+		});
 		const tokenSeries = buildModelBreakdownSeries([withErrors], 'tokens', false);
 		const costSeries = buildModelBreakdownSeries([withErrors], 'cost', false);
 
@@ -202,31 +143,13 @@ describe('buildModelBreakdownSeries', () => {
 
 describe('groupByDay', () => {
 	it('aggregates tokens and costs independently by UTC day and model', () => {
-		const points: CsvPoint[] = [
-			{
-				date: '2026-08-28T23:30:00.000Z',
-				model: 'alpha',
-				cost: 1.25,
-				tokens: 100,
-				...noBreakdown
-			},
-			{
-				date: '2026-08-28T23:45:00.000Z',
-				model: 'beta',
-				cost: 0.5,
-				tokens: 50,
-				...noBreakdown
-			},
-			{
-				date: '2026-08-29T00:15:00.000Z',
-				model: 'alpha',
-				cost: null,
-				tokens: 25,
-				...noBreakdown
-			}
-		];
-
-		expect(groupByDay(points)).toEqual([
+		expect(
+			groupByDay([
+				csvPoint({ date: '2026-08-28T23:30:00.000Z', model: 'alpha', cost: 1.25, tokens: 100 }),
+				csvPoint({ date: '2026-08-28T23:45:00.000Z', model: 'beta', cost: 0.5, tokens: 50 }),
+				csvPoint({ date: '2026-08-29T00:15:00.000Z', model: 'alpha', cost: null, tokens: 25 })
+			])
+		).toEqual([
 			{
 				day: '2026-08-28',
 				cost: 1.75,
@@ -248,63 +171,15 @@ describe('groupByDay', () => {
 
 describe('groupByHour', () => {
 	it('aggregates every date into 24 local hour-of-day buckets', () => {
-		const points: CsvPoint[] = [
-			{
-				date: '2026-08-28T00:05:00.000Z',
-				model: 'alpha',
-				cost: 1,
-				tokens: 10,
-				...noBreakdown
-			},
-			{
-				date: '2026-08-28T01:00:00.000Z',
-				model: 'alpha',
-				cost: 1,
-				tokens: 100,
-				...noBreakdown
-			},
-			{
-				date: '2026-08-28T01:59:59.999Z',
-				model: 'alpha',
-				cost: 1,
-				tokens: 50,
-				...noBreakdown
-			},
-			{
-				date: '2026-08-28T02:00:00.000Z',
-				model: 'alpha',
-				cost: 1,
-				tokens: 20,
-				...noBreakdown
-			},
-			{
-				date: '2026-08-28T10:30:00+09:00',
-				model: 'alpha',
-				cost: 1,
-				tokens: 25,
-				...noBreakdown
-			},
-			{
-				date: '2026-08-28T23:59:59.999Z',
-				model: 'alpha',
-				cost: 1,
-				tokens: 30,
-				...noBreakdown
-			},
-			{
-				date: '2026-08-29T00:00:00.000Z',
-				model: 'alpha',
-				cost: 1,
-				tokens: 40,
-				...noBreakdown
-			},
-			{
-				date: '2026-08-30T01:30:00.000Z',
-				model: 'alpha',
-				cost: 1,
-				tokens: 60,
-				...noBreakdown
-			}
+		const points = [
+			csvPoint({ date: '2026-08-28T00:05:00.000Z', tokens: 10 }),
+			csvPoint({ date: '2026-08-28T01:00:00.000Z', tokens: 100 }),
+			csvPoint({ date: '2026-08-28T01:59:59.999Z', tokens: 50 }),
+			csvPoint({ date: '2026-08-28T02:00:00.000Z', tokens: 20 }),
+			csvPoint({ date: '2026-08-28T10:30:00+09:00', tokens: 25 }),
+			csvPoint({ date: '2026-08-28T23:59:59.999Z', tokens: 30 }),
+			csvPoint({ date: '2026-08-29T00:00:00.000Z', tokens: 40 }),
+			csvPoint({ date: '2026-08-30T01:30:00.000Z', tokens: 60 })
 		];
 
 		const hours = groupByHour(points);
@@ -336,20 +211,8 @@ describe('groupByHour', () => {
 describe('buildTokenCalendar', () => {
 	it('shows the oldest data month through today when the current month has data', () => {
 		const days = groupByDay([
-			{
-				date: '2026-08-25T10:00:00.000Z',
-				model: 'alpha',
-				cost: 1,
-				tokens: 100,
-				...noBreakdown
-			},
-			{
-				date: '2026-08-27T10:00:00.000Z',
-				model: 'alpha',
-				cost: 1,
-				tokens: 300,
-				...noBreakdown
-			}
+			csvPoint({ date: '2026-08-25T10:00:00.000Z', tokens: 100 }),
+			csvPoint({ date: '2026-08-27T10:00:00.000Z', tokens: 300 })
 		]);
 
 		const calendar = buildTokenCalendar(days, new Date(2026, 7, 31, 12));
@@ -366,20 +229,8 @@ describe('buildTokenCalendar', () => {
 
 	it('shows the oldest data month through today when older data also exists', () => {
 		const days = groupByDay([
-			{
-				date: '2026-07-15T10:00:00.000Z',
-				model: 'alpha',
-				cost: 1,
-				tokens: 100,
-				...noBreakdown
-			},
-			{
-				date: '2026-08-02T10:00:00.000Z',
-				model: 'alpha',
-				cost: 1,
-				tokens: 300,
-				...noBreakdown
-			}
+			csvPoint({ date: '2026-07-15T10:00:00.000Z', tokens: 100 }),
+			csvPoint({ date: '2026-08-02T10:00:00.000Z', tokens: 300 })
 		]);
 
 		const calendar = buildTokenCalendar(days, new Date(2026, 7, 31, 12));
@@ -393,20 +244,8 @@ describe('buildTokenCalendar', () => {
 
 	it('shows complete data months when the current month has no data', () => {
 		const days = groupByDay([
-			{
-				date: '2026-06-15T10:00:00.000Z',
-				model: 'alpha',
-				cost: 1,
-				tokens: 100,
-				...noBreakdown
-			},
-			{
-				date: '2026-08-27T10:00:00.000Z',
-				model: 'alpha',
-				cost: 1,
-				tokens: 300,
-				...noBreakdown
-			}
+			csvPoint({ date: '2026-06-15T10:00:00.000Z', tokens: 100 }),
+			csvPoint({ date: '2026-08-27T10:00:00.000Z', tokens: 300 })
 		]);
 
 		const calendar = buildTokenCalendar(days, new Date(2026, 7, 31, 12));
@@ -420,16 +259,7 @@ describe('buildTokenCalendar', () => {
 	});
 
 	it('treats a current-month day with zero tokens as current-month data', () => {
-		const days = groupByDay([
-			{
-				date: '2026-08-02T10:00:00.000Z',
-				model: 'alpha',
-				cost: 1,
-				tokens: 0,
-				...noBreakdown
-			}
-		]);
-
+		const days = groupByDay([csvPoint({ date: '2026-08-02T10:00:00.000Z', tokens: 0 })]);
 		const calendar = buildTokenCalendar(days, new Date(2026, 7, 31, 12));
 
 		expect(calendar.range.start).toEqual(new Date(2026, 7, 1));
@@ -437,7 +267,7 @@ describe('buildTokenCalendar', () => {
 	});
 
 	it('puts a late-UTC timestamp on the same day as groupByDay', () => {
-		const days = groupByDay([point('2026-08-28T23:30:00.000Z', 100, 1)]);
+		const days = groupByDay([csvPoint({ date: '2026-08-28T23:30:00.000Z', tokens: 100 })]);
 		const calendar = buildTokenCalendar(days, new Date('2026-08-31T12:00:00.000Z'));
 
 		expect(days[0]?.day).toBe('2026-08-28');
@@ -446,11 +276,11 @@ describe('buildTokenCalendar', () => {
 });
 
 describe('filterPointsByDays', () => {
-	const points: CsvPoint[] = [
-		point('2026-07-19T12:00:00.000Z', 400, 4),
-		point('2026-08-18T12:00:00.000Z', 300, 3),
-		point('2026-08-25T12:00:00.000Z', 200, 2),
-		point('2026-08-28T12:00:00.000Z', 100, 1)
+	const points = [
+		csvPoint({ date: '2026-07-19T12:00:00.000Z', tokens: 400, cost: 4 }),
+		csvPoint({ date: '2026-08-18T12:00:00.000Z', tokens: 300, cost: 3 }),
+		csvPoint({ date: '2026-08-25T12:00:00.000Z', tokens: 200, cost: 2 }),
+		csvPoint({ date: '2026-08-28T12:00:00.000Z', tokens: 100, cost: 1 })
 	];
 
 	it('keeps the inclusive UTC window ending on the latest point', () => {
@@ -485,13 +315,3 @@ describe('filterPointsByDays', () => {
 		expect(filterPointsByDays([], 'all')).toEqual([]);
 	});
 });
-
-function point(date: string, tokens: number, cost: number): CsvPoint {
-	return {
-		date,
-		model: 'alpha',
-		cost,
-		tokens,
-		...noBreakdown
-	};
-}
