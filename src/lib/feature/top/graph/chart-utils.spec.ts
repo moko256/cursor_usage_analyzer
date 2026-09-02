@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { CsvPoint } from '$lib/csv-parser';
 import {
 	buildTokenCalendar,
+	filterPointsByDays,
 	formatTokenAxis,
 	groupByDay,
 	groupByHour,
@@ -361,3 +362,55 @@ describe('buildTokenCalendar', () => {
 		expect(calendar.range.end).toEqual(new Date(2026, 8, 1));
 	});
 });
+
+describe('filterPointsByDays', () => {
+	const points: CsvPoint[] = [
+		point('2026-07-19T12:00:00.000Z', 400, 4),
+		point('2026-08-18T12:00:00.000Z', 300, 3),
+		point('2026-08-25T12:00:00.000Z', 200, 2),
+		point('2026-08-28T12:00:00.000Z', 100, 1)
+	];
+
+	it('keeps the inclusive UTC window ending on the latest point', () => {
+		expect(filterPointsByDays(points, 1).map((item) => item.date)).toEqual([
+			'2026-08-28T12:00:00.000Z'
+		]);
+		expect(filterPointsByDays(points, 7).map((item) => item.date)).toEqual([
+			'2026-08-25T12:00:00.000Z',
+			'2026-08-28T12:00:00.000Z'
+		]);
+		expect(filterPointsByDays(points, 30).map((item) => item.date)).toEqual([
+			'2026-08-18T12:00:00.000Z',
+			'2026-08-25T12:00:00.000Z',
+			'2026-08-28T12:00:00.000Z'
+		]);
+		expect(filterPointsByDays(points, 'all').map((item) => item.date)).toEqual([
+			'2026-07-19T12:00:00.000Z',
+			'2026-08-18T12:00:00.000Z',
+			'2026-08-25T12:00:00.000Z',
+			'2026-08-28T12:00:00.000Z'
+		]);
+	});
+
+	it('uses the provided now as the window end', () => {
+		expect(
+			filterPointsByDays(points, 7, new Date('2026-08-25T23:59:59.000Z')).map((item) => item.date)
+		).toEqual(['2026-08-25T12:00:00.000Z']);
+	});
+
+	it('returns an empty list when there are no points', () => {
+		expect(filterPointsByDays([], 30)).toEqual([]);
+		expect(filterPointsByDays([], 'all')).toEqual([]);
+	});
+});
+
+function point(date: string, tokens: number, cost: number): CsvPoint {
+	return {
+		date,
+		model: 'alpha',
+		cost,
+		tokens,
+		kind: 'amount',
+		...noBreakdown
+	};
+}
