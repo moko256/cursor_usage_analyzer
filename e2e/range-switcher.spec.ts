@@ -26,6 +26,11 @@ test('range switcher filters charts without changing usage totals', async ({ pag
 	const day7 = group.getByRole('button', { name: '7 days' });
 	const day30 = group.getByRole('button', { name: '30 days' });
 
+	await expect(group).toHaveCount(1);
+	await expect(group.locator('> button')).toHaveCount(3);
+	await expect(day1).toHaveClass(/outline/);
+	await expect(day7).toHaveClass(/outline/);
+	await expect(day30).toHaveClass(/outline/);
 	await expect(day30).toHaveAttribute('aria-current', 'true');
 	await expect(day1).not.toHaveAttribute('aria-current');
 	await expect(day7).not.toHaveAttribute('aria-current');
