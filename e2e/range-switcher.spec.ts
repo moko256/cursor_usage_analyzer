@@ -25,20 +25,24 @@ test('range switcher filters charts without changing usage totals', async ({ pag
 	const day1 = group.getByRole('button', { name: '1 day' });
 	const day7 = group.getByRole('button', { name: '7 days' });
 	const day30 = group.getByRole('button', { name: '30 days' });
+	const allTime = group.getByRole('button', { name: 'All time' });
 
 	await expect(group).toHaveCount(1);
-	await expect(group.locator('> button')).toHaveCount(3);
+	await expect(group.locator('> button')).toHaveCount(4);
+	await expect(group.locator('> button').last()).toHaveText('All time');
 
 	const groupBox = await group.boundingBox();
 	const chartsBox = await page.locator('.graph-group').boundingBox();
 	expect(groupBox?.width ?? 0).toBeGreaterThan(0);
-	expect(groupBox?.width ?? 0).toBeLessThan((chartsBox?.width ?? 0) / 2);
+	expect(groupBox?.width ?? 0).toBeLessThan(chartsBox?.width ?? 0);
 	await expect(day30).not.toHaveAttribute('class');
 	await expect(day1).toHaveClass('outline secondary');
 	await expect(day7).toHaveClass('outline secondary');
+	await expect(allTime).toHaveClass('outline secondary');
 	await expect(day30).toHaveAttribute('aria-current', 'true');
 	await expect(day1).not.toHaveAttribute('aria-current');
 	await expect(day7).not.toHaveAttribute('aria-current');
+	await expect(allTime).not.toHaveAttribute('aria-current');
 	await expect(
 		page.getByRole('img', { name: 'Daily tokens by model. 1 models, 3 days.' })
 	).toBeVisible();
@@ -47,6 +51,7 @@ test('range switcher filters charts without changing usage totals', async ({ pag
 	await expect(day7).not.toHaveAttribute('class');
 	await expect(day1).toHaveClass('outline secondary');
 	await expect(day30).toHaveClass('outline secondary');
+	await expect(allTime).toHaveClass('outline secondary');
 	await expect(day7).toHaveAttribute('aria-current', 'true');
 	await expect(day30).not.toHaveAttribute('aria-current');
 	await expect(
@@ -59,10 +64,24 @@ test('range switcher filters charts without changing usage totals', async ({ pag
 	await expect(day1).not.toHaveAttribute('class');
 	await expect(day7).toHaveClass('outline secondary');
 	await expect(day30).toHaveClass('outline secondary');
+	await expect(allTime).toHaveClass('outline secondary');
 	await expect(day1).toHaveAttribute('aria-current', 'true');
 	await expect(day7).not.toHaveAttribute('aria-current');
 	await expect(
 		page.getByRole('img', { name: 'Daily tokens by model. 1 models, 1 days.' })
+	).toBeVisible();
+	await expect(page.locator('section > strong').nth(0)).toHaveText('On-demand usage: $10.0');
+	await expect(page.locator('section > strong').nth(1)).toHaveText('Total tokens: 1,000');
+
+	await allTime.click();
+	await expect(allTime).not.toHaveAttribute('class');
+	await expect(day1).toHaveClass('outline secondary');
+	await expect(day7).toHaveClass('outline secondary');
+	await expect(day30).toHaveClass('outline secondary');
+	await expect(allTime).toHaveAttribute('aria-current', 'true');
+	await expect(day1).not.toHaveAttribute('aria-current');
+	await expect(
+		page.getByRole('img', { name: 'Daily tokens by model. 1 models, 4 days.' })
 	).toBeVisible();
 	await expect(page.locator('section > strong').nth(0)).toHaveText('On-demand usage: $10.0');
 	await expect(page.locator('section > strong').nth(1)).toHaveText('Total tokens: 1,000');

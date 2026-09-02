@@ -8,6 +8,7 @@
 	"range_1_day": "1 day",
 	"range_7_days": "7 days",
 	"range_30_days": "30 days",
+	"range_all_time": "All time",
 	"on_demand_usage": "On-demand usage: {value}",
 	"total_tokens": "Total tokens: {value}",
 	"csv_picker_description": "Drop a CSV or choose a file",

@@ -16,6 +16,8 @@
 				return m.range_7_days();
 			case 30:
 				return m.range_30_days();
+			case 'all':
+				return m.range_all_time();
 		}
 	}
 </script>

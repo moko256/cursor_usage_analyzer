@@ -384,6 +384,12 @@ describe('filterPointsByDays', () => {
 			'2026-08-25T12:00:00.000Z',
 			'2026-08-28T12:00:00.000Z'
 		]);
+		expect(filterPointsByDays(points, 'all').map((item) => item.date)).toEqual([
+			'2026-07-19T12:00:00.000Z',
+			'2026-08-18T12:00:00.000Z',
+			'2026-08-25T12:00:00.000Z',
+			'2026-08-28T12:00:00.000Z'
+		]);
 	});
 
 	it('uses the provided now as the window end', () => {
@@ -394,6 +400,7 @@ describe('filterPointsByDays', () => {
 
 	it('returns an empty list when there are no points', () => {
 		expect(filterPointsByDays([], 30)).toEqual([]);
+		expect(filterPointsByDays([], 'all')).toEqual([]);
 	});
 });
 

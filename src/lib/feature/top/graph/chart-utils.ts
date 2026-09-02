@@ -37,7 +37,7 @@ export type HourlyValue = {
 	tokens: number;
 };
 
-export const DAY_RANGES = [1, 7, 30] as const;
+export const DAY_RANGES = [1, 7, 30, 'all'] as const;
 
 export type DayRange = (typeof DAY_RANGES)[number];
 
@@ -138,8 +138,11 @@ function formatRoundedNumber(value: number) {
 /**
  * Keeps points whose UTC calendar day falls in the inclusive window of `days`
  * ending on `now`, or on the latest point when `now` is omitted.
+ * `'all'` returns every point.
  */
 export function filterPointsByDays(points: CsvPoint[], days: DayRange, now?: Date): CsvPoint[] {
+	if (days === 'all') return points;
+
 	const endDay = resolveRangeEndDay(points, now);
 	if (!endDay) return [];
 
