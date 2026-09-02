@@ -19,7 +19,7 @@
 
 	type ViewState = 'idle' | 'loading' | 'success' | 'error';
 
-	let points = $state<CsvPoint[]>([]);
+	let points = $state.raw<CsvPoint[]>([]);
 	let status = $state<ViewState>('idle');
 	let errorMessage = $state('');
 	let rangeDays = $state<DayRange>(30);
