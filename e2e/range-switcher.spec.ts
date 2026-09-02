@@ -28,9 +28,9 @@ test('range switcher filters charts without changing usage totals', async ({ pag
 
 	await expect(group).toHaveCount(1);
 	await expect(group.locator('> button')).toHaveCount(3);
-	await expect(day1).toHaveClass(/outline/);
-	await expect(day7).toHaveClass(/outline/);
-	await expect(day30).toHaveClass(/outline/);
+	await expect(day30).toHaveClass('outline');
+	await expect(day1).toHaveClass('outline secondary');
+	await expect(day7).toHaveClass('outline secondary');
 	await expect(day30).toHaveAttribute('aria-current', 'true');
 	await expect(day1).not.toHaveAttribute('aria-current');
 	await expect(day7).not.toHaveAttribute('aria-current');
@@ -39,6 +39,9 @@ test('range switcher filters charts without changing usage totals', async ({ pag
 	).toBeVisible();
 
 	await day7.click();
+	await expect(day7).toHaveClass('outline');
+	await expect(day1).toHaveClass('outline secondary');
+	await expect(day30).toHaveClass('outline secondary');
 	await expect(day7).toHaveAttribute('aria-current', 'true');
 	await expect(day30).not.toHaveAttribute('aria-current');
 	await expect(
@@ -48,6 +51,9 @@ test('range switcher filters charts without changing usage totals', async ({ pag
 	await expect(page.locator('section > strong').nth(1)).toHaveText('Total tokens: 1,000');
 
 	await day1.click();
+	await expect(day1).toHaveClass('outline');
+	await expect(day7).toHaveClass('outline secondary');
+	await expect(day30).toHaveClass('outline secondary');
 	await expect(day1).toHaveAttribute('aria-current', 'true');
 	await expect(day7).not.toHaveAttribute('aria-current');
 	await expect(
