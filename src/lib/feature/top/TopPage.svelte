@@ -7,6 +7,8 @@
 	import HourlyTokenChart from '$lib/feature/top/graph/HourlyTokenChart.svelte';
 	import ModelCostChart from '$lib/feature/top/graph/ModelCostChart.svelte';
 	import ModelTokenChart from '$lib/feature/top/graph/ModelTokenChart.svelte';
+	import RangeSwitcher from '$lib/feature/top/graph/RangeSwitcher.svelte';
+	import { filterPointsByDays, type DayRange } from '$lib/feature/top/graph/chart-utils';
 	import Header from '$lib/feature/top/Header.svelte';
 	import * as m from '$lib/paraglide/messages';
 	import Footer from './Footer.svelte';
@@ -20,6 +22,8 @@
 	let points = $state<CsvPoint[]>([]);
 	let status = $state<ViewState>('idle');
 	let errorMessage = $state('');
+	let rangeDays = $state<DayRange>(30);
+	let chartPoints = $derived(filterPointsByDays(points, rangeDays));
 
 	async function processFile(file: File | undefined) {
 		if (!file || status === 'loading') return;
@@ -84,13 +88,14 @@
 	<section class="container" aria-label={m.dashboard_aria_label()}>
 		{#if status === 'success'}
 			<Usage {points} />
+			<RangeSwitcher bind:days={rangeDays} />
 			<GraphGroup>
-				<DailyModelTokenChart {points} />
-				<DailyModelCostChart {points} />
-				<ModelTokenChart {points} />
-				<ModelCostChart {points} />
-				<CalendarTokenChart {points} />
-				<HourlyTokenChart {points} />
+				<DailyModelTokenChart points={chartPoints} />
+				<DailyModelCostChart points={chartPoints} />
+				<ModelTokenChart points={chartPoints} />
+				<ModelCostChart points={chartPoints} />
+				<CalendarTokenChart points={chartPoints} />
+				<HourlyTokenChart points={chartPoints} />
 			</GraphGroup>
 		{/if}
 	</section>

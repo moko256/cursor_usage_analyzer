@@ -37,6 +37,10 @@ export type HourlyValue = {
 	tokens: number;
 };
 
+export const DAY_RANGES = [1, 7, 30] as const;
+
+export type DayRange = (typeof DAY_RANGES)[number];
+
 export const TOKEN_BREAKDOWN_LABELS = [
 	'Input (w/ Cache Write)',
 	'Input (w/o Cache Write)',
@@ -129,6 +133,36 @@ export function formatTokenAxis(value: number): string {
 
 function formatRoundedNumber(value: number) {
 	return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+/**
+ * Keeps points whose UTC calendar day falls in the inclusive window of `days`
+ * ending on `now`, or on the latest point when `now` is omitted.
+ */
+export function filterPointsByDays(points: CsvPoint[], days: DayRange, now?: Date): CsvPoint[] {
+	const endDay = resolveRangeEndDay(points, now);
+	if (!endDay) return [];
+
+	const startDate = new Date(`${endDay}T00:00:00.000Z`);
+	startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
+	const startDay = startDate.toISOString().slice(0, 10);
+
+	return points.filter((point) => {
+		const day = utcDay(point.date);
+		return day >= startDay && day <= endDay;
+	});
+}
+
+function resolveRangeEndDay(points: CsvPoint[], now?: Date): string | null {
+	if (now) return utcDay(now.toISOString());
+
+	let latest = Number.NEGATIVE_INFINITY;
+	for (const point of points) {
+		const timestamp = Date.parse(point.date);
+		if (Number.isFinite(timestamp) && timestamp > latest) latest = timestamp;
+	}
+
+	return Number.isFinite(latest) ? new Date(latest).toISOString().slice(0, 10) : null;
 }
 
 export function groupByDay(points: CsvPoint[]): DailyValue[] {
