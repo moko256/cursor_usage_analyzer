@@ -28,6 +28,11 @@ test('range switcher filters charts without changing usage totals', async ({ pag
 
 	await expect(group).toHaveCount(1);
 	await expect(group.locator('> button')).toHaveCount(3);
+
+	const groupBox = await group.boundingBox();
+	const chartsBox = await page.locator('.graph-group').boundingBox();
+	expect(groupBox?.width ?? 0).toBeGreaterThan(0);
+	expect(groupBox?.width ?? 0).toBeLessThan((chartsBox?.width ?? 0) / 2);
 	await expect(day30).toHaveClass('outline');
 	await expect(day1).toHaveClass('outline secondary');
 	await expect(day7).toHaveClass('outline secondary');
