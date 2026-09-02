@@ -20,7 +20,7 @@
 	}
 </script>
 
-<div role="group" aria-label={m.chart_range_aria()}>
+<div role="group" style="width: fit-content" aria-label={m.chart_range_aria()}>
 	{#each DAY_RANGES as range (range)}
 		{#if days === range}
 			<button type="button" aria-current="true" onclick={() => (days = range)}>
@@ -33,9 +33,3 @@
 		{/if}
 	{/each}
 </div>
-
-<style>
-	[role='group'] {
-		width: fit-content;
-	}
-</style>
