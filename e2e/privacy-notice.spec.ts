@@ -1,7 +1,5 @@
 import { expect, test } from '@playwright/test';
 
-test.use({ video: 'on' });
-
 const sensitiveColumns = ['Cloud Agent ID', 'Automation ID', 'User'];
 
 for (const locale of ['ja', 'en'] as const) {
