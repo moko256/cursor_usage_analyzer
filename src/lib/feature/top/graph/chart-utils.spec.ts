@@ -34,7 +34,6 @@ describe('sumCost', () => {
 				model: 'alpha',
 				cost: 10.05,
 				tokens: 1,
-				kind: 'amount',
 				...noBreakdown
 			},
 			{
@@ -42,7 +41,6 @@ describe('sumCost', () => {
 				model: 'alpha',
 				cost: 2.25,
 				tokens: 1,
-				kind: 'amount',
 				...noBreakdown
 			},
 			{
@@ -50,7 +48,6 @@ describe('sumCost', () => {
 				model: 'alpha',
 				cost: null,
 				tokens: 1,
-				kind: 'included',
 				...noBreakdown
 			},
 			{
@@ -58,7 +55,6 @@ describe('sumCost', () => {
 				model: 'alpha',
 				cost: null,
 				tokens: 1,
-				kind: 'free',
 				...noBreakdown
 			},
 			{
@@ -66,7 +62,6 @@ describe('sumCost', () => {
 				model: 'alpha',
 				cost: null,
 				tokens: 1,
-				kind: 'empty',
 				...noBreakdown
 			}
 		];
@@ -83,7 +78,6 @@ describe('sumTokens', () => {
 				model: 'alpha',
 				cost: 1,
 				tokens: 100,
-				kind: 'amount',
 				...noBreakdown
 			},
 			{
@@ -91,7 +85,6 @@ describe('sumTokens', () => {
 				model: 'alpha',
 				cost: null,
 				tokens: 250,
-				kind: 'included',
 				...noBreakdown
 			}
 		];
@@ -215,7 +208,6 @@ describe('groupByDay', () => {
 				model: 'alpha',
 				cost: 1.25,
 				tokens: 100,
-				kind: 'amount',
 				...noBreakdown
 			},
 			{
@@ -223,7 +215,6 @@ describe('groupByDay', () => {
 				model: 'beta',
 				cost: 0.5,
 				tokens: 50,
-				kind: 'amount',
 				...noBreakdown
 			},
 			{
@@ -231,7 +222,6 @@ describe('groupByDay', () => {
 				model: 'alpha',
 				cost: null,
 				tokens: 25,
-				kind: 'included',
 				...noBreakdown
 			}
 		];
@@ -264,7 +254,6 @@ describe('groupByHour', () => {
 				model: 'alpha',
 				cost: 1,
 				tokens: 10,
-				kind: 'amount',
 				...noBreakdown
 			},
 			{
@@ -272,7 +261,6 @@ describe('groupByHour', () => {
 				model: 'alpha',
 				cost: 1,
 				tokens: 100,
-				kind: 'amount',
 				...noBreakdown
 			},
 			{
@@ -280,7 +268,6 @@ describe('groupByHour', () => {
 				model: 'alpha',
 				cost: 1,
 				tokens: 50,
-				kind: 'amount',
 				...noBreakdown
 			},
 			{
@@ -288,7 +275,6 @@ describe('groupByHour', () => {
 				model: 'alpha',
 				cost: 1,
 				tokens: 20,
-				kind: 'amount',
 				...noBreakdown
 			},
 			{
@@ -296,7 +282,6 @@ describe('groupByHour', () => {
 				model: 'alpha',
 				cost: 1,
 				tokens: 25,
-				kind: 'amount',
 				...noBreakdown
 			},
 			{
@@ -304,7 +289,6 @@ describe('groupByHour', () => {
 				model: 'alpha',
 				cost: 1,
 				tokens: 30,
-				kind: 'amount',
 				...noBreakdown
 			},
 			{
@@ -312,7 +296,6 @@ describe('groupByHour', () => {
 				model: 'alpha',
 				cost: 1,
 				tokens: 40,
-				kind: 'amount',
 				...noBreakdown
 			},
 			{
@@ -320,7 +303,6 @@ describe('groupByHour', () => {
 				model: 'alpha',
 				cost: 1,
 				tokens: 60,
-				kind: 'amount',
 				...noBreakdown
 			}
 		];
@@ -359,7 +341,6 @@ describe('buildTokenCalendar', () => {
 				model: 'alpha',
 				cost: 1,
 				tokens: 100,
-				kind: 'amount',
 				...noBreakdown
 			},
 			{
@@ -367,7 +348,6 @@ describe('buildTokenCalendar', () => {
 				model: 'alpha',
 				cost: 1,
 				tokens: 300,
-				kind: 'amount',
 				...noBreakdown
 			}
 		]);
@@ -391,7 +371,6 @@ describe('buildTokenCalendar', () => {
 				model: 'alpha',
 				cost: 1,
 				tokens: 100,
-				kind: 'amount',
 				...noBreakdown
 			},
 			{
@@ -399,7 +378,6 @@ describe('buildTokenCalendar', () => {
 				model: 'alpha',
 				cost: 1,
 				tokens: 300,
-				kind: 'amount',
 				...noBreakdown
 			}
 		]);
@@ -420,7 +398,6 @@ describe('buildTokenCalendar', () => {
 				model: 'alpha',
 				cost: 1,
 				tokens: 100,
-				kind: 'amount',
 				...noBreakdown
 			},
 			{
@@ -428,7 +405,6 @@ describe('buildTokenCalendar', () => {
 				model: 'alpha',
 				cost: 1,
 				tokens: 300,
-				kind: 'amount',
 				...noBreakdown
 			}
 		]);
@@ -450,7 +426,6 @@ describe('buildTokenCalendar', () => {
 				model: 'alpha',
 				cost: 1,
 				tokens: 0,
-				kind: 'amount',
 				...noBreakdown
 			}
 		]);
@@ -459,6 +434,14 @@ describe('buildTokenCalendar', () => {
 
 		expect(calendar.range.start).toEqual(new Date(2026, 7, 1));
 		expect(calendar.range.end).toEqual(new Date(2026, 8, 1));
+	});
+
+	it('puts a late-UTC timestamp on the same day as groupByDay', () => {
+		const days = groupByDay([point('2026-08-28T23:30:00.000Z', 100, 1)]);
+		const calendar = buildTokenCalendar(days, new Date('2026-08-31T12:00:00.000Z'));
+
+		expect(days[0]?.day).toBe('2026-08-28');
+		expect(calendar.data.find(({ day }) => day === '2026-08-28')?.tokens).toBe(100);
 	});
 });
 
@@ -509,7 +492,6 @@ function point(date: string, tokens: number, cost: number): CsvPoint {
 		model: 'alpha',
 		cost,
 		tokens,
-		kind: 'amount',
 		...noBreakdown
 	};
 }

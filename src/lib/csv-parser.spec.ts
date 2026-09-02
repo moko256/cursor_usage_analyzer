@@ -32,7 +32,6 @@ describe('parseCsvText', () => {
 				model: 'gpt-5.6-luna-high',
 				cost: null,
 				tokens: 50,
-				kind: 'empty',
 				inputWithCacheWrite: 1,
 				inputWithoutCacheWrite: 2,
 				cacheRead: 3,
@@ -43,7 +42,6 @@ describe('parseCsvText', () => {
 				model: 'gpt-5.6-luna-high',
 				cost: 12.34,
 				tokens: 100,
-				kind: 'amount',
 				inputWithCacheWrite: 1,
 				inputWithoutCacheWrite: 2,
 				cacheRead: 3,
@@ -54,7 +52,6 @@ describe('parseCsvText', () => {
 				model: 'gpt-5.6-luna-high',
 				cost: null,
 				tokens: 2379495,
-				kind: 'included',
 				inputWithCacheWrite: 81777,
 				inputWithoutCacheWrite: 114,
 				cacheRead: 2278964,
@@ -65,7 +62,6 @@ describe('parseCsvText', () => {
 				model: 'cursor-grok-4.6-high',
 				cost: null,
 				tokens: 0,
-				kind: 'free',
 				...noBreakdown
 			},
 			{
@@ -73,7 +69,6 @@ describe('parseCsvText', () => {
 				model: 'gpt-5.6-luna-high',
 				cost: null,
 				tokens: 4389984,
-				kind: 'included',
 				inputWithCacheWrite: 231243,
 				inputWithoutCacheWrite: 639,
 				cacheRead: 4130263,
@@ -84,7 +79,6 @@ describe('parseCsvText', () => {
 				model: 'cursor-grok-4.6-high',
 				cost: null,
 				tokens: 0,
-				kind: 'free',
 				...noBreakdown
 			},
 			{
@@ -92,7 +86,6 @@ describe('parseCsvText', () => {
 				model: 'gpt-5.6-luna-high',
 				cost: null,
 				tokens: 1589273,
-				kind: 'included',
 				inputWithCacheWrite: 120957,
 				inputWithoutCacheWrite: 611,
 				cacheRead: 1452080,
@@ -127,7 +120,6 @@ describe('parseCsvText', () => {
 				model: 'alpha',
 				cost: 1.5,
 				tokens: 0,
-				kind: 'amount',
 				...noBreakdown
 			}
 		]);
@@ -144,7 +136,6 @@ describe('parseCsvText', () => {
 				model: 'alpha',
 				cost: 10,
 				tokens: 42,
-				kind: 'amount',
 				...noBreakdown
 			}
 		]);
@@ -167,7 +158,6 @@ describe('parseCsvText', () => {
 				model: 'alpha',
 				cost: null,
 				tokens: 10,
-				kind: 'free',
 				...noBreakdown
 			},
 			{
@@ -175,7 +165,6 @@ describe('parseCsvText', () => {
 				model: 'alpha',
 				cost: null,
 				tokens: 10,
-				kind: 'free',
 				...noBreakdown
 			}
 		]);
@@ -214,8 +203,7 @@ describe('parseCsvText', () => {
 		expect(points[0]).toMatchObject({
 			date: '2026-08-28T17:00:00.000Z',
 			model: 'alpha',
-			cost: 1.5,
-			kind: 'amount'
+			cost: 1.5
 		});
 	});
 
