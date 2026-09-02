@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { CsvParseError, parseCsvFile, type CsvPoint } from '$lib/csv-parser';
+	import { parseCsvFile } from '$lib/csv-parser';
+	import { csvParseErrorMessage } from '$lib/csv-parse-error-message';
 	import CalendarTokenChart from '$lib/feature/top/graph/CalendarTokenChart.svelte';
 	import DailyModelChart from '$lib/feature/top/graph/DailyModelChart.svelte';
 	import GraphGroup from '$lib/feature/top/graph/GraphGroup.svelte';
@@ -9,64 +10,33 @@
 	import { filterPointsByDays, type DayRange } from '$lib/feature/top/graph/chart-utils';
 	import Header from '$lib/feature/top/Header.svelte';
 	import * as m from '$lib/paraglide/messages';
+	import { toPickerView, type ParseView } from './parse-view';
 	import Footer from './Footer.svelte';
 	import Picker from './Picker.svelte';
 	import Usage from './Usage.svelte';
 	import PrivacyNotice from './PrivacyNotice.svelte';
 	import NoScript from '$lib/components/NoScript.svelte';
 
-	type ViewState = 'idle' | 'loading' | 'success' | 'error';
-
-	let points = $state.raw<CsvPoint[]>([]);
-	let status = $state<ViewState>('idle');
-	let errorMessage = $state('');
+	let view = $state.raw<ParseView>({ status: 'idle' });
 	let rangeDays = $state<DayRange>(30);
+	let points = $derived(view.status === 'success' ? view.points : []);
 	let chartPoints = $derived(filterPointsByDays(points, rangeDays));
+	let pickerView = $derived(toPickerView(view));
 
 	async function processFile(file: File | undefined) {
-		if (!file || status === 'loading') return;
+		if (!file || view.status === 'loading') return;
 
 		if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
-			status = 'error';
-			errorMessage = m.invalid_file_type();
+			view = { status: 'error', message: m.invalid_file_type() };
 			return;
 		}
 
-		status = 'loading';
-		errorMessage = '';
-		points = [];
+		view = { status: 'loading' };
 
 		try {
-			points = await parseCsvFile(file);
-			status = 'success';
+			view = { status: 'success', points: await parseCsvFile(file) };
 		} catch (error) {
-			status = 'error';
-			errorMessage = getErrorMessage(error);
-		}
-	}
-
-	function getErrorMessage(error: unknown) {
-		if (!(error instanceof CsvParseError)) {
-			console.error(error);
-
-			return m.csv_read_failed();
-		}
-
-		switch (error.code) {
-			case 'empty':
-				return m.csv_empty();
-			case 'missing_columns':
-				return m.csv_missing_columns();
-			case 'no_valid_data':
-				return m.csv_no_valid_data();
-			case 'background_parsing_unavailable':
-				return m.background_parsing_unavailable();
-			case 'background_parsing_failed':
-				return m.background_parsing_failed();
-			case 'unclosed_quotes':
-				return m.csv_unclosed_quotes();
-			default:
-				return m.csv_parse_failed();
+			view = { status: 'error', message: csvParseErrorMessage(error) };
 		}
 	}
 </script>
@@ -81,10 +51,10 @@
 <main class="container">
 	<NoScript />
 
-	<Picker {status} {errorMessage} pointCount={points.length} onFileSelected={processFile} />
+	<Picker view={pickerView} onFileSelected={processFile} />
 
 	<section class="container" aria-label={m.dashboard_aria_label()}>
-		{#if status === 'success'}
+		{#if view.status === 'success'}
 			<Usage {points} />
 			<RangeSwitcher bind:days={rangeDays} />
 			<GraphGroup>
