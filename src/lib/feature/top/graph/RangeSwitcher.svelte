@@ -22,14 +22,15 @@
 
 <div role="group" aria-label={m.chart_range_aria()}>
 	{#each DAY_RANGES as range (range)}
-		<button
-			type="button"
-			class={days === range ? undefined : 'outline secondary'}
-			aria-current={days === range ? true : undefined}
-			onclick={() => (days = range)}
-		>
-			{rangeLabel(range)}
-		</button>
+		{#if days === range}
+			<button type="button" aria-current="true" onclick={() => (days = range)}>
+				{rangeLabel(range)}
+			</button>
+		{:else}
+			<button type="button" class="outline secondary" onclick={() => (days = range)}>
+				{rangeLabel(range)}
+			</button>
+		{/if}
 	{/each}
 </div>
 
