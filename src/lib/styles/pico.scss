@@ -1,0 +1,26 @@
+// Custom Pico build: keep the blue theme and only the modules this app uses.
+// See https://picocss.com/docs/sass
+@use '@picocss/pico/scss/pico' with (
+	$theme-color: 'blue',
+	$modules: (
+		// Layout: charts use a local CSS grid, and .overflow-auto is unused.
+		'layout/grid': false,
+		'layout/overflow-auto': false,
+		// Content: no tables.
+		'content/table': false,
+		// Forms: the CSV picker hides its file input; no other form controls.
+		'forms/basics': false,
+		'forms/checkbox-radio-switch': false,
+		'forms/input-color': false,
+		'forms/input-date': false,
+		'forms/input-file': false,
+		'forms/input-range': false,
+		'forms/input-search': false,
+		// Components: no accordion, dropdown, loading spinner, modal, or Pico tooltip.
+		'components/accordion': false,
+		'components/dropdown': false,
+		'components/loading': false,
+		'components/modal': false,
+		'components/tooltip': false
+	)
+);
