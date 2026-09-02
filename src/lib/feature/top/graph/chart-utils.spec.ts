@@ -1,13 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import type { CsvPoint } from '$lib/csv-parser';
 import {
+	buildModelBreakdownSeries,
 	buildTokenCalendar,
 	filterPointsByDays,
+	formatChartAxis,
+	formatChartValue,
+	formatCostAxis,
 	formatTokenAxis,
 	groupByDay,
 	groupByHour,
+	modelsFromDays,
 	sumCost,
-	sumTokens
+	sumTokens,
+	TOKEN_BREAKDOWN_KEYS,
+	TOKEN_BREAKDOWN_LABELS,
+	type DailyValue,
+	type ModelBreakdownValue
 } from './chart-utils';
 
 const noBreakdown = {
@@ -105,6 +114,96 @@ describe('formatTokenAxis', () => {
 		[1e9, '1G']
 	])('formats %s as %s', (value, expected) => {
 		expect(formatTokenAxis(value)).toBe(expected);
+	});
+});
+
+describe('formatCostAxis', () => {
+	it.each([
+		[0, '$0'],
+		[1_500, '$1.5k'],
+		[-1_500, '-$1.5k'],
+		[1e9, '$1G']
+	])('formats %s as %s', (value, expected) => {
+		expect(formatCostAxis(value)).toBe(expected);
+	});
+});
+
+describe('formatChartAxis', () => {
+	it('delegates to the token or cost axis formatter', () => {
+		expect(formatChartAxis(1_500, 'tokens')).toBe('1.5k');
+		expect(formatChartAxis(1_500, 'cost')).toBe('$1.5k');
+	});
+});
+
+describe('formatChartValue', () => {
+	it('formats compact tokens and USD costs', () => {
+		expect(formatChartValue(1234, 'tokens')).toBe('1.2K');
+		expect(formatChartValue(1.5, 'cost')).toBe('$1.50');
+	});
+});
+
+describe('modelsFromDays', () => {
+	it('returns unique model names sorted by locale', () => {
+		const days: DailyValue[] = [
+			{
+				day: '2026-08-28',
+				cost: 1,
+				tokens: 10,
+				models: [
+					{ model: 'zeta', cost: 1, tokens: 4 },
+					{ model: 'alpha', cost: 0, tokens: 6 }
+				]
+			},
+			{
+				day: '2026-08-29',
+				cost: 2,
+				tokens: 5,
+				models: [{ model: 'alpha', cost: 2, tokens: 5 }]
+			}
+		];
+
+		expect(modelsFromDays(days)).toEqual(['alpha', 'zeta']);
+	});
+});
+
+describe('buildModelBreakdownSeries', () => {
+	const row = (overrides: Partial<ModelBreakdownValue> = {}): ModelBreakdownValue => ({
+		model: 'alpha',
+		cost: 10,
+		tokens: 100,
+		inputWithCacheWrite: 40,
+		inputWithoutCacheWrite: 20,
+		cacheRead: 30,
+		outputTokens: 10,
+		errorMinus: 0,
+		errorPlus: 0,
+		...overrides
+	});
+
+	it('uses stable keys and display labels for the token breakdown', () => {
+		const series = buildModelBreakdownSeries([row()], 'tokens', false);
+
+		expect(series.map((item) => item.key)).toEqual([...TOKEN_BREAKDOWN_KEYS]);
+		expect(series.map((item) => item.label)).toEqual(
+			TOKEN_BREAKDOWN_KEYS.map((key) => TOKEN_BREAKDOWN_LABELS[key])
+		);
+		expect(series[0]?.value(row())).toBe(40);
+	});
+
+	it('adds error series with stable keys and a negative Error+ value', () => {
+		const withErrors = row({ tokens: 80, errorMinus: 20, errorPlus: 10, outputTokens: 0 });
+		const tokenSeries = buildModelBreakdownSeries([withErrors], 'tokens', false);
+		const costSeries = buildModelBreakdownSeries([withErrors], 'cost', false);
+
+		expect(tokenSeries.map((item) => item.key)).toEqual([
+			...TOKEN_BREAKDOWN_KEYS,
+			'errorMinus',
+			'errorPlus'
+		]);
+		expect(tokenSeries.at(-1)?.value(withErrors)).toBe(-10);
+		expect(costSeries.at(-1)?.value(withErrors)).toBe(-1.25);
+		expect(tokenSeries.at(-2)?.key).toBe('errorMinus');
+		expect(tokenSeries.at(-1)?.key).toBe('errorPlus');
 	});
 });
 

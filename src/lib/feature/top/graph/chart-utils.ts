@@ -15,12 +15,6 @@ export type DailyValue = {
 	models: DailyModelValue[];
 };
 
-export type ModelValue = {
-	model: string;
-	cost: number;
-	tokens: number;
-};
-
 export type TokenCalendarDay = {
 	day: string;
 	date: Date;
@@ -245,22 +239,6 @@ export function groupByDay(points: CsvPoint[]): DailyValue[] {
 				left.model.localeCompare(right.model)
 			)
 		}));
-}
-
-export function groupByModel(points: CsvPoint[]): ModelValue[] {
-	const byModel = new Map<string, { cost: number; tokens: number }>();
-
-	for (const point of points) {
-		const model = point.model || m.unknown_model();
-		const value = byModel.get(model) ?? { cost: 0, tokens: 0 };
-		value.cost += point.cost ?? 0;
-		value.tokens += point.tokens;
-		byModel.set(model, value);
-	}
-
-	return Array.from(byModel.entries())
-		.sort(([left], [right]) => left.localeCompare(right))
-		.map(([model, value]) => ({ model, ...value }));
 }
 
 /** Returns cumulative token counts for every local hour of the day. */
