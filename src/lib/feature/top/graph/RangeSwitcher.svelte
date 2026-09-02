@@ -37,10 +37,4 @@
 	[role='group'] {
 		width: fit-content;
 	}
-
-	[role='group'] :global(button) {
-		flex: 0 0 auto;
-		width: max-content;
-		white-space: nowrap;
-	}
 </style>
