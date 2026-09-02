@@ -2,7 +2,7 @@
 	import type { CsvPoint } from '$lib/csv-parser';
 	import * as m from '$lib/paraglide/messages';
 	import { scaleThreshold } from 'd3-scale';
-	import { Calendar, Chart, Layer, Rect, Tooltip } from 'layerchart';
+	import { Calendar, Chart, Layer, Rect, Tooltip } from 'layerchart/svg';
 	import { buildTokenCalendar, groupByDay } from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
 

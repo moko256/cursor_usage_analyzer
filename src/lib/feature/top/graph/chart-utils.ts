@@ -1,6 +1,6 @@
 import type { CsvPoint } from '$lib/csv-parser';
 import * as m from '$lib/paraglide/messages';
-import { getStringWidth, truncateText } from 'layerchart';
+import { getStringWidth, truncateText } from 'layerchart/utils/string';
 
 export type DailyModelValue = {
 	model: string;
