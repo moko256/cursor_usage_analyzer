@@ -24,7 +24,7 @@
 	{#each DAY_RANGES as range (range)}
 		<button
 			type="button"
-			class="outline"
+			class={['outline', days !== range && 'secondary']}
 			aria-current={days === range ? true : undefined}
 			onclick={() => (days = range)}
 		>
