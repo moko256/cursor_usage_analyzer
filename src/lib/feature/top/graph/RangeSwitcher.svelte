@@ -24,7 +24,7 @@
 	{#each DAY_RANGES as range (range)}
 		<button
 			type="button"
-			class={['outline', days !== range && 'secondary']}
+			class={days === range ? undefined : 'outline secondary'}
 			aria-current={days === range ? true : undefined}
 			onclick={() => (days = range)}
 		>
@@ -38,7 +38,7 @@
 		width: fit-content;
 	}
 
-	[role='group'] button {
+	[role='group'] :global(button) {
 		flex: 0 0 auto;
 		width: max-content;
 		white-space: nowrap;
