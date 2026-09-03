@@ -8,7 +8,7 @@ const csv = [
 	'2026-08-28T12:00:00.000Z,alpha,100,1'
 ].join('\n');
 
-test('range switcher filters charts without changing usage totals', async ({ page }) => {
+test('range switcher filters charts and usage totals', async ({ page }) => {
 	await page.goto('/cursor_usage_analyzer/en/');
 	await page.waitForLoadState('networkidle');
 	await page.locator('input[type="file"]').setInputFiles({
@@ -18,8 +18,9 @@ test('range switcher filters charts without changing usage totals', async ({ pag
 	});
 
 	await expect(page.getByText('4 records loaded')).toBeVisible();
-	await expect(page.locator('section > strong').nth(0)).toHaveText('On-demand usage: $10.0');
-	await expect(page.locator('section > strong').nth(1)).toHaveText('Total tokens: 1,000');
+	const usage = page.locator('section[aria-live="polite"]');
+	await expect(usage.locator('strong').nth(0)).toHaveText('On-demand usage: $10.0');
+	await expect(usage.locator('strong').nth(1)).toHaveText('Total tokens: 1,000');
 
 	const group = page.getByRole('group', { name: 'Chart date range' });
 	const day1 = group.getByRole('button', { name: '1 day' });
@@ -32,9 +33,11 @@ test('range switcher filters charts without changing usage totals', async ({ pag
 	await expect(group.getByRole('button', { name: '30 days' })).toHaveCount(0);
 
 	const groupBox = await group.boundingBox();
+	const usageBox = await usage.boundingBox();
 	const chartsBox = await page.locator('.graph-group').boundingBox();
 	expect(groupBox?.width ?? 0).toBeGreaterThan(0);
 	expect(groupBox?.width ?? 0).toBeLessThan(chartsBox?.width ?? 0);
+	expect(groupBox?.y ?? 0).toBeLessThan(usageBox?.y ?? 0);
 	await expect(allTime).not.toHaveAttribute('class');
 	await expect(day1).toHaveClass('outline secondary');
 	await expect(day7).toHaveClass('outline secondary');
@@ -54,8 +57,8 @@ test('range switcher filters charts without changing usage totals', async ({ pag
 	await expect(
 		page.getByRole('img', { name: 'Daily tokens by model. 1 models, 2 days.' })
 	).toBeVisible();
-	await expect(page.locator('section > strong').nth(0)).toHaveText('On-demand usage: $10.0');
-	await expect(page.locator('section > strong').nth(1)).toHaveText('Total tokens: 1,000');
+	await expect(usage.locator('strong').nth(0)).toHaveText('On-demand usage: $3.0');
+	await expect(usage.locator('strong').nth(1)).toHaveText('Total tokens: 300');
 
 	await day1.click();
 	await expect(day1).not.toHaveAttribute('class');
@@ -66,8 +69,8 @@ test('range switcher filters charts without changing usage totals', async ({ pag
 	await expect(
 		page.getByRole('img', { name: 'Daily tokens by model. 1 models, 1 days.' })
 	).toBeVisible();
-	await expect(page.locator('section > strong').nth(0)).toHaveText('On-demand usage: $10.0');
-	await expect(page.locator('section > strong').nth(1)).toHaveText('Total tokens: 1,000');
+	await expect(usage.locator('strong').nth(0)).toHaveText('On-demand usage: $1.0');
+	await expect(usage.locator('strong').nth(1)).toHaveText('Total tokens: 100');
 
 	await allTime.click();
 	await expect(allTime).not.toHaveAttribute('class');
@@ -78,6 +81,6 @@ test('range switcher filters charts without changing usage totals', async ({ pag
 	await expect(
 		page.getByRole('img', { name: 'Daily tokens by model. 1 models, 4 days.' })
 	).toBeVisible();
-	await expect(page.locator('section > strong').nth(0)).toHaveText('On-demand usage: $10.0');
-	await expect(page.locator('section > strong').nth(1)).toHaveText('Total tokens: 1,000');
+	await expect(usage.locator('strong').nth(0)).toHaveText('On-demand usage: $10.0');
+	await expect(usage.locator('strong').nth(1)).toHaveText('Total tokens: 1,000');
 });
