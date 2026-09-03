@@ -2,11 +2,13 @@ export type {
 	ChartMetric,
 	DailyModelValue,
 	DailyValue,
+	DashboardData,
 	DayRange,
 	HourlyValue,
 	ModelBreakdownSeries,
 	ModelBreakdownSeriesKey,
 	ModelBreakdownValue,
+	RangeChartData,
 	TokenBreakdownKey,
 	TokenCalendarDay,
 	TokenCalendarRange
@@ -46,7 +48,6 @@ export {
 } from './chart-style';
 
 export {
-	buildDailyModelSeries,
 	filterPointsByDays,
 	groupByDay,
 	groupByHour,
@@ -55,8 +56,9 @@ export {
 	sumTokens
 } from './chart-aggregate';
 
+export { buildDashboardData } from './chart-dashboard';
+
 export {
-	buildModelBreakdownSeries,
 	computeTokenBreakdownErrors,
 	groupByModelBreakdown,
 	tokenBreakdownCost,
@@ -65,5 +67,7 @@ export {
 	tokenErrorMinusCost,
 	tokenErrorPlusCost
 } from './chart-breakdown';
+
+export { buildDailyModelSeries, buildModelBreakdownSeries } from './chart-series';
 
 export { buildTokenCalendar } from './chart-calendar';

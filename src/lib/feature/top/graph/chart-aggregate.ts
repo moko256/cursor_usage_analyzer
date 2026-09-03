@@ -1,13 +1,6 @@
 import type { CsvPoint } from '$lib/csv-parser';
 import * as m from '$lib/paraglide/messages';
-import type {
-	ChartMetric,
-	DailyModelValue,
-	DailyValue,
-	DayRange,
-	HourlyValue
-} from './chart-types';
-import { getDailyModelColors } from './chart-style';
+import type { DailyModelValue, DailyValue, DayRange, HourlyValue } from './chart-types';
 import { utcDay } from './chart-utc';
 
 export function sumCost(points: CsvPoint[]): number {
@@ -51,7 +44,7 @@ function resolveRangeEndDay(points: CsvPoint[], now?: Date): string | null {
 	return Number.isFinite(latest) ? new Date(latest).toISOString().slice(0, 10) : null;
 }
 
-export function groupByDay(points: CsvPoint[]): DailyValue[] {
+export function groupByDay(points: CsvPoint[], unknownModel = m.unknown_model()): DailyValue[] {
 	const byDay = new Map<
 		string,
 		{ cost: number; tokens: number; models: Map<string, DailyModelValue> }
@@ -60,7 +53,7 @@ export function groupByDay(points: CsvPoint[]): DailyValue[] {
 	for (const point of points) {
 		const day = utcDay(point.date);
 		const dayValue = byDay.get(day) ?? { cost: 0, tokens: 0, models: new Map() };
-		const model = point.model || m.unknown_model();
+		const model = point.model || unknownModel;
 		const modelValue = dayValue.models.get(model) ?? { model, cost: 0, tokens: 0 };
 
 		dayValue.cost += point.cost ?? 0;
@@ -105,12 +98,4 @@ export function modelsFromDays(days: DailyValue[]): string[] {
 	return [...new Set(days.flatMap((day) => day.models.map((value) => value.model)))].sort(
 		(left, right) => left.localeCompare(right)
 	);
-}
-
-export function buildDailyModelSeries(models: string[], metric: ChartMetric, isDark: boolean) {
-	return models.map((model, index) => ({
-		key: model,
-		color: getDailyModelColors(index, models.length, isDark),
-		value: (day: DailyValue) => day.models.find((value) => value.model === model)?.[metric] ?? 0
-	}));
 }

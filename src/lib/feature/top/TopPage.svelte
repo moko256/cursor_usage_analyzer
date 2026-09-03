@@ -7,7 +7,7 @@
 	import HourlyTokenChart from '$lib/feature/top/graph/HourlyTokenChart.svelte';
 	import ModelBreakdownChart from '$lib/feature/top/graph/ModelBreakdownChart.svelte';
 	import RangeSwitcher from '$lib/feature/top/graph/RangeSwitcher.svelte';
-	import { filterPointsByDays, type DayRange } from '$lib/feature/top/graph/chart-utils';
+	import type { DayRange } from '$lib/feature/top/graph/chart-utils';
 	import Header from '$lib/feature/top/Header.svelte';
 	import * as m from '$lib/paraglide/messages';
 	import { toPickerView, type ParseView } from './parse-view';
@@ -19,8 +19,8 @@
 
 	let view = $state.raw<ParseView>({ status: 'idle' });
 	let rangeDays = $state<DayRange>('all');
-	let points = $derived(view.status === 'success' ? view.points : []);
-	let chartPoints = $derived(filterPointsByDays(points, rangeDays));
+	let dashboard = $derived(view.status === 'success' ? view.dashboard : null);
+	let range = $derived(dashboard?.ranges[rangeDays]);
 	let pickerView = $derived(toPickerView(view));
 
 	async function processFile(file: File | undefined) {
@@ -34,7 +34,7 @@
 		view = { status: 'loading' };
 
 		try {
-			view = { status: 'success', points: await parseCsvFile(file) };
+			view = { status: 'success', dashboard: await parseCsvFile(file, m.unknown_model()) };
 		} catch (error) {
 			view = { status: 'error', message: csvParseErrorMessage(error) };
 		}
@@ -54,16 +54,16 @@
 	<Picker view={pickerView} onFileSelected={processFile} />
 
 	<section class="container" aria-label={m.dashboard_aria_label()}>
-		{#if view.status === 'success'}
-			<Usage {points} />
+		{#if dashboard && range}
+			<Usage totalCost={dashboard.totalCost} totalTokens={dashboard.totalTokens} />
 			<RangeSwitcher bind:days={rangeDays} />
 			<GraphGroup>
-				<DailyModelChart points={chartPoints} metric="tokens" />
-				<DailyModelChart points={chartPoints} metric="cost" />
-				<ModelBreakdownChart points={chartPoints} metric="tokens" />
-				<ModelBreakdownChart points={chartPoints} metric="cost" />
-				<CalendarTokenChart points={chartPoints} />
-				<HourlyTokenChart points={chartPoints} />
+				<DailyModelChart days={range.byDay} metric="tokens" />
+				<DailyModelChart days={range.byDay} metric="cost" />
+				<ModelBreakdownChart modelValues={range.byModelBreakdown} metric="tokens" />
+				<ModelBreakdownChart modelValues={range.byModelBreakdown} metric="cost" />
+				<CalendarTokenChart days={range.byDay} />
+				<HourlyTokenChart hours={range.byHour} />
 			</GraphGroup>
 		{/if}
 	</section>

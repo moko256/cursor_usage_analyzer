@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { CsvPoint } from '$lib/csv-parser';
 	import * as m from '$lib/paraglide/messages';
 	import { BarChart, Tooltip } from 'layerchart/svg';
 	import ChartCard from './ChartCard.svelte';
@@ -7,17 +6,16 @@
 		compactNumberFormat,
 		formatHour,
 		formatTokenAxis,
-		groupByHour,
 		verticalChartHeight,
 		verticalChartPadding,
 		type HourlyValue
 	} from './chart-utils';
 
 	interface Props {
-		points: CsvPoint[];
+		hours: HourlyValue[];
 	}
 
-	let { points }: Props = $props();
+	let { hours }: Props = $props();
 	const series = [
 		{
 			key: 'tokens',
@@ -26,7 +24,7 @@
 		}
 	];
 	let hourValues = $derived(
-		groupByHour(points).map((hour) => ({
+		hours.map((hour) => ({
 			...hour,
 			label: formatHour(hour.hour)
 		}))

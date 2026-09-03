@@ -1,4 +1,5 @@
 import CsvParserWorker from '$lib/csv-parser.worker?worker&inline';
+import type { DashboardData } from '$lib/feature/top/graph/chart-types';
 
 export type TokenBreakdown = {
 	inputWithCacheWrite: number;
@@ -30,9 +31,14 @@ export class CsvParseError extends Error {
 	}
 }
 
+export type WorkerRequest = {
+	file: Blob;
+	unknownModel: string;
+};
+
 type WorkerSuccess = {
 	type: 'success';
-	points: CsvPoint[];
+	dashboard: DashboardData;
 };
 
 type WorkerFailure = {
@@ -175,10 +181,10 @@ function parseOptionalColumn(record: string[], index: number) {
 }
 
 /**
- * Sends the file to a dedicated worker. The worker reads and parses the file,
- * returning only the Date, Model, Cost, and Total Tokens fields needed by the dashboard.
+ * Sends the file to a dedicated worker. The worker parses rows and groups them
+ * there, then posts back only the compact dashboard payload.
  */
-export function parseCsvFile(file: Blob): Promise<CsvPoint[]> {
+export function parseCsvFile(file: Blob, unknownModel: string): Promise<DashboardData> {
 	return new Promise((resolve, reject) => {
 		if (typeof Worker === 'undefined') {
 			reject(new CsvParseError('background_parsing_unavailable'));
@@ -191,7 +197,7 @@ export function parseCsvFile(file: Blob): Promise<CsvPoint[]> {
 		worker.onmessage = (event: MessageEvent<WorkerSuccess | WorkerFailure>) => {
 			finish();
 			if (event.data.type === 'success') {
-				resolve(event.data.points);
+				resolve(event.data.dashboard);
 			} else {
 				reject(new CsvParseError(event.data.code));
 			}
@@ -200,7 +206,8 @@ export function parseCsvFile(file: Blob): Promise<CsvPoint[]> {
 			finish();
 			reject(new CsvParseError('background_parsing_failed'));
 		};
-		worker.postMessage(file);
+		const request: WorkerRequest = { file, unknownModel };
+		worker.postMessage(request);
 	});
 }
 
