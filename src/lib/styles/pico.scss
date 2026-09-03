@@ -1,0 +1,26 @@
+@use '@picocss/pico/scss' with (
+	$theme-color: 'blue',
+	$modules: (
+		// Layout
+		'layout/grid': false,
+		'layout/overflow-auto': false,
+
+		// Content
+		'content/table': false,
+		'content/misc': false,
+
+		// Forms
+		'forms/checkbox-radio-switch': false,
+		'forms/input-color': false,
+		'forms/input-date': false,
+		'forms/input-range': false,
+		'forms/input-search': false,
+
+		// Components
+		'components/accordion': false,
+		'components/dropdown': false,
+		'components/loading': false,
+		'components/modal': false,
+		'components/tooltip': false
+	)
+);
