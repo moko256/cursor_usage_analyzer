@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { CsvPoint } from '$lib/csv-parser';
 	import * as m from '$lib/paraglide/messages';
 	import { BarChart, Tooltip } from 'layerchart/svg';
 	import { MediaQuery } from 'svelte/reactivity';
@@ -7,21 +6,20 @@
 		buildModelBreakdownSeries,
 		formatChartAxis,
 		formatChartValue,
-		groupByModelBreakdown,
 		modelAxisPadding,
 		truncateModelLabel,
-		type ChartMetric
+		type ChartMetric,
+		type ModelBreakdownValue
 	} from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
 
 	interface Props {
-		points: CsvPoint[];
+		modelValues: ModelBreakdownValue[];
 		metric: ChartMetric;
 	}
 
-	let { points, metric }: Props = $props();
+	let { modelValues, metric }: Props = $props();
 	const isDark = new MediaQuery('(prefers-color-scheme: dark)');
-	let modelValues = $derived(groupByModelBreakdown(points));
 	let horizontalChartHeight = $derived(Math.max(190, modelValues.length * 36 + 55));
 	let padding = $derived(modelAxisPadding(modelValues.map((value) => value.model)));
 	let series = $derived(buildModelBreakdownSeries(modelValues, metric, isDark.current));

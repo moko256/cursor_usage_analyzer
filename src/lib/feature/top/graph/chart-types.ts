@@ -69,3 +69,16 @@ export type ModelBreakdownSeries = {
 	color: string;
 	value: (row: ModelBreakdownValue) => number;
 };
+
+export type RangeChartData = {
+	byDay: DailyValue[];
+	byHour: HourlyValue[];
+	byModelBreakdown: ModelBreakdownValue[];
+};
+
+export type DashboardData = {
+	pointCount: number;
+	totalCost: number;
+	totalTokens: number;
+	ranges: { [K in DayRange]: RangeChartData };
+};

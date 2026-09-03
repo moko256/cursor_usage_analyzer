@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { CsvPoint } from '$lib/csv-parser';
 	import * as m from '$lib/paraglide/messages';
 	import { BarChart, Tooltip } from 'layerchart/svg';
 	import { MediaQuery } from 'svelte/reactivity';
@@ -8,23 +7,23 @@
 		formatChartAxis,
 		formatChartValue,
 		formatDay,
-		groupByDay,
 		modelsFromDays,
 		verticalChartHeight,
 		verticalChartPadding,
-		type ChartMetric
+		type ChartMetric,
+		type DailyValue
 	} from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
 
 	interface Props {
-		points: CsvPoint[];
+		days: DailyValue[];
 		metric: ChartMetric;
 	}
 
-	let { points, metric }: Props = $props();
+	let { days, metric }: Props = $props();
 	const isDark = new MediaQuery('(prefers-color-scheme: dark)');
 	let dayValues = $derived(
-		groupByDay(points).map((day) => ({
+		days.map((day) => ({
 			...day,
 			label: formatDay(day.day)
 		}))

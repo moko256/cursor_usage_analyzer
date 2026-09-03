@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { buildDashboardData } from '$lib/feature/top/graph/chart-dashboard';
 import { csvPoint } from '$lib/csv-point.fixture';
 import { toPickerView, type ParseView } from './parse-view';
 
@@ -16,7 +17,7 @@ describe('toPickerView', () => {
 	it('exposes only the record count on success', () => {
 		const view: ParseView = {
 			status: 'success',
-			points: [csvPoint({ tokens: 10 })]
+			dashboard: buildDashboardData([csvPoint({ tokens: 10 })])
 		};
 
 		expect(toPickerView(view)).toEqual({ status: 'success', pointCount: 1 });

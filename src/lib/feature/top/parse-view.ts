@@ -1,9 +1,9 @@
-import type { CsvPoint } from '$lib/csv-parser';
+import type { DashboardData } from '$lib/feature/top/graph/chart-types';
 
 export type ParseView =
 	| { status: 'idle' }
 	| { status: 'loading' }
-	| { status: 'success'; points: CsvPoint[] }
+	| { status: 'success'; dashboard: DashboardData }
 	| { status: 'error'; message: string };
 
 export type PickerView =
@@ -13,5 +13,7 @@ export type PickerView =
 	| { status: 'error'; message: string };
 
 export function toPickerView(view: ParseView): PickerView {
-	return view.status === 'success' ? { status: 'success', pointCount: view.points.length } : view;
+	return view.status === 'success'
+		? { status: 'success', pointCount: view.dashboard.pointCount }
+		: view;
 }
