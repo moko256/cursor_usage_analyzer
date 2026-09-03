@@ -28,6 +28,13 @@ export default defineConfig({
 				assets: `${siteProtocol}://${siteHost}`,
 				base: siteBase
 			},
+			csp: {
+				directives: {
+					'default-src': ['none'],
+					'worker-src': ['blob:', 'data:']
+				},
+				mode: 'hash'
+			},
 			output: {
 				bundleStrategy: 'inline'
 			}

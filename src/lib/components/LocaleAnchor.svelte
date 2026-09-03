@@ -18,9 +18,15 @@
 	);
 </script>
 
-<div data-sveltekit-reload style="display: none">
+<div data-sveltekit-reload class="locale-anchor">
 	{#each localesAndLinks as localeAndLink (localeAndLink.locale)}
 		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 		<a href={localeAndLink.link}>{localeAndLink.locale}</a>
 	{/each}
 </div>
+
+<style>
+	.locale-anchor {
+		display: none;
+	}
+</style>
