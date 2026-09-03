@@ -1,6 +1,6 @@
 <script>
-	import { page } from '$app/state';
 	import { m } from '$lib/paraglide/messages';
+	import { currentPageAbsoluteUrl } from '$lib/site-url-resolver';
 </script>
 
 <footer class="container">
@@ -12,7 +12,7 @@
 			</li>
 			<li>
 				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-				<a href={page.url.href} download="cursor_usage_analyzer.html"
+				<a href={currentPageAbsoluteUrl().toString()} download="cursor_usage_analyzer.html"
 					>{m.footer_download_link_title()}</a
 				>
 			</li>
