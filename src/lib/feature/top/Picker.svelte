@@ -1,22 +1,26 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import * as m from '$lib/paraglide/messages';
-
-	type ViewState = 'idle' | 'loading' | 'success' | 'error';
+	import type { PickerView } from './parse-view';
 
 	interface Props {
-		status: ViewState;
-		errorMessage: string;
-		pointCount: number;
+		view: PickerView;
 		onFileSelected: (file: File | undefined) => void;
 	}
 
-	let { status, errorMessage, pointCount, onFileSelected }: Props = $props();
-	let isDragging = $state(false);
+	let { view, onFileSelected }: Props = $props();
+	let fileInput: HTMLInputElement | undefined;
 	let dragDepth = $state(0);
+	let isDragging = $derived(dragDepth > 0);
+
+	function attachFileInput(node: HTMLInputElement) {
+		fileInput = node;
+		return () => {
+			fileInput = undefined;
+		};
+	}
 
 	function openFilePicker() {
-		if (browser) document.getElementById('csv-file-input')?.click();
+		fileInput?.click();
 	}
 
 	function handleFileInput(event: Event) {
@@ -29,25 +33,21 @@
 		event.preventDefault();
 		dragDepth += 1;
 		if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
-		isDragging = true;
 	}
 
 	function handleDragOver(event: DragEvent) {
 		event.preventDefault();
 		if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
-		isDragging = true;
 	}
 
 	function handleDragLeave(event: DragEvent) {
 		event.preventDefault();
 		dragDepth = Math.max(dragDepth - 1, 0);
-		if (dragDepth === 0) isDragging = false;
 	}
 
 	function handleDrop(event: DragEvent) {
 		event.preventDefault();
 		dragDepth = 0;
-		isDragging = false;
 		onFileSelected(event.dataTransfer?.files[0]);
 	}
 </script>
@@ -64,38 +64,31 @@
 
 	<button type="button" onclick={openFilePicker}>{m.select_file()}</button>
 	<input
-		id="csv-file-input"
+		{@attach attachFileInput}
 		class="file-input"
 		type="file"
 		accept=".csv,text/csv"
 		aria-label={m.csv_file_input_label()}
 		onchange={handleFileInput}
 	/>
-	{#if status === 'loading'}
+	{#if view.status === 'loading'}
 		<output class="picker-status" aria-live="polite">
 			<span>{m.parsing()}</span>
 			<progress aria-label={m.parsing_csv()}></progress>
 		</output>
-	{:else if status === 'error'}
+	{:else if view.status === 'error'}
 		<output class="picker-status" role="alert">
-			{errorMessage}
+			{view.message}
 		</output>
-	{:else if status === 'success'}
+	{:else if view.status === 'success'}
 		<output class="picker-status" aria-live="polite">
-			{m.csv_files_loaded({ count: pointCount })}
+			{m.csv_files_loaded({ count: view.pointCount })}
 		</output>
 	{/if}
 </section>
 
 {#if isDragging}
-	<aside
-		class="drop-overlay"
-		role="status"
-		aria-live="assertive"
-		ondragover={handleDragOver}
-		ondragleave={handleDragLeave}
-		ondrop={handleDrop}
-	>
+	<aside class="drop-overlay" role="status" aria-live="assertive">
 		<div class="drop-message">
 			<strong>{m.drop_here()}</strong>
 			<p>{m.load_csv()}</p>
@@ -122,6 +115,7 @@
 		place-items: center;
 		background: rgb(0 0 0 / 75%);
 		color: white;
+		pointer-events: none;
 	}
 
 	.drop-message {

@@ -76,6 +76,15 @@ test('トークン軸の目盛りラベルがSI接頭辞で丸められる', asy
 	expect(modelTokenLabels.some((label) => /^\d{4,}$/.test(label))).toBe(false);
 });
 
+test('コスト軸の目盛りラベルがドル付きで揃う', async ({ page }) => {
+	const cards = page.locator('.chart-card');
+	const dailyCostLabels = await cards.nth(1).locator('text.lc-axis-tick-label').allTextContents();
+	const modelCostLabels = await cards.nth(3).locator('text.lc-axis-tick-label').allTextContents();
+
+	expect(dailyCostLabels.some((label) => label.startsWith('$'))).toBe(true);
+	expect(modelCostLabels.some((label) => label.startsWith('$'))).toBe(true);
+});
+
 test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) => {
 	const group = page.locator('.graph-group');
 	const calendar = group.locator('.calendar-card');
