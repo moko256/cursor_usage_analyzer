@@ -74,6 +74,8 @@ export type RangeChartData = {
 	byDay: DailyValue[];
 	byHour: HourlyValue[];
 	byModelBreakdown: ModelBreakdownValue[];
+	totalCost: number;
+	totalTokens: number;
 };
 
 export type DashboardData = {

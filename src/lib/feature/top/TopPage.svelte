@@ -55,8 +55,8 @@
 
 	<section class="container" aria-label={m.dashboard_aria_label()}>
 		{#if dashboard && range}
-			<Usage totalCost={dashboard.totalCost} totalTokens={dashboard.totalTokens} />
 			<RangeSwitcher bind:days={rangeDays} />
+			<Usage totalCost={range.totalCost} totalTokens={range.totalTokens} />
 			<GraphGroup>
 				<DailyModelChart days={range.byDay} metric="tokens" />
 				<DailyModelChart days={range.byDay} metric="cost" />

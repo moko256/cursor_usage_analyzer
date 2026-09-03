@@ -22,7 +22,7 @@ describe('buildDashboardData', () => {
 		expect(Object.keys(dashboard.ranges)).toEqual(DAY_RANGES.map(String));
 	});
 
-	it('matches filter-then-group for each range', () => {
+	it('matches filter-then-group and filtered totals for each range', () => {
 		const dashboard = buildDashboardData(points);
 
 		for (const days of DAY_RANGES) {
@@ -31,9 +31,18 @@ describe('buildDashboardData', () => {
 			expect(dashboard.ranges[days]).toEqual({
 				byDay: groupByDay(filtered),
 				byHour: groupByHour(filtered),
-				byModelBreakdown: groupByModelBreakdown(filtered)
+				byModelBreakdown: groupByModelBreakdown(filtered),
+				totalCost: sumCost(filtered),
+				totalTokens: sumTokens(filtered)
 			});
 		}
+
+		expect(dashboard.ranges[1].totalCost).toBe(1);
+		expect(dashboard.ranges[1].totalTokens).toBe(100);
+		expect(dashboard.ranges[7].totalCost).toBe(3);
+		expect(dashboard.ranges[7].totalTokens).toBe(300);
+		expect(dashboard.ranges.all.totalCost).toBe(dashboard.totalCost);
+		expect(dashboard.ranges.all.totalTokens).toBe(dashboard.totalTokens);
 	});
 
 	it('uses the supplied unknown-model label', () => {
