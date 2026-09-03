@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { getChartImageBlob } from 'layerchart';
+	import { getChartImageBlob } from 'layerchart/utils/download';
 
 	interface Props {
 		title: string;

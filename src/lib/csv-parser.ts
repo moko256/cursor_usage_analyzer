@@ -12,7 +12,6 @@ export type CsvPoint = {
 	model: string;
 	cost: number | null;
 	tokens: number;
-	kind: 'amount' | 'included' | 'free' | 'empty';
 } & TokenBreakdown;
 
 export type CsvParseErrorCode =
@@ -122,16 +121,17 @@ function sortPointsByTimestamp(points: CsvPoint[], timestamps: number[]): CsvPoi
 	return order.map((index) => points[index]);
 }
 
-function parseCost(value: string | undefined): Pick<CsvPoint, 'cost' | 'kind'> | null {
+function parseCost(value: string | undefined): Pick<CsvPoint, 'cost'> | null {
 	const rawCost = value?.trim() ?? '';
-	if (rawCost === '') return { cost: null, kind: 'empty' };
+	if (rawCost === '') return { cost: null };
 
 	const normalized = rawCost.toLowerCase();
-	if (normalized === 'free' || normalized === '-') return { cost: null, kind: 'free' };
-	if (normalized === 'included') return { cost: null, kind: 'included' };
+	if (normalized === 'free' || normalized === '-' || normalized === 'included') {
+		return { cost: null };
+	}
 
 	const cost = Number(rawCost);
-	return Number.isFinite(cost) ? { cost, kind: 'amount' } : null;
+	return Number.isFinite(cost) ? { cost } : null;
 }
 
 function parseNonNegativeNumber(value: string | undefined) {
