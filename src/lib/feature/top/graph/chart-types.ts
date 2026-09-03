@@ -27,7 +27,7 @@ export type HourlyValue = {
 	tokens: number;
 };
 
-export const DAY_RANGES = [1, 7, 30, 'all'] as const;
+export const DAY_RANGES = [1, 7, 'all'] as const;
 
 export type DayRange = (typeof DAY_RANGES)[number];
 
