@@ -1,71 +1,42 @@
 <script lang="ts">
-	import { CsvParseError, parseCsvFile, type CsvPoint } from '$lib/csv-parser';
-	import DailyModelTokenChart from '$lib/feature/top/graph/DailyModelTokenChart.svelte';
-	import DailyModelCostChart from '$lib/feature/top/graph/DailyModelCostChart.svelte';
-	import CalendarGroup from '$lib/feature/top/graph/CalendarGroup.svelte';
+	import { parseCsvFile } from '$lib/csv-parser';
+	import { csvParseErrorMessage } from '$lib/csv-parse-error-message';
 	import CalendarTokenChart from '$lib/feature/top/graph/CalendarTokenChart.svelte';
-	import ChartCard from '$lib/feature/top/graph/ChartCard.svelte';
+	import DailyModelChart from '$lib/feature/top/graph/DailyModelChart.svelte';
 	import GraphGroup from '$lib/feature/top/graph/GraphGroup.svelte';
-	import ModelCostChart from '$lib/feature/top/graph/ModelCostChart.svelte';
-	import ModelTokenChart from '$lib/feature/top/graph/ModelTokenChart.svelte';
+	import HourlyTokenChart from '$lib/feature/top/graph/HourlyTokenChart.svelte';
+	import ModelBreakdownChart from '$lib/feature/top/graph/ModelBreakdownChart.svelte';
+	import RangeSwitcher from '$lib/feature/top/graph/RangeSwitcher.svelte';
+	import type { DayRange } from '$lib/feature/top/graph/chart-utils';
 	import Header from '$lib/feature/top/Header.svelte';
 	import * as m from '$lib/paraglide/messages';
+	import { toPickerView, type ParseView } from './parse-view';
 	import Footer from './Footer.svelte';
 	import Picker from './Picker.svelte';
 	import Usage from './Usage.svelte';
 	import PrivacyNotice from './PrivacyNotice.svelte';
 	import NoScript from '$lib/components/NoScript.svelte';
 
-	type ViewState = 'idle' | 'loading' | 'success' | 'error';
-
-	let points = $state<CsvPoint[]>([]);
-	let status = $state<ViewState>('idle');
-	let errorMessage = $state('');
+	let view = $state.raw<ParseView>({ status: 'idle' });
+	let rangeDays = $state<DayRange>('all');
+	let dashboard = $derived(view.status === 'success' ? view.dashboard : null);
+	let range = $derived(dashboard?.ranges[rangeDays]);
+	let pickerView = $derived(toPickerView(view));
 
 	async function processFile(file: File | undefined) {
-		if (!file || status === 'loading') return;
+		if (!file || view.status === 'loading') return;
 
 		if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
-			status = 'error';
-			errorMessage = m.invalid_file_type();
+			view = { status: 'error', message: m.invalid_file_type() };
 			return;
 		}
 
-		status = 'loading';
-		errorMessage = '';
-		points = [];
+		view = { status: 'loading' };
 
 		try {
-			points = await parseCsvFile(file);
-			status = 'success';
+			view = { status: 'success', dashboard: await parseCsvFile(file, m.unknown_model()) };
 		} catch (error) {
-			status = 'error';
-			errorMessage = getErrorMessage(error);
-		}
-	}
-
-	function getErrorMessage(error: unknown) {
-		if (!(error instanceof CsvParseError)) {
-			console.error(error);
-
-			return m.csv_read_failed();
-		}
-
-		switch (error.code) {
-			case 'empty':
-				return m.csv_empty();
-			case 'missing_columns':
-				return m.csv_missing_columns();
-			case 'no_valid_data':
-				return m.csv_no_valid_data();
-			case 'background_parsing_unavailable':
-				return m.background_parsing_unavailable();
-			case 'background_parsing_failed':
-				return m.background_parsing_failed();
-			case 'unclosed_quotes':
-				return m.csv_unclosed_quotes();
-			default:
-				return m.csv_parse_failed();
+			view = { status: 'error', message: csvParseErrorMessage(error) };
 		}
 	}
 </script>
@@ -80,23 +51,20 @@
 <main class="container">
 	<NoScript />
 
-	<Picker {status} {errorMessage} pointCount={points.length} onFileSelected={processFile} />
+	<Picker view={pickerView} onFileSelected={processFile} />
 
 	<section class="container" aria-label={m.dashboard_aria_label()}>
-		{#if status === 'success'}
-			<Usage {points} />
+		{#if dashboard && range}
+			<RangeSwitcher bind:days={rangeDays} />
+			<Usage totalCost={range.totalCost} totalTokens={range.totalTokens} />
 			<GraphGroup>
-				<DailyModelTokenChart {points} />
-				<DailyModelCostChart {points} />
-				<ModelTokenChart {points} />
-				<ModelCostChart {points} />
+				<DailyModelChart days={range.byDay} metric="tokens" />
+				<DailyModelChart days={range.byDay} metric="cost" />
+				<ModelBreakdownChart modelValues={range.byModelBreakdown} metric="tokens" />
+				<ModelBreakdownChart modelValues={range.byModelBreakdown} metric="cost" />
+				<CalendarTokenChart days={range.byDay} />
+				<HourlyTokenChart hours={range.byHour} />
 			</GraphGroup>
-			<CalendarGroup>
-				<CalendarTokenChart {points} />
-				<ChartCard title="" subtitle="" class="empty-card">
-					<div class="empty-chart" aria-hidden="true"></div>
-				</ChartCard>
-			</CalendarGroup>
 		{/if}
 	</section>
 
@@ -104,9 +72,3 @@
 </main>
 
 <Footer />
-
-<style>
-	.empty-chart {
-		min-height: 140px;
-	}
-</style>

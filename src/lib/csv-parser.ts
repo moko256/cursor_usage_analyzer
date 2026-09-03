@@ -1,4 +1,5 @@
 import CsvParserWorker from '$lib/csv-parser.worker?worker&inline';
+import type { DashboardData } from '$lib/feature/top/graph/chart-types';
 
 export type TokenBreakdown = {
 	inputWithCacheWrite: number;
@@ -12,7 +13,6 @@ export type CsvPoint = {
 	model: string;
 	cost: number | null;
 	tokens: number;
-	kind: 'amount' | 'included' | 'free' | 'empty';
 } & TokenBreakdown;
 
 export type CsvParseErrorCode =
@@ -31,9 +31,14 @@ export class CsvParseError extends Error {
 	}
 }
 
+export type WorkerRequest = {
+	file: Blob;
+	unknownModel: string;
+};
+
 type WorkerSuccess = {
 	type: 'success';
-	points: CsvPoint[];
+	dashboard: DashboardData;
 };
 
 type WorkerFailure = {
@@ -70,9 +75,13 @@ export function parseCsvText(text: string): CsvPoint[] {
 	}
 
 	const points: CsvPoint[] = [];
-	for (const record of records.slice(1)) {
+	const timestamps: number[] = [];
+	for (let rowIndex = 1; rowIndex < records.length; rowIndex += 1) {
+		const record = records[rowIndex];
 		const date = record[dateIndex]?.trim() ?? '';
-		if (!isIsoDateTime(date)) continue;
+		if (!isoDateTimePattern.test(date)) continue;
+		const timestamp = Date.parse(date);
+		if (!Number.isFinite(timestamp)) continue;
 
 		const model = record[modelIndex]?.trim() ?? '';
 		const tokens = parseTokens(record, tokenIndex, inputTokenIndex, outputTokenIndex);
@@ -83,14 +92,17 @@ export function parseCsvText(text: string): CsvPoint[] {
 			outputTokenIndex
 		});
 		const parsedCost = parseCost(record[costIndex]);
-		if (parsedCost !== null) points.push({ date, model, tokens, ...tokenBreakdown, ...parsedCost });
+		if (parsedCost !== null) {
+			points.push({ date, model, tokens, ...tokenBreakdown, ...parsedCost });
+			timestamps.push(timestamp);
+		}
 	}
 
 	if (points.length === 0) {
 		throw new CsvParseError('no_valid_data');
 	}
 
-	return points.toSorted((left, right) => Date.parse(left.date) - Date.parse(right.date));
+	return sortPointsByTimestamp(points, timestamps);
 }
 
 function normalizeHeader(value: string) {
@@ -102,19 +114,30 @@ function normalizeHeader(value: string) {
 }
 
 function findHeaderIndex(headers: string[], names: string[]) {
-	return names.map((name) => headers.indexOf(name)).find((index) => index !== -1) ?? -1;
+	for (const name of names) {
+		const index = headers.indexOf(name);
+		if (index !== -1) return index;
+	}
+	return -1;
 }
 
-function parseCost(value: string | undefined): Pick<CsvPoint, 'cost' | 'kind'> | null {
+function sortPointsByTimestamp(points: CsvPoint[], timestamps: number[]): CsvPoint[] {
+	const order = timestamps.map((_, index) => index);
+	order.sort((left, right) => timestamps[left] - timestamps[right]);
+	return order.map((index) => points[index]);
+}
+
+function parseCost(value: string | undefined): Pick<CsvPoint, 'cost'> | null {
 	const rawCost = value?.trim() ?? '';
-	if (rawCost === '') return { cost: null, kind: 'empty' };
+	if (rawCost === '') return { cost: null };
 
 	const normalized = rawCost.toLowerCase();
-	if (normalized === 'free') return { cost: null, kind: 'free' };
-	if (normalized === 'included') return { cost: null, kind: 'included' };
+	if (normalized === 'free' || normalized === '-' || normalized === 'included') {
+		return { cost: null };
+	}
 
 	const cost = Number(rawCost);
-	return Number.isFinite(cost) ? { cost, kind: 'amount' } : null;
+	return Number.isFinite(cost) ? { cost } : null;
 }
 
 function parseNonNegativeNumber(value: string | undefined) {
@@ -158,10 +181,10 @@ function parseOptionalColumn(record: string[], index: number) {
 }
 
 /**
- * Sends the file to a dedicated worker. The worker reads and parses the file,
- * returning only the Date, Model, Cost, and Total Tokens fields needed by the dashboard.
+ * Sends the file to a dedicated worker. The worker parses rows and groups them
+ * there, then posts back only the compact dashboard payload.
  */
-export function parseCsvFile(file: Blob): Promise<CsvPoint[]> {
+export function parseCsvFile(file: Blob, unknownModel: string): Promise<DashboardData> {
 	return new Promise((resolve, reject) => {
 		if (typeof Worker === 'undefined') {
 			reject(new CsvParseError('background_parsing_unavailable'));
@@ -174,7 +197,7 @@ export function parseCsvFile(file: Blob): Promise<CsvPoint[]> {
 		worker.onmessage = (event: MessageEvent<WorkerSuccess | WorkerFailure>) => {
 			finish();
 			if (event.data.type === 'success') {
-				resolve(event.data.points);
+				resolve(event.data.dashboard);
 			} else {
 				reject(new CsvParseError(event.data.code));
 			}
@@ -183,52 +206,89 @@ export function parseCsvFile(file: Blob): Promise<CsvPoint[]> {
 			finish();
 			reject(new CsvParseError('background_parsing_failed'));
 		};
-		worker.postMessage(file);
+		const request: WorkerRequest = { file, unknownModel };
+		worker.postMessage(request);
 	});
 }
 
-function isIsoDateTime(value: string) {
-	return isoDateTimePattern.test(value) && Number.isFinite(Date.parse(value));
-}
-
+/**
+ * Parses CSV records with the same quoting rules as before, but quoted fields are
+ * scanned with `indexOf` and unquoted fields are copied with `slice`. Concatenating
+ * one character at a time was the dominant cost on Cursor usage exports, which quote
+ * every cell.
+ */
 function parseRecords(text: string): string[][] {
 	const records: string[][] = [];
+	const length = text.length;
 	let record: string[] = [];
+	let start = 0;
 	let field = '';
+	let hasChunks = false;
 	let insideQuotes = false;
 
-	const pushField = () => {
-		record.push(field);
+	const pushField = (end: number) => {
+		const chunk = text.slice(start, end);
+		record.push(hasChunks ? field + chunk : chunk);
 		field = '';
+		hasChunks = false;
+		start = end + 1;
 	};
-	const pushRecord = () => {
-		pushField();
+	const pushRecord = (end: number) => {
+		pushField(end);
 		if (record.some((value) => value.trim() !== '')) records.push(record);
 		record = [];
 	};
 
-	for (let index = 0; index < text.length; index += 1) {
-		const character = text[index];
-
-		if (character === '"') {
-			if (insideQuotes && text[index + 1] === '"') {
-				field += '"';
-				index += 1;
-			} else {
-				insideQuotes = !insideQuotes;
+	let index = 0;
+	while (index < length) {
+		if (insideQuotes) {
+			const quoteIndex = text.indexOf('"', index);
+			if (quoteIndex === -1) throw new CsvParseError('unclosed_quotes');
+			if (text[quoteIndex + 1] === '"') {
+				field += `${text.slice(start, quoteIndex)}"`;
+				hasChunks = true;
+				index = quoteIndex + 2;
+				start = index;
+				continue;
 			}
-		} else if (character === ',' && !insideQuotes) {
-			pushField();
-		} else if ((character === '\n' || character === '\r') && !insideQuotes) {
-			pushRecord();
-			if (character === '\r' && text[index + 1] === '\n') index += 1;
-		} else {
-			field += character;
+
+			field += text.slice(start, quoteIndex);
+			hasChunks = true;
+			insideQuotes = false;
+			index = quoteIndex + 1;
+			start = index;
+			continue;
 		}
+
+		const character = text[index];
+		if (character === '"') {
+			if (index > start || hasChunks) {
+				field += text.slice(start, index);
+				hasChunks = true;
+			}
+			insideQuotes = true;
+			index += 1;
+			start = index;
+			continue;
+		}
+		if (character === ',') {
+			pushField(index);
+			index += 1;
+			continue;
+		}
+		if (character === '\n' || character === '\r') {
+			pushRecord(index);
+			if (character === '\r' && text[index + 1] === '\n') index += 1;
+			index += 1;
+			start = index;
+			continue;
+		}
+
+		index += 1;
 	}
 
 	if (insideQuotes) throw new CsvParseError('unclosed_quotes');
-	if (field !== '' || record.length > 0) pushRecord();
+	if (start < length || record.length > 0 || hasChunks) pushRecord(length);
 
 	return records;
 }

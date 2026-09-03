@@ -6,6 +6,14 @@ import inlangSettings from './project.inlang/settings.json' with { type: 'json' 
 import { siteBase, siteHost, siteProtocol } from './site-url.ts';
 
 export default defineConfig({
+	css: {
+		preprocessorOptions: {
+			scss: {
+				// Pico still parses disabled modules; their Sass `if()` calls warn on modern Sass.
+				quietDeps: true
+			}
+		}
+	},
 	plugins: [
 		sveltekit({
 			compilerOptions: {

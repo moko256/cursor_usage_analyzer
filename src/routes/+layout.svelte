@@ -21,5 +21,5 @@
 
 <style>
 	@import 'kiso.css';
-	@import '@picocss/pico/css/pico.blue.min.css';
+	@import '$lib/styles/pico.scss';
 </style>

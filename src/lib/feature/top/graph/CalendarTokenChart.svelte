@@ -1,16 +1,15 @@
 <script lang="ts">
-	import type { CsvPoint } from '$lib/csv-parser';
 	import * as m from '$lib/paraglide/messages';
 	import { scaleThreshold } from 'd3-scale';
-	import { Calendar, Chart, Layer, Rect, Tooltip } from 'layerchart';
-	import { buildTokenCalendar, groupByDay } from './chart-utils';
+	import { Calendar, Chart, Layer, Rect, Tooltip } from 'layerchart/svg';
+	import { buildTokenCalendar, type DailyValue } from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
 
 	interface Props {
-		points: CsvPoint[];
+		days: DailyValue[];
 	}
 
-	let { points }: Props = $props();
+	let { days }: Props = $props();
 	const compactNumber = new Intl.NumberFormat('en-US', {
 		notation: 'compact',
 		maximumFractionDigits: 1
@@ -24,7 +23,7 @@
 		'var(--pico-primary)'
 	] as const;
 	const tokenScale = scaleThreshold<number, string>().unknown('transparent');
-	let calendar = $derived(buildTokenCalendar(groupByDay(points)));
+	let calendar = $derived(buildTokenCalendar(days));
 </script>
 
 <ChartCard title="" subtitle="" class="calendar-card">

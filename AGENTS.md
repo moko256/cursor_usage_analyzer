@@ -30,3 +30,7 @@
 - For Svelte/SvelteKit work, if available, list documentation sections first and fetch all relevant sections before implementing.
 - After editing Svelte code, run the autofixer until it reports no issues.
 - Generate a Playground link only after user confirmation, and never for code written to this repository.
+
+## Cursor Cloud specific instructions
+
+- Read `.cursor/skills/playwright-recording/SKILL.md` for browser walkthrough recording guidance.

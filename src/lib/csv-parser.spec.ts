@@ -1,15 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { csvPoint } from './csv-point.fixture';
 import { parseCsvText } from './csv-parser';
 
 const newCsvHeader =
 	'Date,Cloud Agent ID,Automation ID,Kind,Model,Max Mode,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost';
-
-const noBreakdown = {
-	inputWithCacheWrite: 0,
-	inputWithoutCacheWrite: 0,
-	cacheRead: 0,
-	outputTokens: 0
-};
 
 describe('parseCsvText', () => {
 	it('extracts Total Tokens and Cost from the Cursor usage CSV', () => {
@@ -27,77 +21,66 @@ describe('parseCsvText', () => {
 		);
 
 		expect(points).toEqual([
-			{
+			csvPoint({
 				date: '2026-08-28T15:00:00.000Z',
 				model: 'gpt-5.6-luna-high',
 				cost: null,
 				tokens: 50,
-				kind: 'empty',
 				inputWithCacheWrite: 1,
 				inputWithoutCacheWrite: 2,
 				cacheRead: 3,
 				outputTokens: 4
-			},
-			{
+			}),
+			csvPoint({
 				date: '2026-08-28T16:00:00.000Z',
 				model: 'gpt-5.6-luna-high',
 				cost: 12.34,
 				tokens: 100,
-				kind: 'amount',
 				inputWithCacheWrite: 1,
 				inputWithoutCacheWrite: 2,
 				cacheRead: 3,
 				outputTokens: 4
-			},
-			{
+			}),
+			csvPoint({
 				date: '2026-08-28T16:38:08.403Z',
 				model: 'gpt-5.6-luna-high',
 				cost: null,
 				tokens: 2379495,
-				kind: 'included',
 				inputWithCacheWrite: 81777,
 				inputWithoutCacheWrite: 114,
 				cacheRead: 2278964,
 				outputTokens: 18640
-			},
-			{
+			}),
+			csvPoint({
 				date: '2026-08-28T17:41:33.344Z',
 				model: 'cursor-grok-4.6-high',
-				cost: null,
-				tokens: 0,
-				kind: 'free',
-				...noBreakdown
-			},
-			{
+				cost: null
+			}),
+			csvPoint({
 				date: '2026-08-28T17:41:46.434Z',
 				model: 'gpt-5.6-luna-high',
 				cost: null,
 				tokens: 4389984,
-				kind: 'included',
 				inputWithCacheWrite: 231243,
 				inputWithoutCacheWrite: 639,
 				cacheRead: 4130263,
 				outputTokens: 27839
-			},
-			{
+			}),
+			csvPoint({
 				date: '2026-08-28T17:48:02.229Z',
 				model: 'cursor-grok-4.6-high',
-				cost: null,
-				tokens: 0,
-				kind: 'free',
-				...noBreakdown
-			},
-			{
+				cost: null
+			}),
+			csvPoint({
 				date: '2026-08-28T17:49:12.795Z',
 				model: 'gpt-5.6-luna-high',
 				cost: null,
 				tokens: 1589273,
-				kind: 'included',
 				inputWithCacheWrite: 120957,
 				inputWithoutCacheWrite: 611,
 				cacheRead: 1452080,
 				outputTokens: 15625
-			}
+			})
 		]);
 	});
 
@@ -121,16 +104,7 @@ describe('parseCsvText', () => {
 	it('uses 0 tokens when Total Tokens is missing', () => {
 		const points = parseCsvText('Date,Cost,Model\n2026-08-28T17:00:00.000Z,1.5,alpha');
 
-		expect(points).toEqual([
-			{
-				date: '2026-08-28T17:00:00.000Z',
-				model: 'alpha',
-				cost: 1.5,
-				tokens: 0,
-				kind: 'amount',
-				...noBreakdown
-			}
-		]);
+		expect(points).toEqual([csvPoint({ date: '2026-08-28T17:00:00.000Z', cost: 1.5 })]);
 	});
 
 	it('supports quoted commas, escaped quotes, and a BOM', () => {
@@ -138,16 +112,7 @@ describe('parseCsvText', () => {
 			'\uFEFFDate,Cost,Model,Total Tokens,Note\r\n"2026-03-01T10:00:00Z","10","alpha","42","say ""hello, world"""\r\n'
 		);
 
-		expect(points).toEqual([
-			{
-				date: '2026-03-01T10:00:00Z',
-				model: 'alpha',
-				cost: 10,
-				tokens: 42,
-				kind: 'amount',
-				...noBreakdown
-			}
-		]);
+		expect(points).toEqual([csvPoint({ date: '2026-03-01T10:00:00Z', cost: 10, tokens: 42 })]);
 	});
 
 	it('ignores rows with invalid dates or costs', () => {
@@ -156,19 +121,14 @@ describe('parseCsvText', () => {
 				'Date,Cost,Model,Total Tokens',
 				'not-a-date,5,alpha,10',
 				'2026-04-01T10:00:00Z,not-a-number,alpha,10',
-				'2026-04-02T10:00:00Z,Free,alpha,10'
+				'2026-04-02T10:00:00Z,Free,alpha,10',
+				'2026-04-03T10:00:00Z,-,alpha,10'
 			].join('\n')
 		);
 
 		expect(points).toEqual([
-			{
-				date: '2026-04-02T10:00:00Z',
-				model: 'alpha',
-				cost: null,
-				tokens: 10,
-				kind: 'free',
-				...noBreakdown
-			}
+			csvPoint({ date: '2026-04-02T10:00:00Z', cost: null, tokens: 10 }),
+			csvPoint({ date: '2026-04-03T10:00:00Z', cost: null, tokens: 10 })
 		]);
 	});
 
@@ -190,5 +150,33 @@ describe('parseCsvText', () => {
 			cacheRead: 0,
 			outputTokens: 8
 		});
+	});
+
+	it('keeps quoted field content when quotes appear inside an unquoted value', () => {
+		const points = parseCsvText('Date,Cost,Model\n2026-08-28T17:00:00.000Z,1.5,"al"pha');
+
+		expect(points[0]?.model).toBe('alpha');
+	});
+
+	it('parses a trailing comma without dropping the row', () => {
+		const points = parseCsvText('Date,Cost,Model,\n2026-08-28T17:00:00.000Z,1.5,alpha,\n');
+
+		expect(points).toHaveLength(1);
+		expect(points[0]).toMatchObject({
+			date: '2026-08-28T17:00:00.000Z',
+			model: 'alpha',
+			cost: 1.5
+		});
+	});
+
+	it('throws when a quoted field is left open', () => {
+		expect(() => parseCsvText('Date,Cost,Model\n"2026-08-28T17:00:00.000Z,1.5,alpha')).toThrow(
+			'unclosed_quotes'
+		);
+	});
+
+	it('throws when the file has no records', () => {
+		expect(() => parseCsvText('')).toThrow('empty');
+		expect(() => parseCsvText('\n\n')).toThrow('empty');
 	});
 });

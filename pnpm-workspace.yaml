@@ -1,2 +1,9 @@
+allowBuilds:
+  '@parcel/watcher': false
+ignoredOptionalDependencies:
+  - '@parcel/watcher'
+  - sass
+  - sass-embedded-all-unknown
+  - sass-embedded-unknown-all
 onlyBuiltDependencies:
   - esbuild

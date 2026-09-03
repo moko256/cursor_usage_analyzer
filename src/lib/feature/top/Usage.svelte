@@ -1,16 +1,27 @@
 <script lang="ts">
-	import type { CsvPoint } from '$lib/csv-parser';
-	import { sumCost } from '$lib/feature/top/graph/chart-utils';
 	import * as m from '$lib/paraglide/messages';
 
 	interface Props {
-		points: CsvPoint[];
+		totalCost: number;
+		totalTokens: number;
 	}
 
-	let { points }: Props = $props();
-	let total = $derived(sumCost(points));
+	let { totalCost, totalTokens }: Props = $props();
 </script>
 
-<section>
-	<strong>{m.on_demand_usage({ value: `$${total.toFixed(1)}` })}</strong>
+<section aria-live="polite">
+	<strong>{m.on_demand_usage({ value: `$${totalCost.toFixed(1)}` })}</strong>
+	<strong class="total-tokens"
+		>{m.total_tokens({ value: totalTokens.toLocaleString('en-US') })}</strong
+	>
 </section>
+
+<style>
+	section {
+		margin-block-start: var(--pico-spacing);
+	}
+
+	.total-tokens {
+		margin-inline-start: 1rem;
+	}
+</style>
