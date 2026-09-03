@@ -34,7 +34,7 @@ export function computeTokenBreakdownErrors(
 
 export function groupByModelBreakdown(
 	points: CsvPoint[],
-	unknownModel = m.unknown_model()
+	unknownModel: string = m.unknown_model()
 ): ModelBreakdownValue[] {
 	const byModel = new Map<string, { cost: number; tokens: number } & typeof emptyBreakdown>();
 

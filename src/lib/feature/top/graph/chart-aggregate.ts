@@ -44,7 +44,10 @@ function resolveRangeEndDay(points: CsvPoint[], now?: Date): string | null {
 	return Number.isFinite(latest) ? new Date(latest).toISOString().slice(0, 10) : null;
 }
 
-export function groupByDay(points: CsvPoint[], unknownModel = m.unknown_model()): DailyValue[] {
+export function groupByDay(
+	points: CsvPoint[],
+	unknownModel: string = m.unknown_model()
+): DailyValue[] {
 	const byDay = new Map<
 		string,
 		{ cost: number; tokens: number; models: Map<string, DailyModelValue> }
