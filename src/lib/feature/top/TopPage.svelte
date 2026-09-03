@@ -18,7 +18,7 @@
 	import NoScript from '$lib/components/NoScript.svelte';
 
 	let view = $state.raw<ParseView>({ status: 'idle' });
-	let rangeDays = $state<DayRange>(30);
+	let rangeDays = $state<DayRange>('all');
 	let points = $derived(view.status === 'success' ? view.points : []);
 	let chartPoints = $derived(filterPointsByDays(points, rangeDays));
 	let pickerView = $derived(toPickerView(view));
