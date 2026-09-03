@@ -37,6 +37,8 @@ function buildRangeChartData(
 	return {
 		byDay: groupByDay(filtered, unknownModel),
 		byHour: groupByHour(filtered),
-		byModelBreakdown: groupByModelBreakdown(filtered, unknownModel)
+		byModelBreakdown: groupByModelBreakdown(filtered, unknownModel),
+		totalCost: sumCost(filtered),
+		totalTokens: sumTokens(filtered)
 	};
 }
