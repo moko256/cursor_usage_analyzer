@@ -1,4 +1,5 @@
 <script>
+	import { page } from '$app/state';
 	import { m } from '$lib/paraglide/messages';
 </script>
 
@@ -10,7 +11,10 @@
 				>
 			</li>
 			<li>
-				<a href="." download="cursor_usage_analyzer.html">{m.footer_download_link_title()}</a>
+				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+				<a href={page.url.href} download="cursor_usage_analyzer.html"
+					>{m.footer_download_link_title()}</a
+				>
 			</li>
 		</ul>
 	</nav>
