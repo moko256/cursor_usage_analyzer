@@ -19,7 +19,7 @@
 </script>
 
 <div data-sveltekit-reload style="display: none">
-	{#each localesAndLinks as localeAndLink}
+	{#each localesAndLinks as localeAndLink (localeAndLink.locale)}
 		<a href={localeAndLink.link}>{localeAndLink.locale}</a>
 	{/each}
 </div>
