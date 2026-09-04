@@ -31,7 +31,12 @@ export default defineConfig({
 			csp: {
 				directives: {
 					'default-src': ['none'],
-					'worker-src': ['blob:', 'data:']
+					// `self` covers Vite's dev modules, HMR, and workers. `data:`/`blob:` cover
+					// the inline favicon and LayerChart's SVG-to-canvas copy path.
+					'script-src': ['self'],
+					'connect-src': ['self'],
+					'img-src': ['self', 'data:', 'blob:'],
+					'worker-src': ['self', 'blob:', 'data:']
 				},
 				mode: 'hash'
 			},
