@@ -14,6 +14,11 @@ export default defineConfig({
 	webServer: {
 		command: 'pnpm dev --host 127.0.0.1 --port 4173',
 		url: 'http://127.0.0.1:4173',
-		reuseExistingServer: !process.env.CI
+		reuseExistingServer: !process.env.CI,
+		env: {
+			...process.env,
+			// Relaxes CSP for Vite's dev modules; production builds keep default-src none.
+			E2E: '1'
+		}
 	}
 });
