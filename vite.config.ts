@@ -7,12 +7,16 @@ import { siteBase, siteHost, siteProtocol } from './site-url.ts';
 
 export default defineConfig({
 	css: {
+		transformer: 'lightningcss',
 		preprocessorOptions: {
 			scss: {
 				// Pico still parses disabled modules; their Sass `if()` calls warn on modern Sass.
 				quietDeps: true
 			}
 		}
+	},
+	build: {
+		cssMinify: 'lightningcss'
 	},
 	plugins: [
 		sveltekit({

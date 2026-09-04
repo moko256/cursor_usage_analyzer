@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { transform } from 'lightningcss';
 import { compile } from 'sass-embedded';
 import { describe, expect, it } from 'vitest';
 
@@ -43,5 +44,23 @@ describe('custom Pico stylesheet', () => {
 		expect(css).not.toContain('[role=switch]');
 		expect(css).not.toContain('--pico-icon-loading');
 		expect(css).not.toMatch(/(^|[^\w-])\.grid\{/);
+	});
+
+	it('survives a Lightning CSS transform', () => {
+		const { code } = transform({
+			filename: 'pico.css',
+			code: Buffer.from(css),
+			minify: true
+		});
+		const minified = code.toString();
+
+		expect(minified.length).toBeGreaterThan(0);
+		expect(minified).toContain('.container');
+		expect(minified).toContain('[role=group]');
+		expect(minified).toContain('article{');
+		expect(minified).toContain('progress{');
+		expect(minified).toContain('button{');
+		expect(minified).not.toContain('[data-tooltip]');
+		expect(minified).not.toContain('--pico-icon-loading');
 	});
 });
