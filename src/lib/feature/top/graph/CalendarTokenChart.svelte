@@ -10,6 +10,7 @@
 		type DailyValue
 	} from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
+	import { chartTooltipRootProps } from './chart-tooltip';
 
 	interface Props {
 		days: DailyValue[];
@@ -59,7 +60,7 @@
 				</Calendar>
 			</Layer>
 
-			<Tooltip.Root>
+			<Tooltip.Root contained="window" props={{ root: chartTooltipRootProps }}>
 				{#snippet children({ data })}
 					<Tooltip.Header value={data.date} format="day" />
 					<Tooltip.List>
