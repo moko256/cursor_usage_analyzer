@@ -22,13 +22,7 @@
 	}
 
 	let { days, metric, modelIndices }: Props = $props();
-	let dayValues = $derived(
-		days.map((day) => ({
-			...day,
-			label: formatDay(day.day)
-		}))
-	);
-	let models = $derived(modelsFromDays(dayValues));
+	let models = $derived(modelsFromDays(days));
 	let series = $derived(buildDailyModelSeries(models, metric, modelIndices));
 	let title = $derived(
 		metric === 'tokens' ? m.tokens_per_day_heading() : m.models_per_day_heading()
@@ -40,11 +34,11 @@
 		metric === 'tokens'
 			? m.daily_model_token_chart_aria({
 					modelCount: models.length,
-					dayCount: dayValues.length
+					dayCount: days.length
 				})
 			: m.daily_model_cost_chart_aria({
 					modelCount: models.length,
-					dayCount: dayValues.length
+					dayCount: days.length
 				})
 	);
 	let tooltipTitle = $derived(
@@ -52,32 +46,33 @@
 	);
 </script>
 
-<ChartCard {title} {subtitle}>
-	<div role="img" aria-label={ariaLabel}>
-		<BarChart
-			data={dayValues}
-			x="label"
-			{series}
-			seriesLayout="stack"
-			padding={verticalChartPadding}
-			height={verticalChartHeight}
-			props={{ yAxis: { format: (value) => formatChartAxis(value, metric) } }}
-		>
-			{#snippet tooltip()}
-				<Tooltip.Root>
-					{#snippet children({ data })}
-						{#each data.models as model (model.model)}
-							<Tooltip.Header>
-								{tooltipTitle({
-									date: formatDay(data.day),
-									model: model.model,
-									value: formatChartValue(model[metric], metric)
-								})}
-							</Tooltip.Header>
-						{/each}
-					{/snippet}
-				</Tooltip.Root>
-			{/snippet}
-		</BarChart>
-	</div>
+<ChartCard {title} {subtitle} {ariaLabel}>
+	<BarChart
+		data={days}
+		x="day"
+		{series}
+		seriesLayout="stack"
+		padding={verticalChartPadding}
+		height={verticalChartHeight}
+		props={{
+			xAxis: { format: formatDay },
+			yAxis: { format: (value) => formatChartAxis(value, metric) }
+		}}
+	>
+		{#snippet tooltip()}
+			<Tooltip.Root>
+				{#snippet children({ data })}
+					{#each data.models as model (model.model)}
+						<Tooltip.Header>
+							{tooltipTitle({
+								date: formatDay(data.day),
+								model: model.model,
+								value: formatChartValue(model[metric], metric)
+							})}
+						</Tooltip.Header>
+					{/each}
+				{/snippet}
+			</Tooltip.Root>
+		{/snippet}
+	</BarChart>
 </ChartCard>

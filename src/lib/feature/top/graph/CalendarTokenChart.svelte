@@ -2,7 +2,7 @@
 	import * as m from '$lib/paraglide/messages';
 	import { scaleThreshold } from 'd3-scale';
 	import { Calendar, Chart, Layer, Rect, Tooltip } from 'layerchart/svg';
-	import { buildTokenCalendar, type DailyValue } from './chart-utils';
+	import { buildTokenCalendar, compactNumberFormat, type DailyValue } from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
 
 	interface Props {
@@ -10,10 +10,7 @@
 	}
 
 	let { days }: Props = $props();
-	const compactNumber = new Intl.NumberFormat('en-US', {
-		notation: 'compact',
-		maximumFractionDigits: 1
-	});
+	const cellPadding = 1;
 	const tokenThresholds = [1, 10_000, 50_000, 100_000];
 	const tokenColors = [
 		'color-mix(in srgb, var(--pico-muted-color) 18%, var(--pico-background-color))',
@@ -26,54 +23,54 @@
 	let calendar = $derived(buildTokenCalendar(days));
 </script>
 
-<ChartCard title="" subtitle="" class="calendar-card">
-	<div role="img" aria-label={m.token_calendar_chart_aria({ dayCount: calendar.data.length })}>
-		<Chart
-			data={calendar.data}
-			x="date"
-			c="tokens"
-			cScale={tokenScale}
-			cDomain={tokenThresholds}
-			cRange={tokenColors}
-			axis={false}
-			tooltipContext
-			padding={{ top: 20 }}
-			height={140}
-		>
-			{#snippet children({ context })}
-				<Layer>
-					<Calendar start={calendar.range.start} end={calendar.range.end}>
-						{#snippet children({ cells, cellSize })}
-							{#each cells as cell (cell.data.day)}
-								{@const padding = 1}
-								<Rect
-									x={cell.x + padding}
-									y={cell.y + padding}
-									width={cellSize[0] - padding * 2}
-									height={cellSize[1] - padding * 2}
-									rx={4}
-									fill={cell.color ?? 'rgb(0 0 0 / 5%)'}
-									onpointermove={(event) => context.tooltip?.show(event, cell.data)}
-									onpointerleave={() => context.tooltip?.hide()}
-								/>
-							{/each}
-						{/snippet}
-					</Calendar>
-				</Layer>
-
-				<Tooltip.Root>
-					{#snippet children({ data })}
-						<Tooltip.Header value={data.date} format="day" />
-						<Tooltip.List>
-							<Tooltip.Item
-								label="tokens"
-								value={compactNumber.format(data.tokens)}
-								valueAlign="right"
+<ChartCard
+	ariaLabel={m.token_calendar_chart_aria({ dayCount: calendar.data.length })}
+	class="calendar-card"
+>
+	<Chart
+		data={calendar.data}
+		x="date"
+		c="tokens"
+		cScale={tokenScale}
+		cDomain={tokenThresholds}
+		cRange={tokenColors}
+		axis={false}
+		tooltipContext
+		padding={{ top: 20 }}
+		height={140}
+	>
+		{#snippet children({ context })}
+			<Layer>
+				<Calendar start={calendar.range.start} end={calendar.range.end}>
+					{#snippet children({ cells, cellSize })}
+						{#each cells as cell (cell.data.day)}
+							<Rect
+								x={cell.x + cellPadding}
+								y={cell.y + cellPadding}
+								width={cellSize[0] - cellPadding * 2}
+								height={cellSize[1] - cellPadding * 2}
+								rx={4}
+								fill={cell.color ?? 'rgb(0 0 0 / 5%)'}
+								onpointermove={(event) => context.tooltip?.show(event, cell.data)}
+								onpointerleave={() => context.tooltip?.hide()}
 							/>
-						</Tooltip.List>
+						{/each}
 					{/snippet}
-				</Tooltip.Root>
-			{/snippet}
-		</Chart>
-	</div>
+				</Calendar>
+			</Layer>
+
+			<Tooltip.Root>
+				{#snippet children({ data })}
+					<Tooltip.Header value={data.date} format="day" />
+					<Tooltip.List>
+						<Tooltip.Item
+							label="tokens"
+							value={compactNumberFormat.format(data.tokens)}
+							valueAlign="right"
+						/>
+					</Tooltip.List>
+				{/snippet}
+			</Tooltip.Root>
+		{/snippet}
+	</Chart>
 </ChartCard>

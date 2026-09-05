@@ -3,14 +3,22 @@
 	import { getChartImageBlob } from 'layerchart/utils/download';
 
 	interface Props {
-		title: string;
-		subtitle: string;
+		title?: string;
+		subtitle?: string;
+		ariaLabel: string;
 		children: Snippet;
 		class?: string;
 	}
 
-	let { title, subtitle, children, class: className = '' }: Props = $props();
-	let chartRef = $state<HTMLElement>();
+	let { title, subtitle, ariaLabel, children, class: className = '' }: Props = $props();
+	let chartRef: HTMLElement | undefined;
+
+	function attachChart(node: HTMLElement) {
+		chartRef = node;
+		return () => {
+			if (chartRef === node) chartRef = undefined;
+		};
+	}
 
 	async function copyChartImage() {
 		if (!chartRef) return;
@@ -26,14 +34,13 @@
 <article class={['chart-card', className]}>
 	<figure>
 		<figcaption>
-			<div>
-				<strong>{title}</strong>
-				<br />
-				<span>{subtitle}</span>
+			<div class="caption-text">
+				{#if title}<strong>{title}</strong>{/if}
+				{#if subtitle}<span>{subtitle}</span>{/if}
 			</div>
 			<button type="button" onclick={copyChartImage} class="outline secondary">Copy</button>
 		</figcaption>
-		<div bind:this={chartRef}>
+		<div {@attach attachChart} role="img" aria-label={ariaLabel}>
 			{@render children()}
 		</div>
 	</figure>
@@ -53,6 +60,11 @@
 	figcaption {
 		display: flex;
 		align-items: baseline;
+	}
+
+	.caption-text {
+		display: flex;
+		flex-direction: column;
 	}
 
 	figcaption button {

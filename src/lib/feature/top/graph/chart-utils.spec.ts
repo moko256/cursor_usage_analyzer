@@ -206,6 +206,23 @@ describe('buildDailyModelSeries', () => {
 		expect(gammaOnly[0]?.color).toBe(allSeries[2]?.color);
 		expect(gammaOnly[0]?.color).not.toBe(getDailyModelColors(0, 1));
 	});
+
+	it('looks up each model on a day without scanning the models array', () => {
+		const series = buildDailyModelSeries(['alpha', 'gamma'], 'tokens', modelIndices);
+		const day = {
+			day: '2026-08-28',
+			cost: 3,
+			tokens: 30,
+			models: [
+				{ model: 'alpha', cost: 1, tokens: 10 },
+				{ model: 'beta', cost: 1, tokens: 5 },
+				{ model: 'gamma', cost: 1, tokens: 15 }
+			]
+		};
+
+		expect(series[0]?.value(day)).toBe(10);
+		expect(series[1]?.value(day)).toBe(15);
+	});
 });
 
 describe('buildModelBreakdownSeries', () => {

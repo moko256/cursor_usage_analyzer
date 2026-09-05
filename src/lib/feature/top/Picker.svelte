@@ -59,8 +59,8 @@
 	ondrop={handleDrop}
 />
 
-<section class="picker" aria-labelledby="picker-description">
-	<p class="picker-description">{m.csv_picker_description()}</p>
+<section aria-labelledby="picker-description">
+	<p id="picker-description">{m.csv_picker_description()}</p>
 
 	<button type="button" onclick={openFilePicker}>{m.select_file()}</button>
 	<input
@@ -71,18 +71,19 @@
 		aria-label={m.csv_file_input_label()}
 		onchange={handleFileInput}
 	/>
-	{#if view.status === 'loading'}
-		<output class="picker-status" aria-live="polite">
-			<span>{m.parsing()}</span>
-			<progress aria-label={m.parsing_csv()}></progress>
-		</output>
-	{:else if view.status === 'error'}
-		<output class="picker-status" role="alert">
-			{view.message}
-		</output>
-	{:else if view.status === 'success'}
-		<output class="picker-status" aria-live="polite">
-			{m.csv_files_loaded({ count: view.pointCount })}
+	{#if view.status !== 'idle'}
+		<output
+			aria-live={view.status === 'error' ? 'assertive' : 'polite'}
+			role={view.status === 'error' ? 'alert' : undefined}
+		>
+			{#if view.status === 'loading'}
+				<span>{m.parsing()}</span>
+				<progress aria-label={m.parsing_csv()}></progress>
+			{:else if view.status === 'error'}
+				{view.message}
+			{:else}
+				{m.csv_files_loaded({ count: view.pointCount })}
+			{/if}
 		</output>
 	{/if}
 </section>
@@ -102,7 +103,6 @@
 		width: 1px;
 		height: 1px;
 		overflow: hidden;
-		clip: rect(0 0 0 0);
 		clip-path: inset(50%);
 		white-space: nowrap;
 	}
@@ -119,9 +119,6 @@
 	}
 
 	.drop-message {
-		display: flex;
-		align-items: center;
-		flex-direction: column;
 		text-align: center;
 	}
 </style>
