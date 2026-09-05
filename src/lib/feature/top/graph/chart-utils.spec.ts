@@ -3,18 +3,23 @@ import { csvPoint, modelBreakdown } from '$lib/csv-point.fixture';
 import {
 	buildDailyModelSeries,
 	buildModelBreakdownSeries,
+	buildModelIndexTable,
 	buildTokenCalendar,
-	getDailyModelColors,
 	filterPointsByDays,
 	formatChartAxis,
 	formatChartValue,
 	formatCostAxis,
+	formatDay,
 	formatTokenAxis,
+	getDailyModelColors,
 	groupByDay,
 	groupByHour,
+	isUtcIsoTimestamp,
 	modelsFromDays,
 	sumCost,
 	sumTokens,
+	utcDay,
+	utcDayAndLocalHour,
 	TOKEN_BREAKDOWN_KEYS,
 	TOKEN_BREAKDOWN_LABELS
 } from './chart-utils';
@@ -86,6 +91,46 @@ describe('formatChartValue', () => {
 	});
 });
 
+describe('formatDay', () => {
+	it('formats a UTC calendar day without constructing a new formatter each call', () => {
+		expect(formatDay('2026-08-28')).toBe('Aug 28');
+		expect(formatDay('2026-01-02')).toBe('Jan 2');
+		expect(formatDay('not-a-day')).toBe('not-a-day');
+	});
+});
+
+describe('utcDay', () => {
+	it('reads the calendar day from a UTC ISO timestamp without shifting it', () => {
+		expect(isUtcIsoTimestamp('2026-08-28T23:30:00.000Z')).toBe(true);
+		expect(utcDay('2026-08-28T23:30:00.000Z')).toBe('2026-08-28');
+		expect(utcDay('2026-08-29T00:15:00Z')).toBe('2026-08-29');
+	});
+
+	it('converts offset timestamps to the UTC calendar day', () => {
+		expect(isUtcIsoTimestamp('2026-08-28T00:30:00+09:00')).toBe(false);
+		expect(utcDay('2026-08-28T00:30:00+09:00')).toBe('2026-08-27');
+		expect(utcDay('2026-08-28T08:30:00+09:00')).toBe('2026-08-27');
+		expect(utcDay('2026-08-28T09:00:00+09:00')).toBe('2026-08-28');
+	});
+
+	it('falls back to the first 10 characters when the value is not a date', () => {
+		expect(utcDay('not-a-date')).toBe('not-a-date');
+	});
+});
+
+describe('utcDayAndLocalHour', () => {
+	it('returns the UTC day and a local hour for a parseable timestamp', () => {
+		const point = utcDayAndLocalHour('2026-08-28T10:30:00+09:00');
+
+		expect(point.day).toBe('2026-08-28');
+		expect(point.hour).toBe(new Date('2026-08-28T10:30:00+09:00').getHours());
+	});
+
+	it('omits the hour when the timestamp is invalid', () => {
+		expect(utcDayAndLocalHour('not-a-date')).toEqual({ day: 'not-a-date', hour: null });
+	});
+});
+
 describe('modelsFromDays', () => {
 	it('returns unique model names sorted by locale', () => {
 		expect(
@@ -110,13 +155,56 @@ describe('modelsFromDays', () => {
 	});
 });
 
-describe('buildDailyModelSeries', () => {
-	it('assigns d3-scale-chromatic colors in stack order', () => {
-		const series = buildDailyModelSeries(['alpha', 'beta'], 'tokens');
+describe('buildModelIndexTable', () => {
+	it('sorts unique model names and numbers them from 0', () => {
+		expect(
+			buildModelIndexTable([
+				csvPoint({ model: 'zeta' }),
+				csvPoint({ model: 'alpha' }),
+				csvPoint({ model: 'zeta' }),
+				csvPoint({ model: 'beta' })
+			])
+		).toEqual({
+			names: ['alpha', 'beta', 'zeta'],
+			indexByName: { alpha: 0, beta: 1, zeta: 2 },
+			count: 3
+		});
+	});
 
-		expect(series.map((item) => item.key)).toEqual(['alpha', 'beta']);
-		expect(series[0]?.color).toBe(getDailyModelColors(0, 2));
-		expect(series[1]?.color).toBe(getDailyModelColors(1, 2));
+	it('uses the unknown-model label for empty names', () => {
+		expect(
+			buildModelIndexTable([csvPoint({ model: '' }), csvPoint({ model: 'alpha' })], '不明')
+		).toEqual({
+			names: ['alpha', '不明'],
+			indexByName: { alpha: 0, 不明: 1 },
+			count: 2
+		});
+	});
+});
+
+describe('buildDailyModelSeries', () => {
+	const modelIndices = buildModelIndexTable([
+		csvPoint({ model: 'alpha' }),
+		csvPoint({ model: 'beta' }),
+		csvPoint({ model: 'gamma' })
+	]);
+
+	it('assigns colors from the global index table, not the range-local order', () => {
+		const allSeries = buildDailyModelSeries(['alpha', 'beta', 'gamma'], 'tokens', modelIndices);
+		const gammaOnly = buildDailyModelSeries(['gamma'], 'tokens', modelIndices);
+
+		expect(modelIndices).toEqual({
+			names: ['alpha', 'beta', 'gamma'],
+			indexByName: { alpha: 0, beta: 1, gamma: 2 },
+			count: 3
+		});
+		expect(allSeries.map((item) => item.color)).toEqual([
+			getDailyModelColors(0, 3),
+			getDailyModelColors(1, 3),
+			getDailyModelColors(2, 3)
+		]);
+		expect(gammaOnly[0]?.color).toBe(allSeries[2]?.color);
+		expect(gammaOnly[0]?.color).not.toBe(getDailyModelColors(0, 1));
 	});
 });
 

@@ -5,7 +5,8 @@ import {
 	type ChartMetric,
 	type DailyValue,
 	type ModelBreakdownSeries,
-	type ModelBreakdownValue
+	type ModelBreakdownValue,
+	type ModelIndexTable
 } from './chart-types';
 import { errorMinusColor, errorPlusColor, getDailyModelColors } from './chart-style';
 import {
@@ -15,10 +16,14 @@ import {
 	tokenErrorPlusCost
 } from './chart-breakdown';
 
-export function buildDailyModelSeries(models: string[], metric: ChartMetric) {
-	return models.map((model, index) => ({
+export function buildDailyModelSeries(
+	models: string[],
+	metric: ChartMetric,
+	modelIndices: ModelIndexTable
+) {
+	return models.map((model) => ({
 		key: model,
-		color: getDailyModelColors(index, models.length),
+		color: getDailyModelColors(modelIndices.indexByName[model] ?? 0, modelIndices.count),
 		value: (day: DailyValue) => day.models.find((value) => value.model === model)?.[metric] ?? 0
 	}));
 }

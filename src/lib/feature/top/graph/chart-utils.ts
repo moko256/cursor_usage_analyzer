@@ -5,6 +5,7 @@ export type {
 	DashboardData,
 	DayRange,
 	HourlyValue,
+	ModelIndexTable,
 	ModelBreakdownSeries,
 	ModelBreakdownSeriesKey,
 	ModelBreakdownValue,
@@ -18,10 +19,12 @@ export { DAY_RANGES, TOKEN_BREAKDOWN_KEYS, TOKEN_BREAKDOWN_LABELS } from './char
 export {
 	addUtcDays,
 	dateFromUtcDay,
+	isUtcIsoTimestamp,
 	startOfNextUtcMonth,
 	startOfUtcMonth,
 	startOfUtcWeek,
 	utcDay,
+	utcDayAndLocalHour,
 	utcDayFromDate,
 	utcYearMonth
 } from './chart-utc';
@@ -48,6 +51,7 @@ export {
 } from './chart-style';
 
 export {
+	buildModelIndexTable,
 	filterPointsByDays,
 	groupByDay,
 	groupByHour,

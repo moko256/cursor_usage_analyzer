@@ -1,7 +1,14 @@
 import type { CsvPoint } from '$lib/csv-parser';
 import * as m from '$lib/paraglide/messages';
-import type { DailyModelValue, DailyValue, DayRange, HourlyValue } from './chart-types';
-import { utcDay } from './chart-utc';
+import { finalizeDays, finalizeHours } from './chart-accumulate';
+import type {
+	DailyModelValue,
+	DailyValue,
+	DayRange,
+	HourlyValue,
+	ModelIndexTable
+} from './chart-types';
+import { addUtcDays, utcDay, utcDayAndLocalHour } from './chart-utc';
 
 export function sumCost(points: CsvPoint[]): number {
 	return points.reduce((sum, point) => sum + (point.cost ?? 0), 0);
@@ -22,9 +29,7 @@ export function filterPointsByDays(points: CsvPoint[], days: DayRange, now?: Dat
 	const endDay = resolveRangeEndDay(points, now);
 	if (!endDay) return [];
 
-	const startDate = new Date(`${endDay}T00:00:00.000Z`);
-	startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
-	const startDay = startDate.toISOString().slice(0, 10);
+	const startDay = addUtcDays(endDay, 1 - days);
 
 	return points.filter((point) => {
 		const day = utcDay(point.date);
@@ -32,7 +37,7 @@ export function filterPointsByDays(points: CsvPoint[], days: DayRange, now?: Dat
 	});
 }
 
-function resolveRangeEndDay(points: CsvPoint[], now?: Date): string | null {
+export function resolveRangeEndDay(points: CsvPoint[], now?: Date): string | null {
 	if (now) return utcDay(now.toISOString());
 
 	let latest = Number.NEGATIVE_INFINITY;
@@ -55,50 +60,62 @@ export function groupByDay(
 
 	for (const point of points) {
 		const day = utcDay(point.date);
-		const dayValue = byDay.get(day) ?? { cost: 0, tokens: 0, models: new Map() };
-		const model = point.model || unknownModel;
-		const modelValue = dayValue.models.get(model) ?? { model, cost: 0, tokens: 0 };
+		let dayValue = byDay.get(day);
+		if (!dayValue) {
+			dayValue = { cost: 0, tokens: 0, models: new Map() };
+			byDay.set(day, dayValue);
+		}
 
-		dayValue.cost += point.cost ?? 0;
+		const model = point.model || unknownModel;
+		let modelValue = dayValue.models.get(model);
+		if (!modelValue) {
+			modelValue = { model, cost: 0, tokens: 0 };
+			dayValue.models.set(model, modelValue);
+		}
+
+		const cost = point.cost ?? 0;
+		dayValue.cost += cost;
 		dayValue.tokens += point.tokens;
-		modelValue.cost += point.cost ?? 0;
+		modelValue.cost += cost;
 		modelValue.tokens += point.tokens;
-		dayValue.models.set(model, modelValue);
-		byDay.set(day, dayValue);
 	}
 
-	return Array.from(byDay.entries())
-		.sort(([left], [right]) => left.localeCompare(right))
-		.map(([day, value]) => ({
-			day,
-			cost: value.cost,
-			tokens: value.tokens,
-			models: Array.from(value.models.values()).sort((left, right) =>
-				left.model.localeCompare(right.model)
-			)
-		}));
+	return finalizeDays(byDay);
 }
 
 /** Cumulative tokens for every local hour-of-day. Days stay UTC; this histogram is local on purpose. */
 export function groupByHour(points: CsvPoint[]): HourlyValue[] {
-	const tokensByHour = new Map<number, number>();
+	const tokensByHour = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 	for (const point of points) {
-		const timestamp = Date.parse(point.date);
-		if (!Number.isFinite(timestamp)) continue;
-
-		const hour = new Date(timestamp).getHours();
-		tokensByHour.set(hour, (tokensByHour.get(hour) ?? 0) + point.tokens);
+		const hour = utcDayAndLocalHour(point.date).hour;
+		if (hour !== null) tokensByHour[hour] += point.tokens;
 	}
 
-	return Array.from({ length: 24 }, (_, hour) => ({
-		hour,
-		tokens: tokensByHour.get(hour) ?? 0
-	}));
+	return finalizeHours(tokensByHour);
 }
 
 export function modelsFromDays(days: DailyValue[]): string[] {
 	return [...new Set(days.flatMap((day) => day.models.map((value) => value.model)))].sort(
 		(left, right) => left.localeCompare(right)
 	);
+}
+
+/**
+ * Assigns a unique 0-based index to every distinct model after dictionary sort.
+ * Empty model names use `unknownModel`, matching `groupByDay`.
+ */
+export function buildModelIndexTable(
+	points: CsvPoint[],
+	unknownModel: string = m.unknown_model()
+): ModelIndexTable {
+	const names = [...new Set(points.map((point) => point.model || unknownModel))].sort(
+		(left, right) => left.localeCompare(right)
+	);
+	const indexByName: Record<string, number> = {};
+	for (let index = 0; index < names.length; index += 1) {
+		indexByName[names[index]] = index;
+	}
+
+	return { names, indexByName, count: names.length };
 }

@@ -24,6 +24,7 @@ describe('buildDashboardData', () => {
 
 	it('matches filter-then-group and filtered totals for each range', () => {
 		const dashboard = buildDashboardData(points);
+		const anchored = buildDashboardData(points, undefined, new Date('2026-08-25T23:59:59.000Z'));
 
 		for (const days of DAY_RANGES) {
 			const filtered = filterPointsByDays(points, days);
@@ -34,6 +35,15 @@ describe('buildDashboardData', () => {
 				byModelBreakdown: groupByModelBreakdown(filtered),
 				totalCost: sumCost(filtered),
 				totalTokens: sumTokens(filtered)
+			});
+
+			const filteredToNow = filterPointsByDays(points, days, new Date('2026-08-25T23:59:59.000Z'));
+			expect(anchored.ranges[days]).toEqual({
+				byDay: groupByDay(filteredToNow),
+				byHour: groupByHour(filteredToNow),
+				byModelBreakdown: groupByModelBreakdown(filteredToNow),
+				totalCost: sumCost(filteredToNow),
+				totalTokens: sumTokens(filteredToNow)
 			});
 		}
 
@@ -50,5 +60,44 @@ describe('buildDashboardData', () => {
 
 		expect(dashboard.ranges.all.byDay[0]?.models[0]?.model).toBe('不明');
 		expect(dashboard.ranges.all.byModelBreakdown[0]?.model).toBe('不明');
+		expect(dashboard.modelIndices).toEqual({
+			names: ['不明'],
+			indexByName: { 不明: 0 },
+			count: 1
+		});
+	});
+
+	it('indexes every distinct model across all ranges', () => {
+		const dashboard = buildDashboardData(points);
+
+		expect(dashboard.modelIndices).toEqual({
+			names: ['alpha', 'beta'],
+			indexByName: { alpha: 0, beta: 1 },
+			count: 2
+		});
+	});
+
+	it('matches filter-then-group for offset timestamps and unsorted rows', () => {
+		const points = [
+			csvPoint({ date: '2026-08-28T08:30:00+09:00', tokens: 50, cost: 1, model: 'alpha' }),
+			csvPoint({ date: '2026-08-19T12:00:00.000Z', tokens: 400, cost: 4, model: 'beta' }),
+			csvPoint({ date: '2026-08-28T09:00:00+09:00', tokens: 75, cost: 2, model: 'alpha' })
+		];
+		const dashboard = buildDashboardData(points);
+
+		for (const days of DAY_RANGES) {
+			const filtered = filterPointsByDays(points, days);
+
+			expect(dashboard.ranges[days]).toEqual({
+				byDay: groupByDay(filtered),
+				byHour: groupByHour(filtered),
+				byModelBreakdown: groupByModelBreakdown(filtered),
+				totalCost: sumCost(filtered),
+				totalTokens: sumTokens(filtered)
+			});
+		}
+
+		expect(dashboard.ranges[1].byDay.map((day) => day.day)).toEqual(['2026-08-28']);
+		expect(dashboard.ranges[7].byDay.map((day) => day.day)).toEqual(['2026-08-27', '2026-08-28']);
 	});
 });

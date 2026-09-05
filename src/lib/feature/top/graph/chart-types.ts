@@ -78,9 +78,23 @@ export type RangeChartData = {
 	totalTokens: number;
 };
 
+/**
+ * Stable color indices for every distinct model in the CSV.
+ * Built once in the worker so a model keeps the same color across date ranges.
+ *
+ * `names` is dictionary-sorted (`localeCompare`). `names[i]` has index `i`.
+ * `indexByName` is the same mapping for O(1) lookup. `count` is `names.length`.
+ */
+export type ModelIndexTable = {
+	names: string[];
+	indexByName: Record<string, number>;
+	count: number;
+};
+
 export type DashboardData = {
 	pointCount: number;
 	totalCost: number;
 	totalTokens: number;
+	modelIndices: ModelIndexTable;
 	ranges: { [K in DayRange]: RangeChartData };
 };
