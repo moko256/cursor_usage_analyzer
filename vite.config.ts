@@ -33,7 +33,7 @@ export default defineConfig(({ command }) => {
 					fallback: '404.html'
 				}),
 				paths: {
-					assets: `${siteProtocol}://${siteHost}`,
+					assets: `${siteProtocol}://${siteHost}${siteBase}`,
 					base: siteBase
 				},
 				csp: {
