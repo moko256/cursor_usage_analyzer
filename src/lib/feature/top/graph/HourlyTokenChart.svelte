@@ -2,6 +2,7 @@
 	import * as m from '$lib/paraglide/messages';
 	import { BarChart, Tooltip } from 'layerchart/svg';
 	import ChartCard from './ChartCard.svelte';
+	import { chartTooltipRootProps } from './chart-tooltip';
 	import {
 		compactNumberFormat,
 		formatHour,
@@ -52,7 +53,7 @@
 		}}
 	>
 		{#snippet tooltip()}
-			<Tooltip.Root>
+			<Tooltip.Root contained={false} props={{ root: chartTooltipRootProps }}>
 				{#snippet children({ data })}
 					<Tooltip.Header>
 						{m.hourly_token_value_title({

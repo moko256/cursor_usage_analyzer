@@ -14,6 +14,7 @@
 		type ModelIndexTable
 	} from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
+	import { chartTooltipRootProps } from './chart-tooltip';
 
 	interface Props {
 		days: DailyValue[];
@@ -58,7 +59,7 @@
 		}}
 	>
 		{#snippet tooltip()}
-			<Tooltip.Root>
+			<Tooltip.Root contained={false} props={{ root: chartTooltipRootProps }}>
 				{#snippet children({ data })}
 					<Tooltip.Header>{formatDay(data.day)}</Tooltip.Header>
 					<Tooltip.List>

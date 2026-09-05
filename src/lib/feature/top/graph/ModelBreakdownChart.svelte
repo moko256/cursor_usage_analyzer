@@ -12,6 +12,7 @@
 		type ModelIndexTable
 	} from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
+	import { chartTooltipRootProps } from './chart-tooltip';
 
 	interface Props {
 		modelValues: ModelBreakdownValue[];
@@ -76,7 +77,7 @@
 			{/each}
 		{/snippet}
 		{#snippet tooltip()}
-			<Tooltip.Root>
+			<Tooltip.Root contained={false} props={{ root: chartTooltipRootProps }}>
 				{#snippet children({ data })}
 					<Tooltip.Header>{data.model}</Tooltip.Header>
 					{#each series as item (item.key)}
