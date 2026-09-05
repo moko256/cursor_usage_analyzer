@@ -46,6 +46,14 @@ async function nonzeroBarFills(chart: Locator) {
 	);
 }
 
+async function tooltipSwatchColors(tooltip: Locator) {
+	return tooltip
+		.locator('.lc-tooltip-item-color')
+		.evaluateAll((dots) =>
+			dots.map((dot) => getComputedStyle(dot).getPropertyValue('--color').trim())
+		);
+}
+
 test('daily model colors stay stable when a shorter range drops other models', async ({ page }) => {
 	await page.goto('/cursor_usage_analyzer/en/');
 	await page.waitForLoadState('networkidle');
@@ -104,6 +112,52 @@ test('token breakdown gradients from interpolatePuBu(0.2) to each model Observab
 		expect(row[0]).toBe(mix(0));
 		expect(row[tokenCount - 1]).toBe(mix(1));
 		expect(row[tokenCount - 1]).toBe(expectedModelColors[modelIndex]);
+	}
+});
+
+test('daily model tooltip shows a color swatch for each model that day', async ({ page }) => {
+	const tooltipCsv = [
+		'Date,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost',
+		'2026-08-20T12:00:00.000Z,alpha,40,30,20,10,100,1',
+		'2026-08-20T12:00:00.000Z,beta,40,30,20,10,200,2',
+		'2026-08-25T12:00:00.000Z,gamma,40,30,20,10,300,3'
+	].join('\n');
+
+	await page.goto('/cursor_usage_analyzer/en/');
+	await page.waitForLoadState('networkidle');
+	await page.locator('input[type="file"]').setInputFiles({
+		name: 'usage.csv',
+		mimeType: 'text/csv',
+		buffer: Buffer.from(tooltipCsv)
+	});
+
+	const tokensChart = page.getByRole('img', { name: 'Daily tokens by model. 3 models, 2 days.' });
+	const costChart = page.getByRole('img', { name: 'Daily cost by model. 3 models, 2 days.' });
+	await expect(tokensChart).toBeVisible();
+	await expect(costChart).toBeVisible();
+
+	const stackedExpected = [expectedModelColors[0], expectedModelColors[1]];
+	const singleExpected = [expectedModelColors[2]];
+
+	for (const chart of [tokensChart, costChart]) {
+		const tooltipRects = chart.locator('.lc-tooltip-rect');
+		await expect(tooltipRects).toHaveCount(2);
+
+		await tooltipRects.nth(0).hover();
+		const stackedTooltip = chart.locator('.lc-tooltip-root:not([inert])');
+		await expect(stackedTooltip).toBeVisible();
+		await expect(stackedTooltip.locator('.lc-tooltip-header')).toHaveText('Aug 20');
+		await expect(stackedTooltip.locator('.lc-tooltip-item-label')).toHaveText(['alpha', 'beta']);
+		await expect(stackedTooltip.locator('.lc-tooltip-item-color')).toHaveCount(2);
+		expect(await tooltipSwatchColors(stackedTooltip)).toEqual(stackedExpected);
+
+		await tooltipRects.nth(1).hover();
+		const singleTooltip = chart.locator('.lc-tooltip-root:not([inert])');
+		await expect(singleTooltip).toBeVisible();
+		await expect(singleTooltip.locator('.lc-tooltip-header')).toHaveText('Aug 25');
+		await expect(singleTooltip.locator('.lc-tooltip-item-label')).toHaveText(['gamma']);
+		await expect(singleTooltip.locator('.lc-tooltip-item-color')).toHaveCount(1);
+		expect(await tooltipSwatchColors(singleTooltip)).toEqual(singleExpected);
 	}
 });
 
