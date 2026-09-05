@@ -7,6 +7,7 @@
 		formatHour,
 		formatTokenAxis,
 		HOURLY_TOKEN_COLOR,
+		hourlyAxisTickLabels,
 		verticalChartHeight,
 		verticalChartPadding,
 		type HourlyValue
@@ -24,6 +25,7 @@
 			value: (hour: HourlyValue) => hour.tokens
 		}
 	];
+	const hourTicks = hourlyAxisTickLabels();
 	let hourValues = $derived(
 		hours.map((hour) => ({
 			...hour,
@@ -44,7 +46,10 @@
 		{series}
 		padding={verticalChartPadding}
 		height={verticalChartHeight}
-		props={{ yAxis: { format: formatTokenAxis } }}
+		props={{
+			xAxis: { ticks: hourTicks },
+			yAxis: { format: formatTokenAxis }
+		}}
 	>
 		{#snippet tooltip()}
 			<Tooltip.Root>

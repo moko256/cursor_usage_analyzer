@@ -12,6 +12,7 @@ import {
 	formatCostAxis,
 	formatDay,
 	formatTokenAxis,
+	hourlyAxisTickLabels,
 	getDailyModelColors,
 	getTokenBreakdownColor,
 	groupByDay,
@@ -99,6 +100,21 @@ describe('formatDay', () => {
 		expect(formatDay('2026-08-28')).toBe('Aug 28');
 		expect(formatDay('2026-01-02')).toBe('Jan 2');
 		expect(formatDay('not-a-day')).toBe('not-a-day');
+	});
+});
+
+describe('hourlyAxisTickLabels', () => {
+	it('returns local-hour labels every 3 hours from 00:00 through 21:00', () => {
+		expect(hourlyAxisTickLabels()).toEqual([
+			'00:00',
+			'03:00',
+			'06:00',
+			'09:00',
+			'12:00',
+			'15:00',
+			'18:00',
+			'21:00'
+		]);
 	});
 });
 

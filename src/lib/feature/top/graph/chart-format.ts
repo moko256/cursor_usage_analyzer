@@ -79,3 +79,13 @@ export function formatDay(value: string) {
 export function formatHour(value: number) {
 	return `${value.toString().padStart(2, '0')}:00`;
 }
+
+/** Local-hour axis labels are drawn every 3 hours (00:00, 03:00, …, 21:00). */
+const HOURLY_AXIS_TICK_STEP_HOURS = 3;
+const HOURLY_BUCKET_COUNT = 24;
+
+export function hourlyAxisTickLabels(): string[] {
+	return Array.from({ length: HOURLY_BUCKET_COUNT / HOURLY_AXIS_TICK_STEP_HOURS }, (_, index) =>
+		formatHour(index * HOURLY_AXIS_TICK_STEP_HOURS)
+	);
+}
