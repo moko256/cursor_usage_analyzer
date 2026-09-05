@@ -62,7 +62,7 @@
 				<DailyModelChart days={range.byDay} metric="cost" modelIndices={dashboard.modelIndices} />
 				<ModelBreakdownChart modelValues={range.byModelBreakdown} metric="tokens" />
 				<ModelBreakdownChart modelValues={range.byModelBreakdown} metric="cost" />
-				<CalendarTokenChart days={range.byDay} />
+				<CalendarTokenChart days={range.byDay} maxDailyTokens={range.maxDailyTokens} />
 				<HourlyTokenChart hours={range.byHour} />
 			</GraphGroup>
 		</section>

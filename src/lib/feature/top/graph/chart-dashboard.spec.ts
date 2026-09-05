@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { csvPoint } from '$lib/csv-point.fixture';
 import { buildDashboardData } from './chart-dashboard';
-import { filterPointsByDays, groupByDay, groupByHour, sumCost, sumTokens } from './chart-aggregate';
+import {
+	filterPointsByDays,
+	groupByDay,
+	groupByHour,
+	maxTokensFromDays,
+	sumCost,
+	sumTokens
+} from './chart-aggregate';
 import { groupByModelBreakdown } from './chart-breakdown';
 import { DAY_RANGES } from './chart-types';
 
@@ -28,22 +35,26 @@ describe('buildDashboardData', () => {
 
 		for (const days of DAY_RANGES) {
 			const filtered = filterPointsByDays(points, days);
+			const byDay = groupByDay(filtered);
 
 			expect(dashboard.ranges[days]).toEqual({
-				byDay: groupByDay(filtered),
+				byDay,
 				byHour: groupByHour(filtered),
 				byModelBreakdown: groupByModelBreakdown(filtered),
 				totalCost: sumCost(filtered),
-				totalTokens: sumTokens(filtered)
+				totalTokens: sumTokens(filtered),
+				maxDailyTokens: maxTokensFromDays(byDay)
 			});
 
 			const filteredToNow = filterPointsByDays(points, days, new Date('2026-08-25T23:59:59.000Z'));
+			const byDayToNow = groupByDay(filteredToNow);
 			expect(anchored.ranges[days]).toEqual({
-				byDay: groupByDay(filteredToNow),
+				byDay: byDayToNow,
 				byHour: groupByHour(filteredToNow),
 				byModelBreakdown: groupByModelBreakdown(filteredToNow),
 				totalCost: sumCost(filteredToNow),
-				totalTokens: sumTokens(filteredToNow)
+				totalTokens: sumTokens(filteredToNow),
+				maxDailyTokens: maxTokensFromDays(byDayToNow)
 			});
 		}
 
@@ -87,13 +98,15 @@ describe('buildDashboardData', () => {
 
 		for (const days of DAY_RANGES) {
 			const filtered = filterPointsByDays(points, days);
+			const byDay = groupByDay(filtered);
 
 			expect(dashboard.ranges[days]).toEqual({
-				byDay: groupByDay(filtered),
+				byDay,
 				byHour: groupByHour(filtered),
 				byModelBreakdown: groupByModelBreakdown(filtered),
 				totalCost: sumCost(filtered),
-				totalTokens: sumTokens(filtered)
+				totalTokens: sumTokens(filtered),
+				maxDailyTokens: maxTokensFromDays(byDay)
 			});
 		}
 

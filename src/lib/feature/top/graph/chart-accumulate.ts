@@ -1,4 +1,5 @@
 import type { CsvPoint } from '$lib/csv-parser';
+import { maxTokensFromDays } from './chart-aggregate';
 import { computeTokenBreakdownErrors } from './chart-breakdown';
 import type {
 	DailyModelValue,
@@ -118,11 +119,14 @@ export function finalizeModels(byModel: RangeBuckets['byModel']): ModelBreakdown
 }
 
 export function finalizeRangeBuckets(buckets: RangeBuckets): RangeChartData {
+	const byDay = finalizeDays(buckets.byDay);
+
 	return {
-		byDay: finalizeDays(buckets.byDay),
+		byDay,
 		byHour: finalizeHours(buckets.hours),
 		byModelBreakdown: finalizeModels(buckets.byModel),
 		totalCost: buckets.totalCost,
-		totalTokens: buckets.totalTokens
+		totalTokens: buckets.totalTokens,
+		maxDailyTokens: maxTokensFromDays(byDay)
 	};
 }

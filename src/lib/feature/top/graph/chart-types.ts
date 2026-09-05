@@ -76,6 +76,8 @@ export type RangeChartData = {
 	byModelBreakdown: ModelBreakdownValue[];
 	totalCost: number;
 	totalTokens: number;
+	/** Peak daily token count in this range; drives calendar heat thresholds. */
+	maxDailyTokens: number;
 };
 
 /**
