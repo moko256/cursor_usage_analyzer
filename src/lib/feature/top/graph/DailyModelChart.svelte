@@ -11,16 +11,18 @@
 		verticalChartHeight,
 		verticalChartPadding,
 		type ChartMetric,
-		type DailyValue
+		type DailyValue,
+		type ModelIndexTable
 	} from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
 
 	interface Props {
 		days: DailyValue[];
 		metric: ChartMetric;
+		modelIndices: ModelIndexTable;
 	}
 
-	let { days, metric }: Props = $props();
+	let { days, metric, modelIndices }: Props = $props();
 	const isDark = new MediaQuery('(prefers-color-scheme: dark)');
 	let dayValues = $derived(
 		days.map((day) => ({
@@ -29,7 +31,7 @@
 		}))
 	);
 	let models = $derived(modelsFromDays(dayValues));
-	let series = $derived(buildDailyModelSeries(models, metric, isDark.current));
+	let series = $derived(buildDailyModelSeries(models, metric, isDark.current, modelIndices));
 	let title = $derived(
 		metric === 'tokens' ? m.tokens_per_day_heading() : m.models_per_day_heading()
 	);

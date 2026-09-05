@@ -1,5 +1,12 @@
 import type { CsvPoint } from '$lib/csv-parser';
-import { filterPointsByDays, groupByDay, groupByHour, sumCost, sumTokens } from './chart-aggregate';
+import {
+	buildModelIndexTable,
+	filterPointsByDays,
+	groupByDay,
+	groupByHour,
+	sumCost,
+	sumTokens
+} from './chart-aggregate';
 import { groupByModelBreakdown } from './chart-breakdown';
 import { DAY_RANGES, type DashboardData, type DayRange, type RangeChartData } from './chart-types';
 
@@ -22,6 +29,7 @@ export function buildDashboardData(
 		pointCount: points.length,
 		totalCost: sumCost(points),
 		totalTokens: sumTokens(points),
+		modelIndices: buildModelIndexTable(points, unknownModel),
 		ranges
 	};
 }
