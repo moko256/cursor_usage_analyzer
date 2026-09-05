@@ -1,4 +1,21 @@
 import type { DailyValue, TokenCalendarDay, TokenCalendarRange } from './chart-types';
+
+/** Fractions of `maxDailyTokens` for calendar heat color breakpoints (4 → 5 colors). */
+export const TOKEN_CALENDAR_THRESHOLD_FRACTIONS = [0.000_01, 0.1, 0.5, 1] as const;
+
+export function buildTokenCalendarThresholds(maxDailyTokens: number): number[] {
+	if (maxDailyTokens <= 0) return [1, 1, 1, 1];
+
+	const minPositive =
+		maxDailyTokens >= 1 ? 1 : maxDailyTokens * TOKEN_CALENDAR_THRESHOLD_FRACTIONS[0];
+
+	return [
+		minPositive,
+		Math.max(minPositive, maxDailyTokens * TOKEN_CALENDAR_THRESHOLD_FRACTIONS[1]),
+		Math.max(minPositive, maxDailyTokens * TOKEN_CALENDAR_THRESHOLD_FRACTIONS[2]),
+		maxDailyTokens
+	];
+}
 import {
 	addUtcDays,
 	dateFromUtcDay,

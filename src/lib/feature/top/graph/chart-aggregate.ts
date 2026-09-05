@@ -103,6 +103,10 @@ export function groupByHour(points: CsvPoint[]): HourlyValue[] {
 	}));
 }
 
+export function maxTokensFromDays(days: DailyValue[]): number {
+	return days.reduce((max, day) => Math.max(max, day.tokens), 0);
+}
+
 export function modelsFromDays(days: DailyValue[]): string[] {
 	return [...new Set(days.flatMap((day) => day.models.map((value) => value.model)))].sort(
 		(left, right) => left.localeCompare(right)

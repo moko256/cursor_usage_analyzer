@@ -5,6 +5,7 @@ import {
 	buildModelBreakdownSeries,
 	buildModelIndexTable,
 	buildTokenCalendar,
+	buildTokenCalendarThresholds,
 	filterPointsByDays,
 	formatChartAxis,
 	formatChartValue,
@@ -13,6 +14,7 @@ import {
 	getDailyModelColors,
 	groupByDay,
 	groupByHour,
+	maxTokensFromDays,
 	modelsFromDays,
 	sumCost,
 	sumTokens,
@@ -333,6 +335,35 @@ describe('buildTokenCalendar', () => {
 
 		expect(days[0]?.day).toBe('2026-08-28');
 		expect(calendar.data.find(({ day }) => day === '2026-08-28')?.tokens).toBe(100);
+	});
+});
+
+describe('maxTokensFromDays', () => {
+	it('returns the highest daily token total', () => {
+		const days = groupByDay([
+			csvPoint({ date: '2026-08-25T10:00:00.000Z', tokens: 100 }),
+			csvPoint({ date: '2026-08-27T10:00:00.000Z', tokens: 300 })
+		]);
+
+		expect(maxTokensFromDays(days)).toBe(300);
+	});
+
+	it('returns 0 when there are no days', () => {
+		expect(maxTokensFromDays([])).toBe(0);
+	});
+});
+
+describe('buildTokenCalendarThresholds', () => {
+	it('scales breakpoints as fractions of the range max', () => {
+		expect(buildTokenCalendarThresholds(100_000)).toEqual([1, 10_000, 50_000, 100_000]);
+	});
+
+	it('keeps thresholds ascending when the max is small', () => {
+		expect(buildTokenCalendarThresholds(5)).toEqual([1, 1, 2.5, 5]);
+	});
+
+	it('returns a neutral fallback when the max is zero', () => {
+		expect(buildTokenCalendarThresholds(0)).toEqual([1, 1, 1, 1]);
 	});
 });
 

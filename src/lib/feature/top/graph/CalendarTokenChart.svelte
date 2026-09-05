@@ -2,19 +2,19 @@
 	import * as m from '$lib/paraglide/messages';
 	import { scaleThreshold } from 'd3-scale';
 	import { Calendar, Chart, Layer, Rect, Tooltip } from 'layerchart/svg';
-	import { buildTokenCalendar, type DailyValue } from './chart-utils';
+	import { buildTokenCalendar, buildTokenCalendarThresholds, type DailyValue } from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
 
 	interface Props {
 		days: DailyValue[];
+		maxDailyTokens: number;
 	}
 
-	let { days }: Props = $props();
+	let { days, maxDailyTokens }: Props = $props();
 	const compactNumber = new Intl.NumberFormat('en-US', {
 		notation: 'compact',
 		maximumFractionDigits: 1
 	});
-	const tokenThresholds = [1, 10_000, 50_000, 100_000];
 	const tokenColors = [
 		'color-mix(in srgb, var(--pico-muted-color) 18%, var(--pico-background-color))',
 		'color-mix(in srgb, var(--pico-primary) 25%, var(--pico-background-color))',
@@ -24,6 +24,7 @@
 	] as const;
 	const tokenScale = scaleThreshold<number, string>().unknown('transparent');
 	let calendar = $derived(buildTokenCalendar(days));
+	let tokenThresholds = $derived(buildTokenCalendarThresholds(maxDailyTokens));
 </script>
 
 <ChartCard title="" subtitle="" class="calendar-card">

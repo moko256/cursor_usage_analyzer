@@ -53,6 +53,7 @@ export {
 	filterPointsByDays,
 	groupByDay,
 	groupByHour,
+	maxTokensFromDays,
 	modelsFromDays,
 	sumCost,
 	sumTokens
@@ -72,4 +73,8 @@ export {
 
 export { buildDailyModelSeries, buildModelBreakdownSeries } from './chart-series';
 
-export { buildTokenCalendar } from './chart-calendar';
+export {
+	TOKEN_CALENDAR_THRESHOLD_FRACTIONS,
+	buildTokenCalendar,
+	buildTokenCalendarThresholds
+} from './chart-calendar';

@@ -4,6 +4,7 @@ import {
 	filterPointsByDays,
 	groupByDay,
 	groupByHour,
+	maxTokensFromDays,
 	sumCost,
 	sumTokens
 } from './chart-aggregate';
@@ -41,12 +42,14 @@ function buildRangeChartData(
 	now?: Date
 ): RangeChartData {
 	const filtered = filterPointsByDays(points, days, now);
+	const byDay = groupByDay(filtered, unknownModel);
 
 	return {
-		byDay: groupByDay(filtered, unknownModel),
+		byDay,
 		byHour: groupByHour(filtered),
 		byModelBreakdown: groupByModelBreakdown(filtered, unknownModel),
 		totalCost: sumCost(filtered),
-		totalTokens: sumTokens(filtered)
+		totalTokens: sumTokens(filtered),
+		maxDailyTokens: maxTokensFromDays(byDay)
 	};
 }
