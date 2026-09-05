@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 
 const viewport = { width: 1280, height: 720 } as const;
+const pageZoom = '0.75';
 const colorSchemes = ['light', 'dark'] as const;
 
 const csv = buildScreenshotCsv();
@@ -46,9 +47,16 @@ function luminance(rgb: string) {
 	return (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255;
 }
 
+async function setPageZoom(page: Page) {
+	await page.evaluate((zoom) => {
+		document.documentElement.style.zoom = zoom;
+	}, pageZoom);
+}
+
 async function loadEnglishDashboard(page: Page) {
 	await page.goto('/cursor_usage_analyzer/en/');
 	await page.waitForLoadState('networkidle');
+	await setPageZoom(page);
 	await page.locator('input[type="file"]').setInputFiles({
 		name: 'usage.csv',
 		mimeType: 'text/csv',
@@ -82,6 +90,9 @@ test.describe('README screenshots', () => {
 
 				await expect(page.getByRole('heading', { name: 'Cursor Usage Analyzer' })).toBeVisible();
 				await expect(page.getByText(/On-demand usage:/)).toBeVisible();
+				await expect
+					.poll(() => page.evaluate(() => document.documentElement.style.zoom))
+					.toBe(pageZoom);
 
 				const { prefersDark, background } = await page.evaluate(() => ({
 					prefersDark: matchMedia('(prefers-color-scheme: dark)').matches,
