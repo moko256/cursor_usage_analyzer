@@ -13,7 +13,6 @@
 		type DailyValue,
 		type ModelIndexTable
 	} from './chart-utils';
-	import { prefersDarkScheme } from './chart-prefers-dark';
 	import ChartCard from './ChartCard.svelte';
 
 	interface Props {
@@ -24,9 +23,7 @@
 
 	let { days, metric, modelIndices }: Props = $props();
 	let models = $derived(modelsFromDays(days));
-	let series = $derived(
-		buildDailyModelSeries(models, metric, prefersDarkScheme.current, modelIndices)
-	);
+	let series = $derived(buildDailyModelSeries(models, metric, modelIndices));
 	let title = $derived(
 		metric === 'tokens' ? m.tokens_per_day_heading() : m.models_per_day_heading()
 	);

@@ -190,13 +190,8 @@ describe('buildDailyModelSeries', () => {
 	]);
 
 	it('assigns colors from the global index table, not the range-local order', () => {
-		const allSeries = buildDailyModelSeries(
-			['alpha', 'beta', 'gamma'],
-			'tokens',
-			true,
-			modelIndices
-		);
-		const gammaOnly = buildDailyModelSeries(['gamma'], 'tokens', true, modelIndices);
+		const allSeries = buildDailyModelSeries(['alpha', 'beta', 'gamma'], 'tokens', modelIndices);
+		const gammaOnly = buildDailyModelSeries(['gamma'], 'tokens', modelIndices);
 
 		expect(modelIndices).toEqual({
 			names: ['alpha', 'beta', 'gamma'],
@@ -204,16 +199,16 @@ describe('buildDailyModelSeries', () => {
 			count: 3
 		});
 		expect(allSeries.map((item) => item.color)).toEqual([
-			getDailyModelColors(0, 3, true),
-			getDailyModelColors(1, 3, true),
-			getDailyModelColors(2, 3, true)
+			getDailyModelColors(0, 3),
+			getDailyModelColors(1, 3),
+			getDailyModelColors(2, 3)
 		]);
 		expect(gammaOnly[0]?.color).toBe(allSeries[2]?.color);
-		expect(gammaOnly[0]?.color).not.toBe(getDailyModelColors(0, 1, true));
+		expect(gammaOnly[0]?.color).not.toBe(getDailyModelColors(0, 1));
 	});
 
 	it('looks up each model on a day without scanning the models array', () => {
-		const series = buildDailyModelSeries(['alpha', 'gamma'], 'tokens', true, modelIndices);
+		const series = buildDailyModelSeries(['alpha', 'gamma'], 'tokens', modelIndices);
 		const day = {
 			day: '2026-08-28',
 			cost: 3,
@@ -232,7 +227,7 @@ describe('buildDailyModelSeries', () => {
 
 describe('buildModelBreakdownSeries', () => {
 	it('uses stable keys and display labels for the token breakdown', () => {
-		const series = buildModelBreakdownSeries([modelBreakdown()], 'tokens', false);
+		const series = buildModelBreakdownSeries([modelBreakdown()], 'tokens');
 
 		expect(series.map((item) => item.key)).toEqual([...TOKEN_BREAKDOWN_KEYS]);
 		expect(series.map((item) => item.label)).toEqual(
@@ -248,8 +243,8 @@ describe('buildModelBreakdownSeries', () => {
 			errorPlus: 10,
 			outputTokens: 0
 		});
-		const tokenSeries = buildModelBreakdownSeries([withErrors], 'tokens', false);
-		const costSeries = buildModelBreakdownSeries([withErrors], 'cost', false);
+		const tokenSeries = buildModelBreakdownSeries([withErrors], 'tokens');
+		const costSeries = buildModelBreakdownSeries([withErrors], 'cost');
 
 		expect(tokenSeries.map((item) => item.key)).toEqual([
 			...TOKEN_BREAKDOWN_KEYS,

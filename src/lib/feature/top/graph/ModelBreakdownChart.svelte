@@ -10,7 +10,6 @@
 		type ChartMetric,
 		type ModelBreakdownValue
 	} from './chart-utils';
-	import { prefersDarkScheme } from './chart-prefers-dark';
 	import ChartCard from './ChartCard.svelte';
 
 	interface Props {
@@ -21,7 +20,7 @@
 	let { modelValues, metric }: Props = $props();
 	let horizontalChartHeight = $derived(Math.max(190, modelValues.length * 36 + 55));
 	let padding = $derived(modelAxisPadding(modelValues.map((value) => value.model)));
-	let series = $derived(buildModelBreakdownSeries(modelValues, metric, prefersDarkScheme.current));
+	let series = $derived(buildModelBreakdownSeries(modelValues, metric));
 	let title = $derived(
 		metric === 'tokens' ? m.tokens_per_model_heading() : m.cost_per_model_heading()
 	);

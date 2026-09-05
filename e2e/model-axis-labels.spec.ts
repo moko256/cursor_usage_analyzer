@@ -21,6 +21,22 @@ const models = ['claude-4.5-sonnet-thinking', 'gpt-5.6-luna-high', 'composer-2.5
  * chart's outer `<svg>`, and both of those clip. A clipped label is still in the DOM and still passes
  * Playwright's visibility check, so compare the boxes instead.
  */
+async function uniqueBarFills(card: Locator) {
+	return card.locator('.lc-bar').evaluateAll((bars) => {
+		const byFill = new Map<string, { fill: string; computed: string }>();
+
+		for (const bar of bars) {
+			const fill = bar.getAttribute('fill') ?? '';
+			if (!fill || fill === 'none') continue;
+			if (!byFill.has(fill)) {
+				byFill.set(fill, { fill, computed: getComputedStyle(bar).fill });
+			}
+		}
+
+		return [...byFill.values()];
+	});
+}
+
 async function readTickLabels(card: Locator) {
 	return card.evaluate((element) => {
 		const chart = element.querySelector('svg.lc-layout-svg')!.getBoundingClientRect();
@@ -48,6 +64,26 @@ test.beforeEach(async ({ page }) => {
 	});
 
 	await expect(page.locator('.chart-card')).toHaveCount(6);
+});
+
+test('モデル別グラフの色が d3-scale-chromatic で割り当てられる', async ({ page }) => {
+	const dailyFills = await uniqueBarFills(page.locator('.chart-card').nth(0));
+	expect(dailyFills.length).toBeGreaterThanOrEqual(models.length);
+	expect(new Set(dailyFills.map((item) => item.computed)).size).toBe(dailyFills.length);
+
+	await page.locator('input[type="file"]').setInputFiles({
+		name: 'breakdown.csv',
+		mimeType: 'text/csv',
+		buffer: Buffer.from(breakdownCsv)
+	});
+	await expect(page.locator('.chart-card')).toHaveCount(6);
+
+	const breakdownCard = page.locator('.chart-card.horizontal-card').nth(0);
+	await expect(breakdownCard.locator('.lc-bar')).not.toHaveCount(0);
+
+	const breakdownFills = await uniqueBarFills(breakdownCard);
+	expect(breakdownFills.length).toBeGreaterThan(1);
+	expect(new Set(breakdownFills.map((item) => item.computed)).size).toBe(breakdownFills.length);
 });
 
 test('モデル別の日次グラフが先頭に並ぶ', async ({ page }) => {
