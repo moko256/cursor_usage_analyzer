@@ -119,7 +119,12 @@ describe('buildDailyModelSeries', () => {
 	]);
 
 	it('assigns colors from the global index table, not the range-local order', () => {
-		const allSeries = buildDailyModelSeries(['alpha', 'beta', 'gamma'], 'tokens', true, modelIndices);
+		const allSeries = buildDailyModelSeries(
+			['alpha', 'beta', 'gamma'],
+			'tokens',
+			true,
+			modelIndices
+		);
 		const gammaOnly = buildDailyModelSeries(['gamma'], 'tokens', true, modelIndices);
 
 		expect(modelIndices).toEqual({
