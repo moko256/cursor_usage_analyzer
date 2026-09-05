@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { e2eDevOrigin } from './scripts/e2e-dev-server.mjs';
 
 export default defineConfig({
 	testDir: './e2e',
@@ -7,14 +8,17 @@ export default defineConfig({
 	retries: process.env.CI ? 2 : 0,
 	reporter: 'html',
 	use: {
-		baseURL: 'http://127.0.0.1:4173',
+		baseURL: e2eDevOrigin,
 		trace: 'on-first-retry',
 		...devices['Desktop Chrome']
 	},
 	webServer: {
-		command: 'pnpm dev --host 127.0.0.1 --port 4173',
-		url: 'http://127.0.0.1:4173',
-		reuseExistingServer: !process.env.CI,
+		// `pnpm test:e2e` frees this port first. Playwright rejects a used port before
+		// webServer.command runs when reuseExistingServer is false.
+		command: 'node ./scripts/e2e-dev-server.mjs',
+		url: e2eDevOrigin,
+		reuseExistingServer: false,
+		timeout: 120_000,
 		env: {
 			...process.env,
 			// Relaxes CSP for Vite's dev modules; production builds keep default-src none.

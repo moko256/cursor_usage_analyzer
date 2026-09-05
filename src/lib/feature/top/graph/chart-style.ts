@@ -1,32 +1,19 @@
+import { interpolatePuBu } from 'd3-scale-chromatic';
 import { getStringWidth, truncateText } from 'layerchart/utils/string';
 
 export const errorMinusColor = 'light-dark(' + '#868e96, #adb5bd)';
 export const errorPlusColor = 'light-dark(' + '#e03131, #ff6b6b)';
 
-// Source: https://picocss.com/docs/colors
-// VSCodeでプレビューできるように+で結合している
-const dailyModelColors = [
-	'light-dark(' + '#748BF8, #3C71F7)',
-	'light-dark(' + '#5C7EF8, #5C7EF8)',
-	'light-dark(' + '#3C71F7, #748BF8)',
-	'light-dark(' + '#2060DF, #8999F9)',
-	'light-dark(' + '#1D59D0, #9CA7FA)',
-	'light-dark(' + '#184EB8, #AEB5FB)',
-	'light-dark(' + '#1343A0, #BFC3FA)',
-	'light-dark(' + '#0F3888, #D0D2FA)',
-	'light-dark(' + '#0F2D70, #E0E1FA)',
-	'light-dark(' + '#0E2358, #F0F0FB)'
-] as const;
+/**
+ * Stacked model / breakdown color. Always samples ColorBrewer PuBu from
+ * LayerChart's ColorRamp schemes so any series count stays on one ramp.
+ * Darker stops sit at the bottom of the stack; a single series uses a mid-dark stop.
+ * @see https://www.layerchart.com/docs/components/ColorRamp#schemes
+ */
+export function getDailyModelColors(modelIndex: number, modelLength: number): string {
+	const stop = modelLength <= 1 ? 0.7 : 1 - modelIndex / (modelLength - 1);
 
-export function getDailyModelColors(
-	modelIndex: number,
-	modelLength: number,
-	isDark: boolean
-): string {
-	// dailyModelColorsの先頭から選び、かつ、黒に近い方がグラフの下側に選ばれるようにする
-	const index = isDark ? modelIndex : modelLength - modelIndex;
-
-	return dailyModelColors[index % dailyModelColors.length];
+	return interpolatePuBu(stop);
 }
 
 /**

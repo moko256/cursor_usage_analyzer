@@ -1,7 +1,6 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages';
 	import { BarChart, Tooltip } from 'layerchart/svg';
-	import { MediaQuery } from 'svelte/reactivity';
 	import {
 		buildModelBreakdownSeries,
 		formatChartAxis,
@@ -19,10 +18,9 @@
 	}
 
 	let { modelValues, metric }: Props = $props();
-	const isDark = new MediaQuery('(prefers-color-scheme: dark)');
 	let horizontalChartHeight = $derived(Math.max(190, modelValues.length * 36 + 55));
 	let padding = $derived(modelAxisPadding(modelValues.map((value) => value.model)));
-	let series = $derived(buildModelBreakdownSeries(modelValues, metric, isDark.current));
+	let series = $derived(buildModelBreakdownSeries(modelValues, metric));
 	let title = $derived(
 		metric === 'tokens' ? m.tokens_per_model_heading() : m.cost_per_model_heading()
 	);
