@@ -24,6 +24,7 @@
 	let { days, metric, modelIndices }: Props = $props();
 	let models = $derived(modelsFromDays(days));
 	let series = $derived(buildDailyModelSeries(models, metric, modelIndices));
+	let colorByModel = $derived(new Map(series.map((item) => [item.key, item.color])));
 	let title = $derived(
 		metric === 'tokens' ? m.tokens_per_day_heading() : m.models_per_day_heading()
 	);
@@ -40,9 +41,6 @@
 					modelCount: models.length,
 					dayCount: days.length
 				})
-	);
-	let tooltipTitle = $derived(
-		metric === 'tokens' ? m.daily_model_token_value_title : m.daily_model_cost_value_title
 	);
 </script>
 
@@ -62,15 +60,16 @@
 		{#snippet tooltip()}
 			<Tooltip.Root>
 				{#snippet children({ data })}
-					{#each data.models as model (model.model)}
-						<Tooltip.Header>
-							{tooltipTitle({
-								date: formatDay(data.day),
-								model: model.model,
-								value: formatChartValue(model[metric], metric)
-							})}
-						</Tooltip.Header>
-					{/each}
+					<Tooltip.Header>{formatDay(data.day)}</Tooltip.Header>
+					<Tooltip.List>
+						{#each data.models as model (model.model)}
+							<Tooltip.Item
+								label={model.model}
+								value={formatChartValue(model[metric], metric)}
+								color={colorByModel.get(model.model)}
+							/>
+						{/each}
+					</Tooltip.List>
 				{/snippet}
 			</Tooltip.Root>
 		{/snippet}
