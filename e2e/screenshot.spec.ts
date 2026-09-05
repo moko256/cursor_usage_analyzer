@@ -83,9 +83,11 @@ test.describe('README screenshots', () => {
 				await expect(page.getByRole('heading', { name: 'Cursor Usage Analyzer' })).toBeVisible();
 				await expect(page.getByText(/On-demand usage:/)).toBeVisible();
 
-				const background = await page.evaluate(
-					() => getComputedStyle(document.body).backgroundColor
-				);
+				const { prefersDark, background } = await page.evaluate(() => ({
+					prefersDark: matchMedia('(prefers-color-scheme: dark)').matches,
+					background: getComputedStyle(document.documentElement).backgroundColor
+				}));
+				expect(prefersDark).toBe(colorScheme === 'dark');
 				if (colorScheme === 'dark') {
 					expect(luminance(background)).toBeLessThan(0.5);
 				} else {
