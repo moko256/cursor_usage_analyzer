@@ -1,19 +1,19 @@
-import { interpolatePuBu } from 'd3-scale-chromatic';
+import { interpolateViridis } from 'd3-scale-chromatic';
 import { getStringWidth, truncateText } from 'layerchart/utils/string';
 
 export const errorMinusColor = 'light-dark(' + '#868e96, #adb5bd)';
 export const errorPlusColor = 'light-dark(' + '#e03131, #ff6b6b)';
 
 /**
- * Stacked model / breakdown color. Always samples ColorBrewer PuBu from
- * LayerChart's ColorRamp schemes so any series count stays on one ramp.
- * Darker stops sit at the bottom of the stack; a single series uses a mid-dark stop.
+ * Stacked model / breakdown color. Always samples Viridis from LayerChart's
+ * ColorRamp schemes so any series count stays on one ramp. Viridis is dark at 0,
+ * so the first series sits at the bottom of the stack.
  * @see https://www.layerchart.com/docs/components/ColorRamp#schemes
  */
 export function getDailyModelColors(modelIndex: number, modelLength: number): string {
-	const stop = modelLength <= 1 ? 0.7 : 1 - modelIndex / (modelLength - 1);
+	const stop = modelLength <= 1 ? 0.35 : modelIndex / (modelLength - 1);
 
-	return interpolatePuBu(stop);
+	return interpolateViridis(stop);
 }
 
 /**
