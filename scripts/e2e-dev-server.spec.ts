@@ -57,6 +57,21 @@ describe('collectAncestorPids', () => {
 	});
 });
 
+describe('e2e-dev-server --stop', () => {
+	it('exits after freeing the port', async () => {
+		const child = spawn(process.execPath, ['./scripts/e2e-dev-server.mjs', '--stop'], {
+			stdio: 'ignore'
+		});
+		children.push(child);
+
+		const code = await new Promise<number | null>((resolve) => {
+			child.once('exit', (exitCode) => resolve(exitCode));
+		});
+
+		expect(code).toBe(0);
+	});
+});
+
 describe('freeListenPort', () => {
 	it('stops a child listener so the port can be bound again', async () => {
 		const port = await unusedPort();

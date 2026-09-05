@@ -13,8 +13,8 @@ export default defineConfig({
 		...devices['Desktop Chrome']
 	},
 	webServer: {
-		// Always start through the helper so a stale leftover Vite (wrong CSP, broken HMR)
-		// is replaced instead of reused just because the port still answers.
+		// `pnpm test:e2e` frees this port first. Playwright rejects a used port before
+		// webServer.command runs when reuseExistingServer is false.
 		command: 'node ./scripts/e2e-dev-server.mjs',
 		url: e2eDevOrigin,
 		reuseExistingServer: false,

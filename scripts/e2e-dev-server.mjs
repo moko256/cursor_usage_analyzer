@@ -148,6 +148,10 @@ if (isDirectRun()) {
 		console.log(`Stopped stale dev server on ${e2eDevOrigin} (pids ${stopped.join(', ')})`);
 	}
 
+	if (process.argv.includes('--stop')) {
+		process.exit(0);
+	}
+
 	const child = spawn(serverCommand[0], serverCommand.slice(1), {
 		stdio: 'inherit',
 		env: { ...process.env, E2E: '1' }
