@@ -14,8 +14,9 @@ const csv = [
 const modelCount = 3;
 const tokenCount = 4;
 const modelColorStops = 10;
-const expectedModelColors = [0, 1, 2].map((index) => {
-	const stop = Math.min(index / Math.max(modelCount, modelColorStops), 1);
+
+function expectedModelColor(index: number, length: number): string {
+	const stop = Math.min(index / Math.max(length, modelColorStops), 1);
 	const scaled = stop * 9;
 	const k = Math.floor(scaled);
 	const t = scaled % 1;
@@ -24,7 +25,9 @@ const expectedModelColors = [0, 1, 2].map((index) => {
 		schemeObservable10[k],
 		schemeObservable10[(k + 1) % schemeObservable10.length]
 	)(t);
-});
+}
+
+const expectedModelColors = [0, 1, 2].map((index) => expectedModelColor(index, modelCount));
 const expectedTokenStart = interpolatePuBu(0.2);
 
 async function nonzeroBarFills(chart: Locator) {
@@ -102,4 +105,36 @@ test('token breakdown gradients from interpolatePuBu(0.2) to each model Observab
 		expect(row[tokenCount - 1]).toBe(mix(1));
 		expect(row[tokenCount - 1]).toBe(expectedModelColors[modelIndex]);
 	}
+});
+
+test('10 models sample distinct Observable10 Lab colors', async ({ page }) => {
+	const paletteCount = 10;
+	const paletteCsv = [
+		'Date,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost',
+		...Array.from(
+			{ length: paletteCount },
+			(_, index) => `2026-08-20T12:00:00.000Z,model-${index},40,30,20,10,100,${index + 1}`
+		)
+	].join('\n');
+
+	await page.goto('/cursor_usage_analyzer/en/');
+	await page.waitForLoadState('networkidle');
+	await page.locator('input[type="file"]').setInputFiles({
+		name: 'usage.csv',
+		mimeType: 'text/csv',
+		buffer: Buffer.from(paletteCsv)
+	});
+
+	const tokensChart = page.getByRole('img', {
+		name: 'Daily tokens by model. 10 models, 1 days.'
+	});
+	await expect(tokensChart).toBeVisible();
+
+	const fills = [...new Set((await nonzeroBarFills(tokensChart)).map((bar) => bar.fill))];
+	const expected = Array.from({ length: paletteCount }, (_, index) =>
+		expectedModelColor(index, paletteCount)
+	);
+
+	expect(fills).toHaveLength(paletteCount);
+	expect(new Set(fills)).toEqual(new Set(expected));
 });
