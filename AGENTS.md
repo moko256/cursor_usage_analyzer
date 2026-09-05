@@ -19,7 +19,7 @@
 - Dev: `pnpm dev`
 - Check: `pnpm check`
 - Test: `pnpm test`
-- E2E: `pnpm test:e2e` (Playwright; Chromium is installed during Cloud Agent setup)
+- E2E: `pnpm test:e2e` (Playwright; Chromium is installed during Cloud Agent setup). Always starts a fresh Vite server and replaces any stale process still listening on the e2e port.
 - Lint: `pnpm lint`
 - Build: `pnpm build`
 
