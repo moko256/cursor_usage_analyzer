@@ -58,8 +58,8 @@
 			<RangeSwitcher bind:days={rangeDays} />
 			<Usage totalCost={range.totalCost} totalTokens={range.totalTokens} />
 			<GraphGroup>
-				<DailyModelChart days={range.byDay} metric="tokens" />
-				<DailyModelChart days={range.byDay} metric="cost" />
+				<DailyModelChart days={range.byDay} metric="tokens" modelIndices={dashboard.modelIndices} />
+				<DailyModelChart days={range.byDay} metric="cost" modelIndices={dashboard.modelIndices} />
 				<ModelBreakdownChart modelValues={range.byModelBreakdown} metric="tokens" />
 				<ModelBreakdownChart modelValues={range.byModelBreakdown} metric="cost" />
 				<CalendarTokenChart days={range.byDay} />
