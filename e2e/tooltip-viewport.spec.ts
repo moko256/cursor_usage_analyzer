@@ -178,7 +178,7 @@ test('tall daily-model tooltip stays in the viewport', async ({ page }) => {
 	const tooltip = await visibleTooltip(page);
 	await expectTooltipInViewport(page);
 
-	const chartBox = await daily.locator('.layerchart').boundingBox();
+	const chartBox = await daily.locator('[role="img"]').boundingBox();
 	const tooltipSnapshot = await tooltip.evaluate((node) => {
 		const box = node.getBoundingClientRect();
 		return {
