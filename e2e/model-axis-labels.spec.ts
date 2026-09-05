@@ -76,8 +76,12 @@ test('モデル別グラフの色が d3-scale-chromatic で割り当てられる
 		mimeType: 'text/csv',
 		buffer: Buffer.from(breakdownCsv)
 	});
+	await expect(page.locator('.chart-card')).toHaveCount(6);
 
-	const breakdownFills = await uniqueBarFills(page.locator('.chart-card.horizontal-card').nth(0));
+	const breakdownCard = page.locator('.chart-card.horizontal-card').nth(0);
+	await expect(breakdownCard.locator('.lc-bar')).not.toHaveCount(0);
+
+	const breakdownFills = await uniqueBarFills(breakdownCard);
 	expect(breakdownFills.length).toBeGreaterThan(1);
 	expect(new Set(breakdownFills.map((item) => item.computed)).size).toBe(breakdownFills.length);
 });
