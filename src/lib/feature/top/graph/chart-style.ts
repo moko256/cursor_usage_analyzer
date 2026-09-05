@@ -1,22 +1,19 @@
-import { interpolateTurbo, schemeTableau10 } from 'd3-scale-chromatic';
+import { interpolatePuBu } from 'd3-scale-chromatic';
 import { getStringWidth, truncateText } from 'layerchart/utils/string';
 
 export const errorMinusColor = 'light-dark(' + '#868e96, #adb5bd)';
 export const errorPlusColor = 'light-dark(' + '#e03131, #ff6b6b)';
 
 /**
- * Stacked model / breakdown color from LayerChart's recommended d3-scale-chromatic
- * schemes: Tableau10 while it fits, then interpolateTurbo so extra series stay unique.
- * @see https://www.layerchart.com/docs/guides/styles
+ * Stacked model / breakdown color. Always samples ColorBrewer PuBu from
+ * LayerChart's ColorRamp schemes so any series count stays on one ramp.
+ * Darker stops sit at the bottom of the stack; a single series uses a mid-dark stop.
+ * @see https://www.layerchart.com/docs/components/ColorRamp#schemes
  */
 export function getDailyModelColors(modelIndex: number, modelLength: number): string {
-	if (modelLength <= schemeTableau10.length) {
-		return schemeTableau10[modelIndex] ?? schemeTableau10[0]!;
-	}
+	const stop = modelLength <= 1 ? 0.7 : 1 - modelIndex / (modelLength - 1);
 
-	const stop = modelLength <= 1 ? 0 : modelIndex / (modelLength - 1);
-
-	return interpolateTurbo(stop);
+	return interpolatePuBu(stop);
 }
 
 /**
