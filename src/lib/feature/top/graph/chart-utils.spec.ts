@@ -111,6 +111,33 @@ describe('modelsFromDays', () => {
 	});
 });
 
+describe('buildModelIndexTable', () => {
+	it('sorts unique model names and numbers them from 0', () => {
+		expect(
+			buildModelIndexTable([
+				csvPoint({ model: 'zeta' }),
+				csvPoint({ model: 'alpha' }),
+				csvPoint({ model: 'zeta' }),
+				csvPoint({ model: 'beta' })
+			])
+		).toEqual({
+			names: ['alpha', 'beta', 'zeta'],
+			indexByName: { alpha: 0, beta: 1, zeta: 2 },
+			count: 3
+		});
+	});
+
+	it('uses the unknown-model label for empty names', () => {
+		expect(
+			buildModelIndexTable([csvPoint({ model: '' }), csvPoint({ model: 'alpha' })], '不明')
+		).toEqual({
+			names: ['alpha', '不明'],
+			indexByName: { alpha: 0, 不明: 1 },
+			count: 2
+		});
+	});
+});
+
 describe('buildDailyModelSeries', () => {
 	const modelIndices = buildModelIndexTable([
 		csvPoint({ model: 'alpha' }),
