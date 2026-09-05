@@ -7,6 +7,7 @@
 		formatHour,
 		formatTokenAxis,
 		HOURLY_TOKEN_COLOR,
+		hourlyAxisTickLabels,
 		verticalChartHeight,
 		verticalChartPadding,
 		type HourlyValue
@@ -44,7 +45,10 @@
 		{series}
 		padding={verticalChartPadding}
 		height={verticalChartHeight}
-		props={{ yAxis: { format: formatTokenAxis } }}
+		props={{
+			xAxis: { ticks: hourlyAxisTickLabels() },
+			yAxis: { format: formatTokenAxis }
+		}}
 	>
 		{#snippet tooltip()}
 			<Tooltip.Root>

@@ -38,6 +38,8 @@ export {
 	formatDay,
 	formatHour,
 	formatTokenAxis,
+	HOURLY_AXIS_TICK_STEP_HOURS,
+	hourlyAxisTickLabels,
 	verticalChartHeight,
 	verticalChartPadding
 } from './chart-format';

@@ -168,6 +168,18 @@ test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) =
 		/Cumulative token usage by local hour across all data\. 24 one-hour periods\./
 	);
 	await expect(hourly.locator('.lc-bar')).toHaveCount(24);
+
+	const hourlyLabels = await hourly.locator('text.lc-axis-tick-label').allTextContents();
+	expect(hourlyLabels.filter((label) => /^\d{2}:00$/.test(label))).toEqual([
+		'00:00',
+		'03:00',
+		'06:00',
+		'09:00',
+		'12:00',
+		'15:00',
+		'18:00',
+		'21:00'
+	]);
 });
 
 test('横棒グラフの軸にモデル名が描画される', async ({ page }) => {
