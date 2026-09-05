@@ -1,7 +1,30 @@
+/** True for `YYYY-MM-DDTHH:mm…Z` timestamps, whose UTC calendar day is the first 10 chars. */
+export function isUtcIsoTimestamp(value: string): boolean {
+	return value.length >= 11 && value[10] === 'T' && value.endsWith('Z');
+}
+
 /** UTC calendar day `YYYY-MM-DD` for an ISO timestamp or ISO date. */
 export function utcDay(value: string): string {
+	if (isUtcIsoTimestamp(value)) return value.slice(0, 10);
+
 	const date = new Date(value);
 	return Number.isNaN(date.getTime()) ? value.slice(0, 10) : date.toISOString().slice(0, 10);
+}
+
+/**
+ * UTC day plus the local hour-of-day used by the hourly histogram.
+ * One `Date` parse covers both so grouping does not re-parse the same string.
+ */
+export function utcDayAndLocalHour(value: string): { day: string; hour: number | null } {
+	const date = new Date(value);
+	if (Number.isNaN(date.getTime())) {
+		return { day: value.slice(0, 10), hour: null };
+	}
+
+	return {
+		day: isUtcIsoTimestamp(value) ? value.slice(0, 10) : date.toISOString().slice(0, 10),
+		hour: date.getHours()
+	};
 }
 
 export function utcDayFromDate(date: Date): string {

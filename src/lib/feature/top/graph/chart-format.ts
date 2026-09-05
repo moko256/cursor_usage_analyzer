@@ -65,7 +65,7 @@ export function formatChartValue(value: number, metric: ChartMetric): string {
 	return metric === 'tokens' ? compactNumberFormat.format(value) : currencyFormat.format(value);
 }
 
-const dayFormat = new Intl.DateTimeFormat('en-US', {
+const dayLabelFormat = new Intl.DateTimeFormat('en-US', {
 	month: 'short',
 	day: 'numeric',
 	timeZone: 'UTC'
@@ -73,7 +73,7 @@ const dayFormat = new Intl.DateTimeFormat('en-US', {
 
 export function formatDay(value: string) {
 	const date = new Date(`${value}T00:00:00Z`);
-	return Number.isNaN(date.getTime()) ? value : dayFormat.format(date);
+	return Number.isNaN(date.getTime()) ? value : dayLabelFormat.format(date);
 }
 
 export function formatHour(value: number) {

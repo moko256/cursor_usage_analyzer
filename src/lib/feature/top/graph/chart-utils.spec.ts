@@ -14,9 +14,12 @@ import {
 	getDailyModelColors,
 	groupByDay,
 	groupByHour,
+	isUtcIsoTimestamp,
 	modelsFromDays,
 	sumCost,
 	sumTokens,
+	utcDay,
+	utcDayAndLocalHour,
 	TOKEN_BREAKDOWN_KEYS,
 	TOKEN_BREAKDOWN_LABELS
 } from './chart-utils';
@@ -81,17 +84,50 @@ describe('formatChartAxis', () => {
 	});
 });
 
-describe('formatDay', () => {
-	it('formats a UTC calendar day without constructing a new formatter per call', () => {
-		expect(formatDay('2026-08-28')).toBe('Aug 28');
-		expect(formatDay('not-a-date')).toBe('not-a-date');
-	});
-});
-
 describe('formatChartValue', () => {
 	it('formats compact tokens and USD costs', () => {
 		expect(formatChartValue(1234, 'tokens')).toBe('1.2K');
 		expect(formatChartValue(1.5, 'cost')).toBe('$1.50');
+	});
+});
+
+describe('formatDay', () => {
+	it('formats a UTC calendar day without constructing a new formatter each call', () => {
+		expect(formatDay('2026-08-28')).toBe('Aug 28');
+		expect(formatDay('2026-01-02')).toBe('Jan 2');
+		expect(formatDay('not-a-day')).toBe('not-a-day');
+	});
+});
+
+describe('utcDay', () => {
+	it('reads the calendar day from a UTC ISO timestamp without shifting it', () => {
+		expect(isUtcIsoTimestamp('2026-08-28T23:30:00.000Z')).toBe(true);
+		expect(utcDay('2026-08-28T23:30:00.000Z')).toBe('2026-08-28');
+		expect(utcDay('2026-08-29T00:15:00Z')).toBe('2026-08-29');
+	});
+
+	it('converts offset timestamps to the UTC calendar day', () => {
+		expect(isUtcIsoTimestamp('2026-08-28T00:30:00+09:00')).toBe(false);
+		expect(utcDay('2026-08-28T00:30:00+09:00')).toBe('2026-08-27');
+		expect(utcDay('2026-08-28T08:30:00+09:00')).toBe('2026-08-27');
+		expect(utcDay('2026-08-28T09:00:00+09:00')).toBe('2026-08-28');
+	});
+
+	it('falls back to the first 10 characters when the value is not a date', () => {
+		expect(utcDay('not-a-date')).toBe('not-a-date');
+	});
+});
+
+describe('utcDayAndLocalHour', () => {
+	it('returns the UTC day and a local hour for a parseable timestamp', () => {
+		const point = utcDayAndLocalHour('2026-08-28T10:30:00+09:00');
+
+		expect(point.day).toBe('2026-08-28');
+		expect(point.hour).toBe(new Date('2026-08-28T10:30:00+09:00').getHours());
+	});
+
+	it('omits the hour when the timestamp is invalid', () => {
+		expect(utcDayAndLocalHour('not-a-date')).toEqual({ day: 'not-a-date', hour: null });
 	});
 });
 
