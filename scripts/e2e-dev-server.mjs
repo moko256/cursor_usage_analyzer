@@ -29,6 +29,10 @@ export function parseNetstatPids(stdout, port) {
 	return uniquePids(pids);
 }
 
+export function isDevWrapperCommand(cmdline) {
+	return /(?:^|\/)(?:node|pnpm|npm|vite)(?:\s|$)/.test(cmdline);
+}
+
 export function collectAncestorPids(pid, readPpid, readCmdline) {
 	const pids = [pid];
 	let current = pid;
@@ -38,13 +42,26 @@ export function collectAncestorPids(pid, readPpid, readCmdline) {
 		if (!parent || parent <= 1) break;
 
 		const cmdline = readCmdline(parent);
-		if (!/(?:^|\/)(?:node|pnpm|npm|vite)(?:\s|$)/.test(cmdline)) break;
+		if (!isDevWrapperCommand(cmdline)) break;
 
 		pids.push(parent);
 		current = parent;
 	}
 
 	return uniquePids(pids);
+}
+
+/** PIDs we must never signal: this process and everything above it. */
+export function selfProcessPids(readParentPid = readPpid) {
+	const pids = new Set([process.pid]);
+	let current = process.ppid;
+
+	for (let depth = 0; depth < 8 && current > 1; depth += 1) {
+		pids.add(current);
+		current = readParentPid(current);
+	}
+
+	return pids;
 }
 
 export function listenPids(port) {
@@ -76,10 +93,11 @@ export async function freeListenPort(
 	const listeners = pidsForPort(port);
 	if (listeners.length === 0) return [];
 
+	const protectedPids = selfProcessPids();
 	const tree = uniquePids(
 		listeners.flatMap((pid) =>
 			collectAncestorPids(pid, readPpid, readCmdline).filter(
-				(candidate) => candidate !== process.pid && candidate !== process.ppid
+				(candidate) => !protectedPids.has(candidate)
 			)
 		)
 	);
@@ -99,7 +117,7 @@ export async function freeListenPort(
 	}
 
 	for (const pid of pidsForPort(port)) {
-		if (pid === process.pid || pid === process.ppid) continue;
+		if (protectedPids.has(pid)) continue;
 		try {
 			kill(pid, 'SIGKILL');
 		} catch {

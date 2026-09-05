@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
 	collectAncestorPids,
 	freeListenPort,
+	selfProcessPids,
 	parseLsofPids,
 	parseNetstatPids
 } from './e2e-dev-server.mjs';
@@ -32,6 +33,15 @@ describe('parseNetstatPids', () => {
 		].join('\n');
 
 		expect(parseNetstatPids(stdout, 4173)).toEqual([7999]);
+	});
+});
+
+describe('selfProcessPids', () => {
+	it('includes this process and its parents', () => {
+		const pids = selfProcessPids();
+
+		expect(pids.has(process.pid)).toBe(true);
+		expect(pids.has(process.ppid)).toBe(true);
 	});
 });
 
@@ -85,6 +95,8 @@ describe('freeListenPort', () => {
 
 		const stopped = await freeListenPort(port);
 		expect(stopped).toContain(child.pid);
+		expect(stopped).not.toContain(process.pid);
+		expect(stopped).not.toContain(process.ppid);
 
 		await expect(listenOn(port)).resolves.toBeUndefined();
 	});
