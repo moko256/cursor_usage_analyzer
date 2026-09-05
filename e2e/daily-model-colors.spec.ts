@@ -46,12 +46,17 @@ async function nonzeroBarFills(chart: Locator) {
 	);
 }
 
-async function tooltipSwatchColors(tooltip: Locator) {
-	return tooltip
-		.locator('.lc-tooltip-item-color')
-		.evaluateAll((dots) =>
-			dots.map((dot) => getComputedStyle(dot).getPropertyValue('--color').trim())
-		);
+async function tooltipSwatches(tooltip: Locator) {
+	return tooltip.locator('.lc-tooltip-item-color').evaluateAll((dots) =>
+		dots.map((dot) => {
+			const style = getComputedStyle(dot);
+
+			return {
+				color: style.getPropertyValue('--color').trim(),
+				background: style.backgroundColor
+			};
+		})
+	);
 }
 
 test('daily model colors stay stable when a shorter range drops other models', async ({ page }) => {
@@ -153,7 +158,9 @@ test('daily model tooltip shows a color swatch for each model that day', async (
 			isTokens ? ['100', '200'] : ['$1.00', '$2.00']
 		);
 		await expect(stackedTooltip.locator('.lc-tooltip-item-color')).toHaveCount(2);
-		expect(await tooltipSwatchColors(stackedTooltip)).toEqual(stackedExpected);
+		const stackedSwatches = await tooltipSwatches(stackedTooltip);
+		expect(stackedSwatches.map((swatch) => swatch.color)).toEqual(stackedExpected);
+		expect(stackedSwatches.map((swatch) => swatch.background)).not.toContain('rgba(0, 0, 0, 0)');
 
 		await tooltipRects.nth(1).hover();
 		const singleTooltip = page.locator('.lc-tooltip-root:not([inert])');
@@ -164,7 +171,9 @@ test('daily model tooltip shows a color swatch for each model that day', async (
 			isTokens ? ['300'] : ['$3.00']
 		);
 		await expect(singleTooltip.locator('.lc-tooltip-item-color')).toHaveCount(1);
-		expect(await tooltipSwatchColors(singleTooltip)).toEqual(singleExpected);
+		const singleSwatches = await tooltipSwatches(singleTooltip);
+		expect(singleSwatches.map((swatch) => swatch.color)).toEqual(singleExpected);
+		expect(singleSwatches.map((swatch) => swatch.background)).not.toContain('rgba(0, 0, 0, 0)');
 	}
 });
 
