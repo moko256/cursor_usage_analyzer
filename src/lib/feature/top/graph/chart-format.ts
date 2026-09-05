@@ -81,7 +81,7 @@ export function formatHour(value: number) {
 }
 
 /** Local-hour axis labels are drawn every 3 hours (00:00, 03:00, …, 21:00). */
-export const HOURLY_AXIS_TICK_STEP_HOURS = 3;
+const HOURLY_AXIS_TICK_STEP_HOURS = 3;
 const HOURLY_BUCKET_COUNT = 24;
 
 export function hourlyAxisTickLabels(): string[] {

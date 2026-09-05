@@ -25,6 +25,7 @@
 			value: (hour: HourlyValue) => hour.tokens
 		}
 	];
+	const hourTicks = hourlyAxisTickLabels();
 	let hourValues = $derived(
 		hours.map((hour) => ({
 			...hour,
@@ -46,7 +47,7 @@
 		padding={verticalChartPadding}
 		height={verticalChartHeight}
 		props={{
-			xAxis: { ticks: hourlyAxisTickLabels() },
+			xAxis: { ticks: hourTicks },
 			yAxis: { format: formatTokenAxis }
 		}}
 	>
