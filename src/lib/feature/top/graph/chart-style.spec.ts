@@ -1,5 +1,5 @@
 import { interpolateRgb } from 'd3-interpolate';
-import { interpolatePuBu, interpolateYlGnBu } from 'd3-scale-chromatic';
+import { interpolatePuBu, interpolateTurbo } from 'd3-scale-chromatic';
 import { describe, expect, it } from 'vitest';
 import {
 	getDailyModelColors,
@@ -9,14 +9,14 @@ import {
 } from './chart-style';
 
 describe('getDailyModelColors', () => {
-	it('always samples interpolateYlGnBu, regardless of series count', () => {
-		expect(getDailyModelColors(0, 1)).toBe(interpolateYlGnBu(0.7));
-		expect(getDailyModelColors(0, 3)).toBe(interpolateYlGnBu(1));
-		expect(getDailyModelColors(1, 3)).toBe(interpolateYlGnBu(0.5));
-		expect(getDailyModelColors(2, 3)).toBe(interpolateYlGnBu(0));
-		expect(getDailyModelColors(0, 15)).toBe(interpolateYlGnBu(1));
-		expect(getDailyModelColors(7, 15)).toBe(interpolateYlGnBu(1 - 7 / 14));
-		expect(getDailyModelColors(14, 15)).toBe(interpolateYlGnBu(0));
+	it('always samples interpolateTurbo, regardless of series count', () => {
+		expect(getDailyModelColors(0, 1)).toBe(interpolateTurbo(0.7));
+		expect(getDailyModelColors(0, 3)).toBe(interpolateTurbo(1));
+		expect(getDailyModelColors(1, 3)).toBe(interpolateTurbo(0.5));
+		expect(getDailyModelColors(2, 3)).toBe(interpolateTurbo(0));
+		expect(getDailyModelColors(0, 15)).toBe(interpolateTurbo(1));
+		expect(getDailyModelColors(7, 15)).toBe(interpolateTurbo(1 - 7 / 14));
+		expect(getDailyModelColors(14, 15)).toBe(interpolateTurbo(0));
 	});
 
 	it('does not wrap after 10 models', () => {
@@ -28,7 +28,7 @@ describe('getDailyModelColors', () => {
 
 describe('getTokenBreakdownColor', () => {
 	it('interpolates from interpolatePuBu(0.2) to the model color', () => {
-		const modelColor = interpolateYlGnBu(0.7);
+		const modelColor = interpolateTurbo(0.7);
 		const mix = interpolateRgb(interpolatePuBu(0.2), modelColor);
 
 		expect(getTokenBreakdownColor(0, 1, modelColor)).toBe(mix(1));

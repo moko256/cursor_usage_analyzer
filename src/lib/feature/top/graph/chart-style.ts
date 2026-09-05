@@ -1,27 +1,22 @@
 import { interpolateRgb } from 'd3-interpolate';
-import { interpolatePuBu, interpolateYlGnBu } from 'd3-scale-chromatic';
+import { interpolatePuBu, interpolateTurbo } from 'd3-scale-chromatic';
 import { getStringWidth, truncateText } from 'layerchart/utils/string';
 
 export const errorMinusColor = 'light-dark(' + '#868e96, #adb5bd)';
 export const errorPlusColor = 'light-dark(' + '#e03131, #ff6b6b)';
 
-/** Light end of the per-model token-type ramp. */
 const tokenBreakdownGradientStart = interpolatePuBu(0.2);
 
-/**
- * Per-model color. Always samples ColorBrewer YlGnBu.
- * Darker stops sit at the bottom of the stack; a single series uses a mid-dark stop.
- * @see https://www.layerchart.com/docs/components/ColorRamp#schemes
- */
+/** Per-model color from interpolateTurbo. Index 0 is stop 1; a single series uses 0.7. */
 export function getDailyModelColors(modelIndex: number, modelLength: number): string {
 	const stop = modelLength <= 1 ? 0.7 : 1 - modelIndex / (modelLength - 1);
 
-	return interpolateYlGnBu(stop);
+	return interpolateTurbo(stop);
 }
 
 /**
- * Token-type color within a model: interpolates from `interpolatePuBu(0.2)` to
- * that model's YlGnBu color. First key is the PuBu stop; last key is the model color.
+ * Token-type color within a model: interpolateRgb(interpolatePuBu(0.2), modelColor).
+ * First key is the PuBu stop; last key is the model color.
  */
 export function getTokenBreakdownColor(
 	tokenIndex: number,
