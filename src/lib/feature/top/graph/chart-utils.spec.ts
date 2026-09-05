@@ -13,6 +13,7 @@ import {
 	formatDay,
 	formatTokenAxis,
 	getDailyModelColors,
+	getTokenBreakdownColor,
 	groupByDay,
 	groupByHour,
 	isUtcIsoTimestamp,
@@ -229,7 +230,11 @@ describe('buildDailyModelSeries', () => {
 
 describe('buildModelBreakdownSeries', () => {
 	it('uses stable keys and display labels for the token breakdown', () => {
-		const series = buildModelBreakdownSeries([modelBreakdown()], 'tokens');
+		const series = buildModelBreakdownSeries(
+			[modelBreakdown()],
+			'tokens',
+			buildModelIndexTable([csvPoint({ model: 'alpha' })])
+		);
 
 		expect(series.map((item) => item.key)).toEqual([...TOKEN_BREAKDOWN_KEYS]);
 		expect(series.map((item) => item.label)).toEqual(
@@ -245,8 +250,9 @@ describe('buildModelBreakdownSeries', () => {
 			errorPlus: 10,
 			outputTokens: 0
 		});
-		const tokenSeries = buildModelBreakdownSeries([withErrors], 'tokens');
-		const costSeries = buildModelBreakdownSeries([withErrors], 'cost');
+		const modelIndices = buildModelIndexTable([csvPoint({ model: 'alpha' })]);
+		const tokenSeries = buildModelBreakdownSeries([withErrors], 'tokens', modelIndices);
+		const costSeries = buildModelBreakdownSeries([withErrors], 'cost', modelIndices);
 
 		expect(tokenSeries.map((item) => item.key)).toEqual([
 			...TOKEN_BREAKDOWN_KEYS,
@@ -257,6 +263,33 @@ describe('buildModelBreakdownSeries', () => {
 		expect(costSeries.at(-1)?.value(withErrors)).toBe(-1.25);
 		expect(tokenSeries.at(-2)?.key).toBe('errorMinus');
 		expect(tokenSeries.at(-1)?.key).toBe('errorPlus');
+	});
+
+	it('gradients each model from interpolatePuBu(0.2) to that model color', () => {
+		const modelIndices = buildModelIndexTable([
+			csvPoint({ model: 'alpha' }),
+			csvPoint({ model: 'beta' })
+		]);
+		const series = buildModelBreakdownSeries(
+			[modelBreakdown({ model: 'alpha' }), modelBreakdown({ model: 'beta' })],
+			'tokens',
+			modelIndices
+		);
+		const alpha = modelBreakdown({ model: 'alpha' });
+		const beta = modelBreakdown({ model: 'beta' });
+		const alphaColor = getDailyModelColors(0, 2);
+		const betaColor = getDailyModelColors(1, 2);
+		const tokenCount = TOKEN_BREAKDOWN_KEYS.length;
+
+		expect(series[0]?.fill(alpha)).toBe(getTokenBreakdownColor(0, tokenCount, alphaColor));
+		expect(series[0]?.fill(beta)).toBe(getTokenBreakdownColor(0, tokenCount, betaColor));
+		expect(series[tokenCount - 1]?.fill(alpha)).toBe(
+			getTokenBreakdownColor(tokenCount - 1, tokenCount, alphaColor)
+		);
+		expect(series[tokenCount - 1]?.fill(beta)).toBe(
+			getTokenBreakdownColor(tokenCount - 1, tokenCount, betaColor)
+		);
+		expect(series[tokenCount - 1]?.fill(alpha)).not.toBe(series[tokenCount - 1]?.fill(beta));
 	});
 });
 

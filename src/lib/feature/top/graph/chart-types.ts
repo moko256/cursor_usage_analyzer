@@ -66,7 +66,10 @@ export type ModelBreakdownValue = {
 export type ModelBreakdownSeries = {
 	key: ModelBreakdownSeriesKey;
 	label: string;
+	/** LayerChart series color (cScale / error bars). Token fills use `fill`. */
 	color: string;
+	/** Per-row fill so each model gets its own token-type gradient. */
+	fill: (row: ModelBreakdownValue) => string;
 	value: (row: ModelBreakdownValue) => number;
 };
 

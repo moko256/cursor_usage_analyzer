@@ -60,8 +60,16 @@
 			<GraphGroup>
 				<DailyModelChart days={range.byDay} metric="tokens" modelIndices={dashboard.modelIndices} />
 				<DailyModelChart days={range.byDay} metric="cost" modelIndices={dashboard.modelIndices} />
-				<ModelBreakdownChart modelValues={range.byModelBreakdown} metric="tokens" />
-				<ModelBreakdownChart modelValues={range.byModelBreakdown} metric="cost" />
+				<ModelBreakdownChart
+					modelValues={range.byModelBreakdown}
+					metric="tokens"
+					modelIndices={dashboard.modelIndices}
+				/>
+				<ModelBreakdownChart
+					modelValues={range.byModelBreakdown}
+					metric="cost"
+					modelIndices={dashboard.modelIndices}
+				/>
 				<CalendarTokenChart days={range.byDay} maxDailyTokens={range.maxDailyTokens} />
 				<HourlyTokenChart hours={range.byHour} />
 			</GraphGroup>

@@ -1,26 +1,43 @@
-import { interpolatePuBu } from 'd3-scale-chromatic';
+import { interpolateRgb } from 'd3-interpolate';
+import { interpolatePuBu, interpolateYlGnBu } from 'd3-scale-chromatic';
 import { getStringWidth, truncateText } from 'layerchart/utils/string';
 
 export const errorMinusColor = 'light-dark(' + '#868e96, #adb5bd)';
 export const errorPlusColor = 'light-dark(' + '#e03131, #ff6b6b)';
 
+/** Light end of the per-model token-type ramp. */
+const tokenBreakdownGradientStart = interpolatePuBu(0.2);
+
 /**
- * Stacked model / breakdown color. Always samples ColorBrewer PuBu from
- * LayerChart's ColorRamp schemes so any series count stays on one ramp.
+ * Per-model color. Always samples ColorBrewer YlGnBu.
  * Darker stops sit at the bottom of the stack; a single series uses a mid-dark stop.
  * @see https://www.layerchart.com/docs/components/ColorRamp#schemes
  */
 export function getDailyModelColors(modelIndex: number, modelLength: number): string {
 	const stop = modelLength <= 1 ? 0.7 : 1 - modelIndex / (modelLength - 1);
 
-	return interpolatePuBu(stop);
+	return interpolateYlGnBu(stop);
+}
+
+/**
+ * Token-type color within a model: interpolates from `interpolatePuBu(0.2)` to
+ * that model's YlGnBu color. First key is the PuBu stop; last key is the model color.
+ */
+export function getTokenBreakdownColor(
+	tokenIndex: number,
+	tokenCount: number,
+	modelColor: string
+): string {
+	const stop = tokenCount <= 1 ? 1 : tokenIndex / (tokenCount - 1);
+
+	return interpolateRgb(tokenBreakdownGradientStart, modelColor)(stop);
 }
 
 /** 5 heat colors for the token calendar (scaleThreshold bins). Light → dark. */
 export const TOKEN_CALENDAR_COLORS = [0, 0.25, 0.5, 0.75, 1].map((stop) => interpolatePuBu(stop));
 
-/** Single-series bar color (same stop as one-model daily charts). */
-export const HOURLY_TOKEN_COLOR = getDailyModelColors(0, 1);
+/** Single-series hourly bar color. */
+export const HOURLY_TOKEN_COLOR = interpolatePuBu(0.7);
 
 /**
  * Mirrors LayerChart's `.lc-axis-tick-label` rule so a measured width matches the drawn one.

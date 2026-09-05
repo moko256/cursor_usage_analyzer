@@ -9,7 +9,12 @@ import {
 	type ModelBreakdownValue,
 	type ModelIndexTable
 } from './chart-types';
-import { errorMinusColor, errorPlusColor, getDailyModelColors } from './chart-style';
+import {
+	errorMinusColor,
+	errorPlusColor,
+	getDailyModelColors,
+	getTokenBreakdownColor
+} from './chart-style';
 import {
 	tokenBreakdownCost,
 	tokenBreakdownValue,
@@ -43,30 +48,58 @@ export function buildDailyModelSeries(
 
 export function buildModelBreakdownSeries(
 	rows: ModelBreakdownValue[],
-	metric: ChartMetric
+	metric: ChartMetric,
+	modelIndices: ModelIndexTable
 ): ModelBreakdownSeries[] {
-	const series: ModelBreakdownSeries[] = TOKEN_BREAKDOWN_KEYS.map((key, index) => ({
-		key,
-		label: TOKEN_BREAKDOWN_LABELS[key],
-		color: getDailyModelColors(index, TOKEN_BREAKDOWN_KEYS.length),
-		value: (row) =>
-			metric === 'tokens' ? tokenBreakdownValue(row, key) : tokenBreakdownCost(row, key)
-	}));
+	const tokenColorsByModel = new Map<string, string[]>();
+
+	function tokenFill(model: string, tokenIndex: number) {
+		let colors = tokenColorsByModel.get(model);
+		if (!colors) {
+			const modelColor = getDailyModelColors(
+				modelIndices.indexByName[model] ?? 0,
+				modelIndices.count
+			);
+			colors = TOKEN_BREAKDOWN_KEYS.map((_, index) =>
+				getTokenBreakdownColor(index, TOKEN_BREAKDOWN_KEYS.length, modelColor)
+			);
+			tokenColorsByModel.set(model, colors);
+		}
+
+		return colors[tokenIndex] ?? colors[0];
+	}
+
+	const series: ModelBreakdownSeries[] = TOKEN_BREAKDOWN_KEYS.map((key, index) => {
+		const fill = (row: ModelBreakdownValue) => tokenFill(row.model, index);
+
+		return {
+			key,
+			label: TOKEN_BREAKDOWN_LABELS[key],
+			color: tokenFill(modelIndices.names[0] ?? '', index),
+			fill,
+			value: (row) =>
+				metric === 'tokens' ? tokenBreakdownValue(row, key) : tokenBreakdownCost(row, key)
+		};
+	});
 
 	if (rows.some((row) => row.errorMinus > 0)) {
+		const fill = () => errorMinusColor;
 		series.push({
 			key: 'errorMinus',
 			label: m.token_error_minus(),
 			color: errorMinusColor,
+			fill,
 			value: (row) => (metric === 'tokens' ? row.errorMinus : tokenErrorMinusCost(row))
 		});
 	}
 
 	if (rows.some((row) => row.errorPlus > 0)) {
+		const fill = () => errorPlusColor;
 		series.push({
 			key: 'errorPlus',
 			label: m.token_error_plus(),
 			color: errorPlusColor,
+			fill,
 			value: (row) => (metric === 'tokens' ? -row.errorPlus : tokenErrorPlusCost(row))
 		});
 	}

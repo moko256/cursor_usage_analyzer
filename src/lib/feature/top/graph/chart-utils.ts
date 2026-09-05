@@ -46,6 +46,7 @@ export {
 	errorMinusColor,
 	errorPlusColor,
 	getDailyModelColors,
+	getTokenBreakdownColor,
 	HOURLY_TOKEN_COLOR,
 	modelAxisPadding,
 	TOKEN_CALENDAR_COLORS,
