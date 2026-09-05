@@ -62,9 +62,12 @@ export function buildTokenCalendar(
 		: oldestMonthStart;
 	const end = hasCurrentMonthData ? addUtcDays(todayUtc, 1) : startOfNextUtcMonth(lastDay);
 	const data: TokenCalendarDay[] = [];
+	const cursor = new Date(`${start}T00:00:00.000Z`);
 
-	for (let day = start; day < end; day = addUtcDays(day, 1)) {
+	for (let day = start; day < end;) {
 		data.push({ day, date: dateFromUtcDay(day), tokens: values.get(day) ?? 0 });
+		cursor.setUTCDate(cursor.getUTCDate() + 1);
+		day = cursor.toISOString().slice(0, 10);
 	}
 
 	return { data, range: { start: dateFromUtcDay(start), end: dateFromUtcDay(end) } };

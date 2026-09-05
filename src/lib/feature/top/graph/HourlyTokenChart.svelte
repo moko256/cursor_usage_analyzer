@@ -34,29 +34,28 @@
 <ChartCard
 	title={m.tokens_per_hour_heading()}
 	subtitle={m.hourly_token_subtitle()}
+	ariaLabel={m.hourly_token_chart_aria({ hourCount: hourValues.length })}
 	class="hourly-token-card"
 >
-	<div role="img" aria-label={m.hourly_token_chart_aria({ hourCount: hourValues.length })}>
-		<BarChart
-			data={hourValues}
-			x="label"
-			{series}
-			padding={verticalChartPadding}
-			height={verticalChartHeight}
-			props={{ yAxis: { format: formatTokenAxis } }}
-		>
-			{#snippet tooltip()}
-				<Tooltip.Root>
-					{#snippet children({ data })}
-						<Tooltip.Header>
-							{m.hourly_token_value_title({
-								hour: formatHour(data.hour),
-								value: compactNumberFormat.format(data.tokens)
-							})}
-						</Tooltip.Header>
-					{/snippet}
-				</Tooltip.Root>
-			{/snippet}
-		</BarChart>
-	</div>
+	<BarChart
+		data={hourValues}
+		x="label"
+		{series}
+		padding={verticalChartPadding}
+		height={verticalChartHeight}
+		props={{ yAxis: { format: formatTokenAxis } }}
+	>
+		{#snippet tooltip()}
+			<Tooltip.Root>
+				{#snippet children({ data })}
+					<Tooltip.Header>
+						{m.hourly_token_value_title({
+							hour: formatHour(data.hour),
+							value: compactNumberFormat.format(data.tokens)
+						})}
+					</Tooltip.Header>
+				{/snippet}
+			</Tooltip.Root>
+		{/snippet}
+	</BarChart>
 </ChartCard>

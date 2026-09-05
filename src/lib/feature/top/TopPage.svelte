@@ -53,8 +53,8 @@
 
 	<Picker view={pickerView} onFileSelected={processFile} />
 
-	<section class="container" aria-label={m.dashboard_aria_label()}>
-		{#if dashboard && range}
+	{#if dashboard && range}
+		<section aria-label={m.dashboard_aria_label()}>
 			<RangeSwitcher bind:days={rangeDays} />
 			<Usage totalCost={range.totalCost} totalTokens={range.totalTokens} />
 			<GraphGroup>
@@ -65,8 +65,8 @@
 				<CalendarTokenChart days={range.byDay} maxDailyTokens={range.maxDailyTokens} />
 				<HourlyTokenChart hours={range.byHour} />
 			</GraphGroup>
-		{/if}
-	</section>
+		</section>
+	{/if}
 
 	<PrivacyNotice />
 </main>

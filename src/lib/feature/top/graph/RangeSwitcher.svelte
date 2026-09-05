@@ -20,16 +20,21 @@
 	}
 </script>
 
-<div role="group" style="width: fit-content" aria-label={m.chart_range_aria()}>
+<div class="range-switcher" role="group" aria-label={m.chart_range_aria()}>
 	{#each DAY_RANGES as range (range)}
-		{#if days === range}
-			<button type="button" aria-current="true" onclick={() => (days = range)}>
-				{rangeLabel(range)}
-			</button>
-		{:else}
-			<button type="button" class="outline secondary" onclick={() => (days = range)}>
-				{rangeLabel(range)}
-			</button>
-		{/if}
+		<button
+			type="button"
+			class={days === range ? undefined : 'outline secondary'}
+			aria-current={days === range ? 'true' : undefined}
+			onclick={() => (days = range)}
+		>
+			{rangeLabel(range)}
+		</button>
 	{/each}
 </div>
+
+<style>
+	.range-switcher {
+		width: fit-content;
+	}
+</style>

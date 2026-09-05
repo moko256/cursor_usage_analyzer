@@ -3,11 +3,7 @@
 </script>
 
 <section>
-	<p>
-		{#each m.privacy_notice_description_1().split('\n') as line, i (i)}
-			{line}<br />
-		{/each}
-	</p>
+	<p class="privacy-lead">{m.privacy_notice_description_1()}</p>
 
 	<p>
 		{m.privacy_notice_description_2_example()} <code>Cloud Agent ID</code>
@@ -17,3 +13,9 @@
 
 	<p>{m.privacy_notice_description_3_offline_guide()}</p>
 </section>
+
+<style>
+	.privacy-lead {
+		white-space: pre-line;
+	}
+</style>

@@ -3,6 +3,7 @@ import {
 	TOKEN_BREAKDOWN_KEYS,
 	TOKEN_BREAKDOWN_LABELS,
 	type ChartMetric,
+	type DailyModelValue,
 	type DailyValue,
 	type ModelBreakdownSeries,
 	type ModelBreakdownValue,
@@ -19,25 +20,35 @@ import {
 export function buildDailyModelSeries(
 	models: string[],
 	metric: ChartMetric,
-	isDark: boolean,
 	modelIndices: ModelIndexTable
 ) {
+	const modelValues = new WeakMap<DailyValue, Map<string, DailyModelValue>>();
+
+	function metricValue(day: DailyValue, model: string) {
+		let byModel = modelValues.get(day);
+		if (!byModel) {
+			byModel = new Map(day.models.map((value) => [value.model, value]));
+			modelValues.set(day, byModel);
+		}
+
+		return byModel.get(model)?.[metric] ?? 0;
+	}
+
 	return models.map((model) => ({
 		key: model,
-		color: getDailyModelColors(modelIndices.indexByName[model] ?? 0, modelIndices.count, isDark),
-		value: (day: DailyValue) => day.models.find((value) => value.model === model)?.[metric] ?? 0
+		color: getDailyModelColors(modelIndices.indexByName[model] ?? 0, modelIndices.count),
+		value: (day: DailyValue) => metricValue(day, model)
 	}));
 }
 
 export function buildModelBreakdownSeries(
 	rows: ModelBreakdownValue[],
-	metric: ChartMetric,
-	isDark: boolean
+	metric: ChartMetric
 ): ModelBreakdownSeries[] {
 	const series: ModelBreakdownSeries[] = TOKEN_BREAKDOWN_KEYS.map((key, index) => ({
 		key,
 		label: TOKEN_BREAKDOWN_LABELS[key],
-		color: getDailyModelColors(index, TOKEN_BREAKDOWN_KEYS.length, isDark),
+		color: getDailyModelColors(index, TOKEN_BREAKDOWN_KEYS.length),
 		value: (row) =>
 			metric === 'tokens' ? tokenBreakdownValue(row, key) : tokenBreakdownCost(row, key)
 	}));
