@@ -15,23 +15,22 @@ import {
 	tokenErrorPlusCost
 } from './chart-breakdown';
 
-export function buildDailyModelSeries(models: string[], metric: ChartMetric, isDark: boolean) {
+export function buildDailyModelSeries(models: string[], metric: ChartMetric) {
 	return models.map((model, index) => ({
 		key: model,
-		color: getDailyModelColors(index, models.length, isDark),
+		color: getDailyModelColors(index, models.length),
 		value: (day: DailyValue) => day.models.find((value) => value.model === model)?.[metric] ?? 0
 	}));
 }
 
 export function buildModelBreakdownSeries(
 	rows: ModelBreakdownValue[],
-	metric: ChartMetric,
-	isDark: boolean
+	metric: ChartMetric
 ): ModelBreakdownSeries[] {
 	const series: ModelBreakdownSeries[] = TOKEN_BREAKDOWN_KEYS.map((key, index) => ({
 		key,
 		label: TOKEN_BREAKDOWN_LABELS[key],
-		color: getDailyModelColors(index, TOKEN_BREAKDOWN_KEYS.length, isDark),
+		color: getDailyModelColors(index, TOKEN_BREAKDOWN_KEYS.length),
 		value: (row) =>
 			metric === 'tokens' ? tokenBreakdownValue(row, key) : tokenBreakdownCost(row, key)
 	}));

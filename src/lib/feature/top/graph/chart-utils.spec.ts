@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { csvPoint, modelBreakdown } from '$lib/csv-point.fixture';
 import {
+	buildDailyModelSeries,
 	buildModelBreakdownSeries,
 	buildTokenCalendar,
+	getDailyModelColors,
 	filterPointsByDays,
 	formatChartAxis,
 	formatChartValue,
@@ -108,9 +110,19 @@ describe('modelsFromDays', () => {
 	});
 });
 
+describe('buildDailyModelSeries', () => {
+	it('assigns CSS HSL colors in stack order', () => {
+		const series = buildDailyModelSeries(['alpha', 'beta'], 'tokens');
+
+		expect(series.map((item) => item.key)).toEqual(['alpha', 'beta']);
+		expect(series[0]?.color).toBe(getDailyModelColors(0, 2));
+		expect(series[1]?.color).toBe(getDailyModelColors(1, 2));
+	});
+});
+
 describe('buildModelBreakdownSeries', () => {
 	it('uses stable keys and display labels for the token breakdown', () => {
-		const series = buildModelBreakdownSeries([modelBreakdown()], 'tokens', false);
+		const series = buildModelBreakdownSeries([modelBreakdown()], 'tokens');
 
 		expect(series.map((item) => item.key)).toEqual([...TOKEN_BREAKDOWN_KEYS]);
 		expect(series.map((item) => item.label)).toEqual(
@@ -126,8 +138,8 @@ describe('buildModelBreakdownSeries', () => {
 			errorPlus: 10,
 			outputTokens: 0
 		});
-		const tokenSeries = buildModelBreakdownSeries([withErrors], 'tokens', false);
-		const costSeries = buildModelBreakdownSeries([withErrors], 'cost', false);
+		const tokenSeries = buildModelBreakdownSeries([withErrors], 'tokens');
+		const costSeries = buildModelBreakdownSeries([withErrors], 'cost');
 
 		expect(tokenSeries.map((item) => item.key)).toEqual([
 			...TOKEN_BREAKDOWN_KEYS,

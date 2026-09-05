@@ -1,7 +1,6 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages';
 	import { BarChart, Tooltip } from 'layerchart/svg';
-	import { MediaQuery } from 'svelte/reactivity';
 	import {
 		buildDailyModelSeries,
 		formatChartAxis,
@@ -21,7 +20,6 @@
 	}
 
 	let { days, metric }: Props = $props();
-	const isDark = new MediaQuery('(prefers-color-scheme: dark)');
 	let dayValues = $derived(
 		days.map((day) => ({
 			...day,
@@ -29,7 +27,7 @@
 		}))
 	);
 	let models = $derived(modelsFromDays(dayValues));
-	let series = $derived(buildDailyModelSeries(models, metric, isDark.current));
+	let series = $derived(buildDailyModelSeries(models, metric));
 	let title = $derived(
 		metric === 'tokens' ? m.tokens_per_day_heading() : m.models_per_day_heading()
 	);
