@@ -1,11 +1,21 @@
 import { execFileSync, spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 export const e2eDevHost = '127.0.0.1';
 export const e2eDevPort = Number(process.env.E2E_DEV_PORT ?? 4173);
 export const e2eDevOrigin = `http://${e2eDevHost}:${e2eDevPort}`;
 
-const serverCommand = ['pnpm', 'dev', '--host', e2eDevHost, '--port', String(e2eDevPort)];
+const viteCli = fileURLToPath(new URL('../node_modules/vite/bin/vite.js', import.meta.url));
+const serverCommand = [
+	process.execPath,
+	viteCli,
+	'dev',
+	'--host',
+	e2eDevHost,
+	'--port',
+	String(e2eDevPort)
+];
 
 export function parseLsofPids(stdout) {
 	return uniquePids(
