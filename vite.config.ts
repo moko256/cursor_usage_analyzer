@@ -1,9 +1,24 @@
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
+import type { CspDirectives } from '@sveltejs/kit';
 import { defineConfig } from 'vitest/config';
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 import inlangSettings from './project.inlang/settings.json' with { type: 'json' };
 import { siteBase, siteHost, siteProtocol } from './site-url.ts';
+
+const productionCspDirectives = {
+	'default-src': ['none'],
+	'worker-src': ['blob:', 'data:']
+} satisfies CspDirectives;
+
+/** Vite's dev modules, HMR, and LayerChart's blob SVG rasterisation need extra sources. */
+const e2eCspDirectives = {
+	'default-src': ['none'],
+	'script-src': ['self'],
+	'connect-src': ['self'],
+	'img-src': ['self', 'data:', 'blob:'],
+	'worker-src': ['self', 'blob:', 'data:']
+} satisfies CspDirectives;
 
 export default defineConfig({
 	css: {
@@ -33,10 +48,7 @@ export default defineConfig({
 				base: siteBase
 			},
 			csp: {
-				directives: {
-					'default-src': ['none'],
-					'worker-src': ['blob:', 'data:']
-				},
+				directives: process.env.E2E === '1' ? e2eCspDirectives : productionCspDirectives,
 				mode: 'hash'
 			},
 			output: {
