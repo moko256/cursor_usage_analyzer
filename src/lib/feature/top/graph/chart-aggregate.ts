@@ -117,8 +117,8 @@ export function buildModelIndexTable(
 	points: CsvPoint[],
 	unknownModel: string = m.unknown_model()
 ): ModelIndexTable {
-	const names = [...new Set(points.map((point) => point.model || unknownModel))].sort((left, right) =>
-		left.localeCompare(right)
+	const names = [...new Set(points.map((point) => point.model || unknownModel))].sort(
+		(left, right) => left.localeCompare(right)
 	);
 	const indexByName: Record<string, number> = {};
 	for (let index = 0; index < names.length; index += 1) {
