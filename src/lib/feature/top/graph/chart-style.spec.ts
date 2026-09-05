@@ -1,5 +1,5 @@
-import { interpolateRgb } from 'd3-interpolate';
-import { interpolatePuBu, interpolateTurbo } from 'd3-scale-chromatic';
+import { interpolateLab, interpolateRgb } from 'd3-interpolate';
+import { interpolatePuBu, schemeObservable10 } from 'd3-scale-chromatic';
 import { describe, expect, it } from 'vitest';
 import {
 	getDailyModelColors,
@@ -8,17 +8,55 @@ import {
 	TOKEN_CALENDAR_COLORS
 } from './chart-style';
 
+const modelColorStops = 10;
+
+function interpolateObservable10(stop: number): string {
+	const scaled = stop * 9;
+	const k = Math.floor(scaled);
+	const t = scaled % 1;
+
+	return interpolateLab(
+		schemeObservable10[k],
+		schemeObservable10[(k + 1) % schemeObservable10.length]
+	)(t);
+}
+
+function modelColorStop(modelIndex: number, modelLength: number): number {
+	return Math.min(modelIndex / Math.max(modelLength, modelColorStops), 1);
+}
+
 describe('getDailyModelColors', () => {
-	it('samples a 15-stop interpolateTurbo palette when there are fewer than 15 models', () => {
-		expect(getDailyModelColors(0, 1)).toBe(interpolateTurbo(0));
-		expect(getDailyModelColors(0, 3)).toBe(interpolateTurbo(0));
-		expect(getDailyModelColors(1, 3)).toBe(interpolateTurbo(1 / 15));
-		expect(getDailyModelColors(2, 3)).toBe(interpolateTurbo(2 / 15));
-		expect(getDailyModelColors(0, 15)).toBe(interpolateTurbo(0));
-		expect(getDailyModelColors(7, 15)).toBe(interpolateTurbo(7 / 15));
-		expect(getDailyModelColors(14, 15)).toBe(interpolateTurbo(14 / 15));
-		expect(getDailyModelColors(0, 20)).toBe(interpolateTurbo(0));
-		expect(getDailyModelColors(19, 20)).toBe(interpolateTurbo(19 / 20));
+	it('samples a 10-stop schemeObservable10 palette when there are fewer than 10 models', () => {
+		expect(getDailyModelColors(0, 1)).toBe(interpolateObservable10(0));
+		expect(getDailyModelColors(0, 3)).toBe(interpolateObservable10(0));
+		expect(getDailyModelColors(1, 3)).toBe(interpolateObservable10(1 / 10));
+		expect(getDailyModelColors(2, 3)).toBe(interpolateObservable10(2 / 10));
+		expect(getDailyModelColors(0, 10)).toBe(interpolateObservable10(0));
+		expect(getDailyModelColors(7, 10)).toBe(interpolateObservable10(7 / 10));
+		expect(getDailyModelColors(9, 10)).toBe(interpolateObservable10(9 / 10));
+		expect(getDailyModelColors(0, 20)).toBe(interpolateObservable10(0));
+		expect(getDailyModelColors(19, 20)).toBe(interpolateObservable10(19 / 20));
+	});
+
+	it('Lab-interpolates between adjacent Observable10 colors, wrapping k=9 to 0', () => {
+		expect(interpolateObservable10(0)).toBe(
+			interpolateLab(schemeObservable10[0], schemeObservable10[1])(0)
+		);
+		expect(interpolateObservable10(1 / 9)).toBe(
+			interpolateLab(schemeObservable10[1], schemeObservable10[2])(0)
+		);
+		expect(interpolateObservable10(0.5 / 9)).toBe(
+			interpolateLab(schemeObservable10[0], schemeObservable10[1])(0.5)
+		);
+		expect(interpolateObservable10(1)).toBe(
+			interpolateLab(schemeObservable10[9], schemeObservable10[0])(0)
+		);
+		expect(getDailyModelColors(10, 10)).toBe(
+			interpolateLab(schemeObservable10[9], schemeObservable10[0])(0)
+		);
+		expect(getDailyModelColors(1, 3)).toBe(
+			interpolateLab(schemeObservable10[0], schemeObservable10[1])((1 / 10) * 9)
+		);
 	});
 
 	it('does not wrap after 10 models', () => {
@@ -30,7 +68,7 @@ describe('getDailyModelColors', () => {
 
 describe('getTokenBreakdownColor', () => {
 	it('interpolates from interpolatePuBu(0.2) to the model color', () => {
-		const modelColor = interpolateTurbo(0.7);
+		const modelColor = interpolateObservable10(modelColorStop(0, 1));
 		const mix = interpolateRgb(interpolatePuBu(0.2), modelColor);
 
 		expect(getTokenBreakdownColor(0, 1, modelColor)).toBe(mix(1));

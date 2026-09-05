@@ -1,5 +1,5 @@
-import { interpolateRgb } from 'd3-interpolate';
-import { interpolatePuBu, interpolateTurbo } from 'd3-scale-chromatic';
+import { interpolateLab, interpolateRgb } from 'd3-interpolate';
+import { interpolatePuBu, schemeObservable10 } from 'd3-scale-chromatic';
 import { expect, test, type Locator } from '@playwright/test';
 
 test.use({ viewport: { width: 1400, height: 1100 } });
@@ -13,9 +13,18 @@ const csv = [
 
 const modelCount = 3;
 const tokenCount = 4;
-const expectedModelColors = [0, 1, 2].map((index) =>
-	interpolateTurbo(Math.min(index / Math.max(modelCount, 15), 1))
-);
+const modelColorStops = 10;
+const expectedModelColors = [0, 1, 2].map((index) => {
+	const stop = Math.min(index / Math.max(modelCount, modelColorStops), 1);
+	const scaled = stop * 9;
+	const k = Math.floor(scaled);
+	const t = scaled % 1;
+
+	return interpolateLab(
+		schemeObservable10[k],
+		schemeObservable10[(k + 1) % schemeObservable10.length]
+	)(t);
+});
 const expectedTokenStart = interpolatePuBu(0.2);
 
 async function nonzeroBarFills(chart: Locator) {
@@ -61,7 +70,7 @@ test('daily model colors stay stable when a shorter range drops other models', a
 	expect(oneDayFills[0]?.fill).not.toBe(allTimeFills[0]?.fill);
 });
 
-test('token breakdown gradients from interpolatePuBu(0.2) to each model turbo color', async ({
+test('token breakdown gradients from interpolatePuBu(0.2) to each model Observable10 color', async ({
 	page
 }) => {
 	await page.goto('/cursor_usage_analyzer/en/');

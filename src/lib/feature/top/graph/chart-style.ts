@@ -1,5 +1,5 @@
-import { interpolateRgb } from 'd3-interpolate';
-import { interpolatePuBu, interpolateTurbo } from 'd3-scale-chromatic';
+import { interpolateLab, interpolateRgb } from 'd3-interpolate';
+import { interpolatePuBu, schemeObservable10 } from 'd3-scale-chromatic';
 import { getStringWidth, truncateText } from 'layerchart/utils/string';
 
 export const errorMinusColor = 'light-dark(' + '#868e96, #adb5bd)';
@@ -7,13 +7,23 @@ export const errorPlusColor = 'light-dark(' + '#e03131, #ff6b6b)';
 
 const tokenBreakdownGradientStart = interpolatePuBu(0.2);
 
-const modelColorStops = 15;
+const modelColorStops = 10;
 
-/** Per-model color from interpolateTurbo. Fewer than 15 models pick from a 15-stop palette. */
+/** Lab-interpolate schemeObservable10 between stop k and k+1 (k=9 wraps to 0). */
+function interpolateObservable10(stop: number): string {
+	const scaled = stop * 9;
+	const k = Math.floor(scaled);
+	const t = scaled % 1;
+	const next = (k + 1) % schemeObservable10.length;
+
+	return interpolateLab(schemeObservable10[k], schemeObservable10[next])(t);
+}
+
+/** Per-model color from schemeObservable10. Fewer than 10 models pick from a 10-stop palette. */
 export function getDailyModelColors(modelIndex: number, modelLength: number): string {
 	const stop = Math.min(modelIndex / Math.max(modelLength, modelColorStops), 1);
 
-	return interpolateTurbo(stop);
+	return interpolateObservable10(stop);
 }
 
 /**
