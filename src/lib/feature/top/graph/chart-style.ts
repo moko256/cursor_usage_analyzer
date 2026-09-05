@@ -16,6 +16,12 @@ export function getDailyModelColors(modelIndex: number, modelLength: number): st
 	return interpolatePuBu(stop);
 }
 
+/** 5 heat colors for the token calendar (scaleThreshold bins). Light → dark. */
+export const TOKEN_CALENDAR_COLORS = [0, 0.25, 0.5, 0.75, 1].map((stop) => interpolatePuBu(stop));
+
+/** Single-series bar color (same stop as one-model daily charts). */
+export const HOURLY_TOKEN_COLOR = getDailyModelColors(0, 1);
+
 /**
  * Mirrors LayerChart's `.lc-axis-tick-label` rule so a measured width matches the drawn one.
  * `getStringWidth` only assigns the properties it is handed, but types them as a whole

@@ -1,6 +1,6 @@
 import { interpolatePuBu } from 'd3-scale-chromatic';
 import { describe, expect, it } from 'vitest';
-import { getDailyModelColors } from './chart-style';
+import { getDailyModelColors, HOURLY_TOKEN_COLOR, TOKEN_CALENDAR_COLORS } from './chart-style';
 
 describe('getDailyModelColors', () => {
 	it('always samples interpolatePuBu, regardless of series count', () => {
@@ -17,5 +17,19 @@ describe('getDailyModelColors', () => {
 		const colors = Array.from({ length: 15 }, (_, index) => getDailyModelColors(index, 15));
 
 		expect(new Set(colors).size).toBe(15);
+	});
+});
+
+describe('TOKEN_CALENDAR_COLORS', () => {
+	it('samples interpolatePuBu from light to dark across 5 heat bins', () => {
+		expect(TOKEN_CALENDAR_COLORS).toEqual(
+			[0, 0.25, 0.5, 0.75, 1].map((stop) => interpolatePuBu(stop))
+		);
+	});
+});
+
+describe('HOURLY_TOKEN_COLOR', () => {
+	it('matches the single-series interpolatePuBu stop', () => {
+		expect(HOURLY_TOKEN_COLOR).toBe(getDailyModelColors(0, 1));
 	});
 });

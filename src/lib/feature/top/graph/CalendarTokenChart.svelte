@@ -6,6 +6,7 @@
 		buildTokenCalendar,
 		buildTokenCalendarThresholds,
 		compactNumberFormat,
+		TOKEN_CALENDAR_COLORS,
 		type DailyValue
 	} from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
@@ -17,13 +18,6 @@
 
 	let { days, maxDailyTokens }: Props = $props();
 	const cellPadding = 1;
-	const tokenColors = [
-		'color-mix(in srgb, var(--pico-muted-color) 18%, var(--pico-background-color))',
-		'color-mix(in srgb, var(--pico-primary) 25%, var(--pico-background-color))',
-		'color-mix(in srgb, var(--pico-primary) 45%, var(--pico-background-color))',
-		'color-mix(in srgb, var(--pico-primary) 70%, var(--pico-background-color))',
-		'var(--pico-primary)'
-	] as const;
 	const tokenScale = scaleThreshold<number, string>().unknown('transparent');
 	let calendar = $derived(buildTokenCalendar(days));
 	let tokenThresholds = $derived(buildTokenCalendarThresholds(maxDailyTokens));
@@ -39,7 +33,7 @@
 		c="tokens"
 		cScale={tokenScale}
 		cDomain={tokenThresholds}
-		cRange={tokenColors}
+		cRange={TOKEN_CALENDAR_COLORS}
 		axis={false}
 		tooltipContext
 		padding={{ top: 20 }}
@@ -56,7 +50,7 @@
 								width={cellSize[0] - cellPadding * 2}
 								height={cellSize[1] - cellPadding * 2}
 								rx={4}
-								fill={cell.color ?? 'rgb(0 0 0 / 5%)'}
+								fill={cell.color ?? TOKEN_CALENDAR_COLORS[0]}
 								onpointermove={(event) => context.tooltip?.show(event, cell.data)}
 								onpointerleave={() => context.tooltip?.hide()}
 							/>

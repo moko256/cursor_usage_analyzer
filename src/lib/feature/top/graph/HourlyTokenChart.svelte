@@ -6,6 +6,7 @@
 		compactNumberFormat,
 		formatHour,
 		formatTokenAxis,
+		HOURLY_TOKEN_COLOR,
 		verticalChartHeight,
 		verticalChartPadding,
 		type HourlyValue
@@ -19,7 +20,7 @@
 	const series = [
 		{
 			key: 'tokens',
-			color: 'var(--pico-primary)',
+			color: HOURLY_TOKEN_COLOR,
 			value: (hour: HourlyValue) => hour.tokens
 		}
 	];

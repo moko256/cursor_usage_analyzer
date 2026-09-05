@@ -41,12 +41,6 @@ export default defineConfig(({ command }) => {
 						isE2E || !isRelease
 							? {
 									// Vite's dev modules, HMR need extra sources.
-									'default-src': ['none'],
-									'script-src': ['self'],
-									'connect-src': ['self'],
-									'manifest-src': ['self'],
-									'img-src': ['self', 'data:', 'blob:'],
-									'worker-src': ['self', 'blob:', 'data:']
 								}
 							: {
 									// Production

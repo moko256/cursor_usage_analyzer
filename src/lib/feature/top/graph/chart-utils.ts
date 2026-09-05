@@ -46,7 +46,9 @@ export {
 	errorMinusColor,
 	errorPlusColor,
 	getDailyModelColors,
+	HOURLY_TOKEN_COLOR,
 	modelAxisPadding,
+	TOKEN_CALENDAR_COLORS,
 	truncateModelLabel
 } from './chart-style';
 
