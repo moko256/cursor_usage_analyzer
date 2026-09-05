@@ -1,46 +1,53 @@
 import { describe, expect, it } from 'vitest';
-import { TOOLTIP_VIEWPORT_PADDING, tooltipViewportShift } from './chart-tooltip';
+import { TOOLTIP_VIEWPORT_PADDING, placeTooltipInViewport } from './chart-tooltip';
 
 const viewport = { width: 800, height: 600, offsetLeft: 0, offsetTop: 0 };
 
-describe('tooltipViewportShift', () => {
-	it('does not shift a tooltip already inside the viewport', () => {
-		expect(tooltipViewportShift(100, 80, 200, 60, viewport)).toEqual({ x: 0, y: 0 });
-	});
-
-	it('shifts left when the tooltip would overflow the right edge', () => {
-		expect(tooltipViewportShift(700, 80, 200, 60, viewport)).toEqual({
-			x: 800 - 200 - TOOLTIP_VIEWPORT_PADDING - 700,
-			y: 0
+describe('placeTooltipInViewport', () => {
+	it('keeps a tooltip that already fits', () => {
+		expect(placeTooltipInViewport(100, 80, 200, 60, viewport)).toMatchObject({
+			left: 100,
+			top: 80
 		});
 	});
 
-	it('shifts up when the tooltip would overflow the bottom edge', () => {
-		expect(tooltipViewportShift(100, 560, 200, 80, viewport)).toEqual({
-			x: 0,
-			y: 600 - 80 - TOOLTIP_VIEWPORT_PADDING - 560
+	it('flips left when the tooltip would overflow the right edge', () => {
+		expect(placeTooltipInViewport(700, 80, 200, 60, viewport)).toMatchObject({
+			left: 500,
+			top: 80
 		});
 	});
 
-	it('shifts right and down when the tooltip would overflow the top-left', () => {
-		expect(tooltipViewportShift(-40, -20, 120, 50, viewport)).toEqual({
-			x: TOOLTIP_VIEWPORT_PADDING - -40,
-			y: TOOLTIP_VIEWPORT_PADDING - -20
-		});
+	it('clamps a wide tooltip to the padded left edge', () => {
+		const placed = placeTooltipInViewport(100, 80, 900, 40, viewport);
+		expect(placed.left).toBe(TOOLTIP_VIEWPORT_PADDING);
+		expect(placed.maxWidth).toBe(800 - TOOLTIP_VIEWPORT_PADDING * 2);
 	});
 
-	it('pins a tooltip larger than the viewport to the padded origin', () => {
-		expect(tooltipViewportShift(40, 30, 900, 700, viewport)).toEqual({
-			x: TOOLTIP_VIEWPORT_PADDING - 40,
-			y: TOOLTIP_VIEWPORT_PADDING - 30
-		});
+	it('clips height below the pointer when there is enough space', () => {
+		const placed = placeTooltipInViewport(100, 400, 200, 300, viewport);
+		expect(placed.top).toBe(400);
+		expect(placed.maxHeight).toBe(600 - TOOLTIP_VIEWPORT_PADDING - 400);
+	});
+
+	it('flips up only when space below the pointer is too small', () => {
+		const placed = placeTooltipInViewport(100, 560, 200, 80, viewport);
+		expect(placed.top).toBe(560 - 80);
+		expect(placed.maxHeight).toBe(80);
+		expect(placed.top).toBeGreaterThanOrEqual(TOOLTIP_VIEWPORT_PADDING);
+	});
+
+	it('does not jump a tall tooltip to the top of the viewport', () => {
+		const placed = placeTooltipInViewport(120, 430, 240, 500, viewport);
+		expect(placed.top).toBe(430);
+		expect(placed.maxHeight).toBe(600 - TOOLTIP_VIEWPORT_PADDING - 430);
+		expect(placed.top).toBeGreaterThan(100);
 	});
 
 	it('accounts for visualViewport offsets', () => {
 		const zoomed = { width: 400, height: 300, offsetLeft: 50, offsetTop: 20 };
-		expect(tooltipViewportShift(10, 10, 100, 40, zoomed)).toEqual({
-			x: 50 + TOOLTIP_VIEWPORT_PADDING - 10,
-			y: 20 + TOOLTIP_VIEWPORT_PADDING - 10
-		});
+		const placed = placeTooltipInViewport(10, 10, 100, 40, zoomed);
+		expect(placed.left).toBe(50 + TOOLTIP_VIEWPORT_PADDING);
+		expect(placed.top).toBe(20 + TOOLTIP_VIEWPORT_PADDING);
 	});
 });

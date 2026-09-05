@@ -61,7 +61,7 @@
 		}}
 	>
 		{#snippet tooltip()}
-			<Tooltip.Root contained="window" props={{ root: chartTooltipRootProps }}>
+			<Tooltip.Root contained={false} props={{ root: chartTooltipRootProps }}>
 				{#snippet children({ data })}
 					{#each data.models as model (model.model)}
 						<Tooltip.Header>

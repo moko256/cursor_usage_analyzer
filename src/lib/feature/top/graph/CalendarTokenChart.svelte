@@ -60,7 +60,7 @@
 				</Calendar>
 			</Layer>
 
-			<Tooltip.Root contained="window" props={{ root: chartTooltipRootProps }}>
+			<Tooltip.Root contained={false} props={{ root: chartTooltipRootProps }}>
 				{#snippet children({ data })}
 					<Tooltip.Header value={data.date} format="day" />
 					<Tooltip.List>

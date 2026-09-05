@@ -48,7 +48,7 @@
 		props={{ yAxis: { format: formatTokenAxis } }}
 	>
 		{#snippet tooltip()}
-			<Tooltip.Root contained="window" props={{ root: chartTooltipRootProps }}>
+			<Tooltip.Root contained={false} props={{ root: chartTooltipRootProps }}>
 				{#snippet children({ data })}
 					<Tooltip.Header>
 						{m.hourly_token_value_title({
