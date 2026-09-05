@@ -65,15 +65,15 @@ export function formatChartValue(value: number, metric: ChartMetric): string {
 	return metric === 'tokens' ? compactNumberFormat.format(value) : currencyFormat.format(value);
 }
 
+const dayLabelFormat = new Intl.DateTimeFormat('en-US', {
+	month: 'short',
+	day: 'numeric',
+	timeZone: 'UTC'
+});
+
 export function formatDay(value: string) {
 	const date = new Date(`${value}T00:00:00Z`);
-	return Number.isNaN(date.getTime())
-		? value
-		: new Intl.DateTimeFormat('en-US', {
-				month: 'short',
-				day: 'numeric',
-				timeZone: 'UTC'
-			}).format(date);
+	return Number.isNaN(date.getTime()) ? value : dayLabelFormat.format(date);
 }
 
 export function formatHour(value: number) {
