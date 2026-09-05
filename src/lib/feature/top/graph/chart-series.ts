@@ -3,6 +3,7 @@ import {
 	TOKEN_BREAKDOWN_KEYS,
 	TOKEN_BREAKDOWN_LABELS,
 	type ChartMetric,
+	type DailyModelValue,
 	type DailyValue,
 	type ModelBreakdownSeries,
 	type ModelBreakdownValue,
@@ -22,10 +23,22 @@ export function buildDailyModelSeries(
 	isDark: boolean,
 	modelIndices: ModelIndexTable
 ) {
+	const modelValues = new WeakMap<DailyValue, Map<string, DailyModelValue>>();
+
+	function metricValue(day: DailyValue, model: string) {
+		let byModel = modelValues.get(day);
+		if (!byModel) {
+			byModel = new Map(day.models.map((value) => [value.model, value]));
+			modelValues.set(day, byModel);
+		}
+
+		return byModel.get(model)?.[metric] ?? 0;
+	}
+
 	return models.map((model) => ({
 		key: model,
 		color: getDailyModelColors(modelIndices.indexByName[model] ?? 0, modelIndices.count, isDark),
-		value: (day: DailyValue) => day.models.find((value) => value.model === model)?.[metric] ?? 0
+		value: (day: DailyValue) => metricValue(day, model)
 	}));
 }
 

@@ -92,8 +92,8 @@ test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) =
 	await expect(group.locator('.chart-card')).toHaveCount(6);
 	await expect(page.locator('.calendar-group')).toHaveCount(0);
 	await expect(calendar).toHaveCount(1);
-	await expect(calendar.locator('figcaption strong')).toHaveText('');
-	await expect(calendar.locator('figcaption span')).toHaveText('');
+	await expect(calendar.locator('figcaption strong')).toHaveCount(0);
+	await expect(calendar.locator('figcaption span')).toHaveCount(0);
 	await expect(calendar.locator('.lc-rect')).toHaveCount(
 		new Date(chartMonthStart.getFullYear(), chartMonthStart.getMonth() + 1, 0).getDate()
 	);

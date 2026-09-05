@@ -9,6 +9,7 @@ import {
 	formatChartAxis,
 	formatChartValue,
 	formatCostAxis,
+	formatDay,
 	formatTokenAxis,
 	getDailyModelColors,
 	groupByDay,
@@ -77,6 +78,13 @@ describe('formatChartAxis', () => {
 	it('delegates to the token or cost axis formatter', () => {
 		expect(formatChartAxis(1_500, 'tokens')).toBe('1.5k');
 		expect(formatChartAxis(1_500, 'cost')).toBe('$1.5k');
+	});
+});
+
+describe('formatDay', () => {
+	it('formats a UTC calendar day without constructing a new formatter per call', () => {
+		expect(formatDay('2026-08-28')).toBe('Aug 28');
+		expect(formatDay('not-a-date')).toBe('not-a-date');
 	});
 });
 
@@ -166,6 +174,23 @@ describe('buildDailyModelSeries', () => {
 		]);
 		expect(gammaOnly[0]?.color).toBe(allSeries[2]?.color);
 		expect(gammaOnly[0]?.color).not.toBe(getDailyModelColors(0, 1, true));
+	});
+
+	it('looks up each model on a day without scanning the models array', () => {
+		const series = buildDailyModelSeries(['alpha', 'gamma'], 'tokens', true, modelIndices);
+		const day = {
+			day: '2026-08-28',
+			cost: 3,
+			tokens: 30,
+			models: [
+				{ model: 'alpha', cost: 1, tokens: 10 },
+				{ model: 'beta', cost: 1, tokens: 5 },
+				{ model: 'gamma', cost: 1, tokens: 15 }
+			]
+		};
+
+		expect(series[0]?.value(day)).toBe(10);
+		expect(series[1]?.value(day)).toBe(15);
 	});
 });
 
