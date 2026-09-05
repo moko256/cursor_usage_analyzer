@@ -7,9 +7,11 @@ export const errorPlusColor = 'light-dark(' + '#e03131, #ff6b6b)';
 
 const tokenBreakdownGradientStart = interpolatePuBu(0.2);
 
-/** Per-model color from interpolateTurbo. Index 0 is stop 1; a single series uses 0.7. */
+const modelColorStops = 15;
+
+/** Per-model color from interpolateTurbo. Fewer than 15 models pick from a 15-stop palette. */
 export function getDailyModelColors(modelIndex: number, modelLength: number): string {
-	const stop = modelLength <= 1 ? 0.7 : 1 - modelIndex / (modelLength - 1);
+	const stop = Math.min(modelIndex / Math.max(modelLength, modelColorStops), 1);
 
 	return interpolateTurbo(stop);
 }

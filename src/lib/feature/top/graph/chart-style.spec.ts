@@ -9,14 +9,16 @@ import {
 } from './chart-style';
 
 describe('getDailyModelColors', () => {
-	it('always samples interpolateTurbo, regardless of series count', () => {
-		expect(getDailyModelColors(0, 1)).toBe(interpolateTurbo(0.7));
-		expect(getDailyModelColors(0, 3)).toBe(interpolateTurbo(1));
-		expect(getDailyModelColors(1, 3)).toBe(interpolateTurbo(0.5));
-		expect(getDailyModelColors(2, 3)).toBe(interpolateTurbo(0));
-		expect(getDailyModelColors(0, 15)).toBe(interpolateTurbo(1));
-		expect(getDailyModelColors(7, 15)).toBe(interpolateTurbo(1 - 7 / 14));
-		expect(getDailyModelColors(14, 15)).toBe(interpolateTurbo(0));
+	it('samples a 15-stop interpolateTurbo palette when there are fewer than 15 models', () => {
+		expect(getDailyModelColors(0, 1)).toBe(interpolateTurbo(0));
+		expect(getDailyModelColors(0, 3)).toBe(interpolateTurbo(0));
+		expect(getDailyModelColors(1, 3)).toBe(interpolateTurbo(1 / 15));
+		expect(getDailyModelColors(2, 3)).toBe(interpolateTurbo(2 / 15));
+		expect(getDailyModelColors(0, 15)).toBe(interpolateTurbo(0));
+		expect(getDailyModelColors(7, 15)).toBe(interpolateTurbo(7 / 15));
+		expect(getDailyModelColors(14, 15)).toBe(interpolateTurbo(14 / 15));
+		expect(getDailyModelColors(0, 20)).toBe(interpolateTurbo(0));
+		expect(getDailyModelColors(19, 20)).toBe(interpolateTurbo(19 / 20));
 	});
 
 	it('does not wrap after 10 models', () => {

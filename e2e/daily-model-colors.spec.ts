@@ -14,7 +14,7 @@ const csv = [
 const modelCount = 3;
 const tokenCount = 4;
 const expectedModelColors = [0, 1, 2].map((index) =>
-	interpolateTurbo(1 - index / (modelCount - 1))
+	interpolateTurbo(Math.min(index / Math.max(modelCount, 15), 1))
 );
 const expectedTokenStart = interpolatePuBu(0.2);
 
