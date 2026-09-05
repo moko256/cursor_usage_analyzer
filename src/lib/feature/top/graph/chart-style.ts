@@ -1,38 +1,22 @@
+import { interpolateTurbo, schemeTableau10 } from 'd3-scale-chromatic';
 import { getStringWidth, truncateText } from 'layerchart/utils/string';
 
 export const errorMinusColor = 'light-dark(' + '#868e96, #adb5bd)';
 export const errorPlusColor = 'light-dark(' + '#e03131, #ff6b6b)';
 
-/** Lightness added from Pico primary at the top of a stack (bottom stays at `l`). */
-const modelColorLightnessLift = {
-	light: '32%',
-	dark: '40%'
-} as const;
-
 /**
- * 0 at the bottom of a stacked series, 1 at the top. A single series stays on the
- * primary stop so it matches `--pico-primary` / `--pico-primary-background`.
- */
-export function modelColorStop(modelIndex: number, modelLength: number): number {
-	if (modelLength <= 1) return 0;
-
-	return modelIndex / (modelLength - 1);
-}
-
-/**
- * Stacked model / breakdown color. Hue and saturation come from Pico via CSS
- * `hsl(from …)`; JS only supplies the lightness stop so darker shades sit at the
- * bottom. `light-dark()` switches theme without a JS media query.
+ * Stacked model / breakdown color from LayerChart's recommended d3-scale-chromatic
+ * schemes: Tableau10 while it fits, then interpolateTurbo so extra series stay unique.
+ * @see https://www.layerchart.com/docs/guides/styles
  */
 export function getDailyModelColors(modelIndex: number, modelLength: number): string {
-	const stop = Number(modelColorStop(modelIndex, modelLength).toFixed(4));
+	if (modelLength <= schemeTableau10.length) {
+		return schemeTableau10[modelIndex] ?? schemeTableau10[0]!;
+	}
 
-	return (
-		'light-dark(' +
-		`hsl(from var(--pico-primary) h s calc(l + ${stop} * ${modelColorLightnessLift.light})), ` +
-		`hsl(from var(--pico-primary-background) h s calc(l + ${stop} * ${modelColorLightnessLift.dark}))` +
-		')'
-	);
+	const stop = modelLength <= 1 ? 0 : modelIndex / (modelLength - 1);
+
+	return interpolateTurbo(stop);
 }
 
 /**

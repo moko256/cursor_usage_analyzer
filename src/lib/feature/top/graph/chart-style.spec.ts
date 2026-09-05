@@ -1,31 +1,18 @@
+import { interpolateTurbo, schemeTableau10 } from 'd3-scale-chromatic';
 import { describe, expect, it } from 'vitest';
-import { getDailyModelColors, modelColorStop } from './chart-style';
-
-describe('modelColorStop', () => {
-	it('keeps a single series on the primary stop', () => {
-		expect(modelColorStop(0, 1)).toBe(0);
-		expect(modelColorStop(0, 0)).toBe(0);
-	});
-
-	it('puts 0 at the bottom of the stack and 1 at the top', () => {
-		expect(modelColorStop(0, 4)).toBe(0);
-		expect(modelColorStop(3, 4)).toBe(1);
-		expect(modelColorStop(1, 3)).toBe(0.5);
-	});
-});
+import { getDailyModelColors } from './chart-style';
 
 describe('getDailyModelColors', () => {
-	it('lets CSS compute HSL from Pico primary', () => {
-		const color = getDailyModelColors(1, 3);
-
-		expect(color).toMatch(/^light-dark\(/);
-		expect(color).toContain('hsl(from var(--pico-primary) h s calc(l + 0.5 * 32%))');
-		expect(color).toContain('hsl(from var(--pico-primary-background) h s calc(l + 0.5 * 40%))');
+	it('uses Tableau10 while the series fits the scheme', () => {
+		expect(getDailyModelColors(0, 3)).toBe(schemeTableau10[0]);
+		expect(getDailyModelColors(2, 3)).toBe(schemeTableau10[2]);
+		expect(getDailyModelColors(9, 10)).toBe(schemeTableau10[9]);
 	});
 
-	it('keeps the darkest stop at the bottom of the stack', () => {
-		expect(getDailyModelColors(0, 5)).toContain('l + 0 * 32%');
-		expect(getDailyModelColors(4, 5)).toContain('l + 1 * 32%');
+	it('uses interpolateTurbo when there are more series than Tableau10', () => {
+		expect(getDailyModelColors(0, 15)).toBe(interpolateTurbo(0));
+		expect(getDailyModelColors(7, 15)).toBe(interpolateTurbo(7 / 14));
+		expect(getDailyModelColors(14, 15)).toBe(interpolateTurbo(1));
 	});
 
 	it('does not wrap after 10 models', () => {

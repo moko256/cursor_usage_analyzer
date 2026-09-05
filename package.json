@@ -24,6 +24,7 @@
 		"@sveltejs/kit": "^2.63.0",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
 		"@types/d3-scale": "^4.0.9",
+		"@types/d3-scale-chromatic": "^3.1.0",
 		"@types/node": "^26.4.0",
 		"@typescript/native": "npm:typescript@^7.0.2",
 		"eslint": "^10.9.1",
@@ -44,6 +45,7 @@
 	"dependencies": {
 		"@picocss/pico": "^2.1.1",
 		"d3-scale": "^4.0.2",
+		"d3-scale-chromatic": "^3.1.0",
 		"kiso.css": "^1.2.4",
 		"layerchart": "^2.3.1"
 	}

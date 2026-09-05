@@ -111,7 +111,7 @@ describe('modelsFromDays', () => {
 });
 
 describe('buildDailyModelSeries', () => {
-	it('assigns CSS HSL colors in stack order', () => {
+	it('assigns d3-scale-chromatic colors in stack order', () => {
 		const series = buildDailyModelSeries(['alpha', 'beta'], 'tokens');
 
 		expect(series.map((item) => item.key)).toEqual(['alpha', 'beta']);

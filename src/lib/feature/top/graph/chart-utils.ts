@@ -44,7 +44,6 @@ export {
 	errorPlusColor,
 	getDailyModelColors,
 	modelAxisPadding,
-	modelColorStop,
 	truncateModelLabel
 } from './chart-style';
 
