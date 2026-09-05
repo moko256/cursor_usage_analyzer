@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { csvPoint, modelBreakdown } from '$lib/csv-point.fixture';
 import {
+	buildDailyModelSeries,
 	buildModelBreakdownSeries,
+	buildModelIndexTable,
 	buildTokenCalendar,
 	filterPointsByDays,
 	formatChartAxis,
@@ -9,6 +11,7 @@ import {
 	formatCostAxis,
 	formatDay,
 	formatTokenAxis,
+	getDailyModelColors,
 	groupByDay,
 	groupByHour,
 	isUtcIsoTimestamp,
@@ -149,6 +152,64 @@ describe('modelsFromDays', () => {
 				}
 			])
 		).toEqual(['alpha', 'zeta']);
+	});
+});
+
+describe('buildModelIndexTable', () => {
+	it('sorts unique model names and numbers them from 0', () => {
+		expect(
+			buildModelIndexTable([
+				csvPoint({ model: 'zeta' }),
+				csvPoint({ model: 'alpha' }),
+				csvPoint({ model: 'zeta' }),
+				csvPoint({ model: 'beta' })
+			])
+		).toEqual({
+			names: ['alpha', 'beta', 'zeta'],
+			indexByName: { alpha: 0, beta: 1, zeta: 2 },
+			count: 3
+		});
+	});
+
+	it('uses the unknown-model label for empty names', () => {
+		expect(
+			buildModelIndexTable([csvPoint({ model: '' }), csvPoint({ model: 'alpha' })], '不明')
+		).toEqual({
+			names: ['alpha', '不明'],
+			indexByName: { alpha: 0, 不明: 1 },
+			count: 2
+		});
+	});
+});
+
+describe('buildDailyModelSeries', () => {
+	const modelIndices = buildModelIndexTable([
+		csvPoint({ model: 'alpha' }),
+		csvPoint({ model: 'beta' }),
+		csvPoint({ model: 'gamma' })
+	]);
+
+	it('assigns colors from the global index table, not the range-local order', () => {
+		const allSeries = buildDailyModelSeries(
+			['alpha', 'beta', 'gamma'],
+			'tokens',
+			true,
+			modelIndices
+		);
+		const gammaOnly = buildDailyModelSeries(['gamma'], 'tokens', true, modelIndices);
+
+		expect(modelIndices).toEqual({
+			names: ['alpha', 'beta', 'gamma'],
+			indexByName: { alpha: 0, beta: 1, gamma: 2 },
+			count: 3
+		});
+		expect(allSeries.map((item) => item.color)).toEqual([
+			getDailyModelColors(0, 3, true),
+			getDailyModelColors(1, 3, true),
+			getDailyModelColors(2, 3, true)
+		]);
+		expect(gammaOnly[0]?.color).toBe(allSeries[2]?.color);
+		expect(gammaOnly[0]?.color).not.toBe(getDailyModelColors(0, 1, true));
 	});
 });
 

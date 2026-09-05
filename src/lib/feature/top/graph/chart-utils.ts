@@ -5,6 +5,7 @@ export type {
 	DashboardData,
 	DayRange,
 	HourlyValue,
+	ModelIndexTable,
 	ModelBreakdownSeries,
 	ModelBreakdownSeriesKey,
 	ModelBreakdownValue,
@@ -50,6 +51,7 @@ export {
 } from './chart-style';
 
 export {
+	buildModelIndexTable,
 	filterPointsByDays,
 	groupByDay,
 	groupByHour,

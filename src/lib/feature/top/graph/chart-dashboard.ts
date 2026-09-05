@@ -1,6 +1,6 @@
 import type { CsvPoint } from '$lib/csv-parser';
 import * as m from '$lib/paraglide/messages';
-import { resolveRangeEndDay } from './chart-aggregate';
+import { buildModelIndexTable, resolveRangeEndDay } from './chart-aggregate';
 import {
 	addPointToBuckets,
 	createRangeBuckets,
@@ -45,6 +45,7 @@ export function buildDashboardData(
 		pointCount: points.length,
 		totalCost: buckets.all.totalCost,
 		totalTokens: buckets.all.totalTokens,
+		modelIndices: buildModelIndexTable(points, unknownModel),
 		ranges: {
 			1: finalizeRangeBuckets(buckets[1]),
 			7: finalizeRangeBuckets(buckets[7]),

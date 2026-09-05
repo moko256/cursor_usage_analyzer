@@ -1,7 +1,13 @@
 import type { CsvPoint } from '$lib/csv-parser';
 import * as m from '$lib/paraglide/messages';
 import { finalizeDays, finalizeHours } from './chart-accumulate';
-import type { DailyModelValue, DailyValue, DayRange, HourlyValue } from './chart-types';
+import type {
+	DailyModelValue,
+	DailyValue,
+	DayRange,
+	HourlyValue,
+	ModelIndexTable
+} from './chart-types';
 import { addUtcDays, utcDay, utcDayAndLocalHour } from './chart-utc';
 
 export function sumCost(points: CsvPoint[]): number {
@@ -93,4 +99,23 @@ export function modelsFromDays(days: DailyValue[]): string[] {
 	return [...new Set(days.flatMap((day) => day.models.map((value) => value.model)))].sort(
 		(left, right) => left.localeCompare(right)
 	);
+}
+
+/**
+ * Assigns a unique 0-based index to every distinct model after dictionary sort.
+ * Empty model names use `unknownModel`, matching `groupByDay`.
+ */
+export function buildModelIndexTable(
+	points: CsvPoint[],
+	unknownModel: string = m.unknown_model()
+): ModelIndexTable {
+	const names = [...new Set(points.map((point) => point.model || unknownModel))].sort(
+		(left, right) => left.localeCompare(right)
+	);
+	const indexByName: Record<string, number> = {};
+	for (let index = 0; index < names.length; index += 1) {
+		indexByName[names[index]] = index;
+	}
+
+	return { names, indexByName, count: names.length };
 }

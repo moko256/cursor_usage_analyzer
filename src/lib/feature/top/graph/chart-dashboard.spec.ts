@@ -60,6 +60,21 @@ describe('buildDashboardData', () => {
 
 		expect(dashboard.ranges.all.byDay[0]?.models[0]?.model).toBe('不明');
 		expect(dashboard.ranges.all.byModelBreakdown[0]?.model).toBe('不明');
+		expect(dashboard.modelIndices).toEqual({
+			names: ['不明'],
+			indexByName: { 不明: 0 },
+			count: 1
+		});
+	});
+
+	it('indexes every distinct model across all ranges', () => {
+		const dashboard = buildDashboardData(points);
+
+		expect(dashboard.modelIndices).toEqual({
+			names: ['alpha', 'beta'],
+			indexByName: { alpha: 0, beta: 1 },
+			count: 2
+		});
 	});
 
 	it('matches filter-then-group for offset timestamps and unsorted rows', () => {
