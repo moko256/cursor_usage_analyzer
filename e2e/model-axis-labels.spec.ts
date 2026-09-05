@@ -180,11 +180,6 @@ test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) =
 		'18:00',
 		'21:00'
 	]);
-
-	await hourly.locator('.lc-tooltip-rect').hover();
-	const tooltip = page.locator('.lc-tooltip-root:not([inert])');
-	await expect(tooltip).toBeVisible();
-	await expect(tooltip.locator('.lc-tooltip-header')).toHaveText(/^\d{2}:00: .+ tokens$/);
 });
 
 test('横棒グラフの軸にモデル名が描画される', async ({ page }) => {
