@@ -33,6 +33,30 @@ const data = {
 			type: 'image/png',
 			sizes: '512x512'
 		}
+	],
+	screenshots: [
+		{
+			src: asset('/screenshots/screenshot-light.png'),
+			sizes: '1280x720',
+			type: 'image/png'
+		},
+		{
+			src: asset('/screenshots/screenshot-dark.png'),
+			sizes: '1280x720',
+			type: 'image/png'
+		},
+		{
+			src: asset('/screenshots/screenshot-light.png'),
+			sizes: '1280x720',
+			type: 'image/png',
+			form_factor: 'wide'
+		},
+		{
+			src: asset('/screenshots/screenshot-dark.png'),
+			sizes: '1280x720',
+			type: 'image/png',
+			form_factor: 'wide'
+		}
 	]
 };
 

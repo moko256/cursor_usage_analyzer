@@ -220,8 +220,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 
 			expect(cells[0]).toEqual({
 				fill: null,
-				computedFill:
-					colorScheme === 'light' ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.1)'
+				computedFill: colorScheme === 'light' ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.1)'
 			});
 			expect(cells[1]?.fill).not.toBeNull();
 			expect(cells[1]?.computedFill).not.toBe(cells[0]?.computedFill);
