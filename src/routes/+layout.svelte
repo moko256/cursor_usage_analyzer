@@ -3,9 +3,19 @@
 	import LocaleAnchor from '$lib/components/LocaleAnchor.svelte';
 	import HeadUrlLinks from '$lib/components/HeadUrlLinks.svelte';
 	import { asset, resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import { applyDocumentLocale } from '$lib/html-lang';
+	import { getLocale } from '$lib/paraglide/runtime';
 
 	let { children } = $props();
 </script>
+
+<svelte:document
+	{@attach (doc) => {
+		void page.url;
+		applyDocumentLocale(doc.documentElement, getLocale());
+	}}
+/>
 
 <svelte:head>
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
