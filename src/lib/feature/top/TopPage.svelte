@@ -27,18 +27,12 @@
 		view = { status: 'loading' };
 
 		try {
-			// Isolate File lifetime to arrayBuffer()+transfer inside parseCsvFile; do not
-			// keep `selected` across the await by nesting the call in a scope that ends
-			// after scheduling parse (parseCsvFile already nulls its blob after read).
-			const dashboard = await parseSelectedCsv(selected);
-			view = { status: 'success', dashboard };
+			const parsing = parseCsvFile(selected, m.unknown_model());
+			selected = undefined;
+			view = { status: 'success', dashboard: await parsing };
 		} catch (error) {
 			view = { status: 'error', message: csvParseErrorMessage(error) };
 		}
-	}
-
-	function parseSelectedCsv(file: File) {
-		return parseCsvFile(file, m.unknown_model());
 	}
 </script>
 
