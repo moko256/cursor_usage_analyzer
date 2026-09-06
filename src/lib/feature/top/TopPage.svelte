@@ -14,10 +14,12 @@
 	let dashboard = $derived(view.status === 'success' ? view.dashboard : null);
 	let pickerView = $derived(toPickerView(view));
 
-	async function processFile(file: File | undefined) {
-		if (!file || view.status === 'loading') return;
+	async function processFile(selected: File | undefined) {
+		if (!selected || view.status === 'loading') return;
 
-		if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
+		const name = selected.name;
+		const type = selected.type;
+		if (!name.toLowerCase().endsWith('.csv') && type !== 'text/csv') {
 			view = { status: 'error', message: m.invalid_file_type() };
 			return;
 		}
@@ -25,7 +27,9 @@
 		view = { status: 'loading' };
 
 		try {
-			view = { status: 'success', dashboard: await parseCsvFile(file, m.unknown_model()) };
+			const parsing = parseCsvFile(selected, m.unknown_model());
+			selected = undefined;
+			view = { status: 'success', dashboard: await parsing };
 		} catch (error) {
 			view = { status: 'error', message: csvParseErrorMessage(error) };
 		}

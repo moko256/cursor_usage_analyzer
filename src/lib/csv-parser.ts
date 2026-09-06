@@ -32,7 +32,8 @@ export class CsvParseError extends Error {
 }
 
 export type WorkerRequest = {
-	file: Blob;
+	/** Transferred ArrayBuffer of the CSV bytes; ownership moves to the worker. */
+	buffer: ArrayBuffer;
 	unknownModel: string;
 };
 
@@ -50,40 +51,62 @@ const isoDateTimePattern =
 	/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?$/;
 
 /**
+ * Force a standalone string so V8 does not keep the whole CSV alive via a
+ * sliced-string parent pointer after unused columns are dropped.
+ */
+function detachString(value: string): string {
+	return value.length === 0 ? '' : value[0] + value.slice(1);
+}
+
+/**
  * Parses only the columns used by the charts. This function is shared with the
  * worker so it can be unit-tested without constructing a browser Worker.
+ *
+ * Records are visited one at a time so the full `string[][]` never sits beside
+ * the extracted points.
  */
 export function parseCsvText(text: string): CsvPoint[] {
-	const records = parseRecords(text);
-	if (records.length === 0) {
-		throw new CsvParseError('empty');
-	}
-
-	const headers = records[0].map((header) => normalizeHeader(header));
-	const dateIndex = headers.indexOf('date');
-	const costIndex = headers.indexOf('cost');
-	const modelIndex = headers.indexOf('model');
-	const tokenIndex = findHeaderIndex(headers, ['tokens', 'token', 'totaltokens']);
-	const inputTokenIndex = findHeaderIndex(headers, ['inputtokens', 'inputtoken']);
-	const outputTokenIndex = findHeaderIndex(headers, ['outputtokens', 'outputtoken']);
-	const inputWithCacheWriteIndex = headers.indexOf('inputwcachewrite');
-	const inputWithoutCacheWriteIndex = headers.indexOf('inputwocachewrite');
-	const cacheReadIndex = headers.indexOf('cacheread');
-
-	if (dateIndex === -1 || costIndex === -1 || modelIndex === -1) {
-		throw new CsvParseError('missing_columns');
-	}
+	let headers: string[] | null = null;
+	let dateIndex = -1;
+	let costIndex = -1;
+	let modelIndex = -1;
+	let tokenIndex = -1;
+	let inputTokenIndex = -1;
+	let outputTokenIndex = -1;
+	let inputWithCacheWriteIndex = -1;
+	let inputWithoutCacheWriteIndex = -1;
+	let cacheReadIndex = -1;
 
 	const points: CsvPoint[] = [];
 	const timestamps: number[] = [];
-	for (let rowIndex = 1; rowIndex < records.length; rowIndex += 1) {
-		const record = records[rowIndex];
-		const date = record[dateIndex]?.trim() ?? '';
-		if (!isoDateTimePattern.test(date)) continue;
-		const timestamp = Date.parse(date);
-		if (!Number.isFinite(timestamp)) continue;
+	let sawRecord = false;
 
-		const model = record[modelIndex]?.trim() ?? '';
+	forEachRecord(text, (record) => {
+		sawRecord = true;
+		if (headers === null) {
+			headers = record.map((header) => normalizeHeader(header));
+			dateIndex = headers.indexOf('date');
+			costIndex = headers.indexOf('cost');
+			modelIndex = headers.indexOf('model');
+			tokenIndex = findHeaderIndex(headers, ['tokens', 'token', 'totaltokens']);
+			inputTokenIndex = findHeaderIndex(headers, ['inputtokens', 'inputtoken']);
+			outputTokenIndex = findHeaderIndex(headers, ['outputtokens', 'outputtoken']);
+			inputWithCacheWriteIndex = headers.indexOf('inputwcachewrite');
+			inputWithoutCacheWriteIndex = headers.indexOf('inputwocachewrite');
+			cacheReadIndex = headers.indexOf('cacheread');
+
+			if (dateIndex === -1 || costIndex === -1 || modelIndex === -1) {
+				throw new CsvParseError('missing_columns');
+			}
+			return;
+		}
+
+		const date = detachString(record[dateIndex]?.trim() ?? '');
+		if (!isoDateTimePattern.test(date)) return;
+		const timestamp = Date.parse(date);
+		if (!Number.isFinite(timestamp)) return;
+
+		const model = detachString(record[modelIndex]?.trim() ?? '');
 		const tokens = parseTokens(record, tokenIndex, inputTokenIndex, outputTokenIndex);
 		const tokenBreakdown = parseTokenBreakdown(record, {
 			inputWithCacheWriteIndex,
@@ -96,6 +119,10 @@ export function parseCsvText(text: string): CsvPoint[] {
 			points.push({ date, model, tokens, ...tokenBreakdown, ...parsedCost });
 			timestamps.push(timestamp);
 		}
+	});
+
+	if (!sawRecord) {
+		throw new CsvParseError('empty');
 	}
 
 	if (points.length === 0) {
@@ -181,10 +208,16 @@ function parseOptionalColumn(record: string[], index: number) {
 }
 
 /**
- * Sends the file to a dedicated worker. The worker parses rows and groups them
- * there, then posts back only the compact dashboard payload.
+ * Reads the blob into an ArrayBuffer, then transfers that buffer to a one-shot
+ * worker. Uses `.then` (not `async`) so the Blob parameter is not kept alive
+ * across the worker wait after the bytes are read. The worker is terminated
+ * after it posts back the compact dashboard.
  */
 export function parseCsvFile(file: Blob, unknownModel: string): Promise<DashboardData> {
+	return file.arrayBuffer().then((buffer) => parseCsvArrayBuffer(buffer, unknownModel));
+}
+
+function parseCsvArrayBuffer(buffer: ArrayBuffer, unknownModel: string): Promise<DashboardData> {
 	return new Promise((resolve, reject) => {
 		if (typeof Worker === 'undefined') {
 			reject(new CsvParseError('background_parsing_unavailable'));
@@ -192,9 +225,17 @@ export function parseCsvFile(file: Blob, unknownModel: string): Promise<Dashboar
 		}
 
 		const worker = new CsvParserWorker();
+		let settled = false;
 
-		const finish = () => worker.terminate();
+		const finish = () => {
+			worker.onmessage = null;
+			worker.onerror = null;
+			worker.terminate();
+		};
+
 		worker.onmessage = (event: MessageEvent<WorkerSuccess | WorkerFailure>) => {
+			if (settled) return;
+			settled = true;
 			finish();
 			if (event.data.type === 'success') {
 				resolve(event.data.dashboard);
@@ -203,11 +244,14 @@ export function parseCsvFile(file: Blob, unknownModel: string): Promise<Dashboar
 			}
 		};
 		worker.onerror = () => {
+			if (settled) return;
+			settled = true;
 			finish();
 			reject(new CsvParseError('background_parsing_failed'));
 		};
-		const request: WorkerRequest = { file, unknownModel };
-		worker.postMessage(request);
+
+		const request: WorkerRequest = { buffer, unknownModel };
+		worker.postMessage(request, [buffer]);
 	});
 }
 
@@ -216,9 +260,10 @@ export function parseCsvFile(file: Blob, unknownModel: string): Promise<Dashboar
  * scanned with `indexOf` and unquoted fields are copied with `slice`. Concatenating
  * one character at a time was the dominant cost on Cursor usage exports, which quote
  * every cell.
+ *
+ * Visits one record at a time so unused columns can be GC'd before the next row.
  */
-function parseRecords(text: string): string[][] {
-	const records: string[][] = [];
+function forEachRecord(text: string, visit: (record: string[]) => void): void {
 	const length = text.length;
 	let record: string[] = [];
 	let start = 0;
@@ -235,7 +280,7 @@ function parseRecords(text: string): string[][] {
 	};
 	const pushRecord = (end: number) => {
 		pushField(end);
-		if (record.some((value) => value.trim() !== '')) records.push(record);
+		if (record.some((value) => value.trim() !== '')) visit(record);
 		record = [];
 	};
 
@@ -289,6 +334,4 @@ function parseRecords(text: string): string[][] {
 
 	if (insideQuotes) throw new CsvParseError('unclosed_quotes');
 	if (start < length || record.length > 0 || hasChunks) pushRecord(length);
-
-	return records;
 }
