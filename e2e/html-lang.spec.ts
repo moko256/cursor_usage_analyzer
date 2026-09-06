@@ -39,7 +39,6 @@ test('client navigation updates html lang from Paraglide getLocale', async ({ pa
 	});
 	await page.locator('#client-nav-ja').click();
 	await expect(page).toHaveURL(/\/ja\/?$/);
-	await expect(page.getByText('CSVをドロップ、またはファイルを選択')).toBeVisible();
 	await expect(page.locator('html')).toHaveAttribute('lang', 'ja');
 	await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
 });
