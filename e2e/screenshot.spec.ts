@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
-import { activeChartCards } from './helpers/chart-locators';
+import { activeChartCards, activeLocator } from './helpers/chart-locators';
 
 const viewport = { width: 1280, height: 720 } as const;
 const pageZoom = '0.75';
@@ -145,7 +145,7 @@ test.describe('full-page screenshots', () => {
 			}) => {
 				await loadEnglishDashboard(page, { zoom: false });
 				await expectScreenshotPage(page, colorScheme, { zoom: false });
-				await expect(page.locator('.calendar-card')).toBeVisible();
+				await expect(activeLocator(page, '.calendar-card')).toBeVisible();
 
 				const screenshot = await page.screenshot({
 					path: screenshotAssetPath(`screenshot-${colorScheme}-full.png`),

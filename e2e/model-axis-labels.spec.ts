@@ -237,7 +237,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 				buffer: Buffer.from(heatmapCalendarCsv)
 			});
 
-			const calendar = page.locator('.calendar-card');
+			const calendar = activeLocator(page, '.calendar-card');
 			await expect(calendar.locator('.lc-rect')).toHaveCount(
 				new Date(chartMonthStart.getFullYear(), chartMonthStart.getMonth() + 1, 0).getDate()
 			);
