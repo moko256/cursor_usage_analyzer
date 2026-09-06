@@ -80,9 +80,11 @@ describe('getTokenBreakdownColor', () => {
 });
 
 describe('TOKEN_CALENDAR_COLORS', () => {
-	it('samples interpolatePuBu from light to dark across 5 heat bins', () => {
+	it('samples interpolatePuBu from light to dark, reversing the stops in dark mode', () => {
 		expect(TOKEN_CALENDAR_COLORS).toEqual(
-			[0, 0.25, 0.5, 0.75, 1].map((stop) => interpolatePuBu(stop))
+			[0, 0.25, 0.5, 0.75, 1].map(
+				(stop) => `light-dark(${interpolatePuBu(stop)}, ${interpolatePuBu(1 - stop)})`
+			)
 		);
 	});
 });
