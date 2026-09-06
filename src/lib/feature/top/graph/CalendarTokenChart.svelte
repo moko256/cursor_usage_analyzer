@@ -6,6 +6,7 @@
 		buildTokenCalendar,
 		buildTokenCalendarThresholds,
 		compactNumberFormat,
+		chartTooltipRootProps,
 		TOKEN_CALENDAR_COLORS,
 		type DailyValue
 	} from './chart-utils';
@@ -59,7 +60,7 @@
 				</Calendar>
 			</Layer>
 
-			<Tooltip.Root>
+			<Tooltip.Root {...chartTooltipRootProps}>
 				{#snippet children({ data })}
 					<Tooltip.Header value={data.date} format="day" />
 					<Tooltip.List>

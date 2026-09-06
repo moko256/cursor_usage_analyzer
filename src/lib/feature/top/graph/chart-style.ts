@@ -5,6 +5,9 @@ import { getStringWidth, truncateText } from 'layerchart/utils/string';
 export const errorMinusColor = 'light-dark(' + '#868e96, #adb5bd)';
 export const errorPlusColor = 'light-dark(' + '#e03131, #ff6b6b)';
 
+/** Keep tooltips within the viewport instead of the chart container. */
+export const chartTooltipRootProps = { contained: 'window' as const };
+
 const tokenBreakdownGradientStart = interpolatePuBu(0.2);
 
 const modelColorStops = 10;

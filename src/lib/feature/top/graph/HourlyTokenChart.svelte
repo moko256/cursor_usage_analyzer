@@ -10,6 +10,7 @@
 		hourlyAxisTickLabels,
 		verticalChartHeight,
 		verticalChartPadding,
+		chartTooltipRootProps,
 		type HourlyValue
 	} from './chart-utils';
 
@@ -52,7 +53,7 @@
 		}}
 	>
 		{#snippet tooltip()}
-			<Tooltip.Root>
+			<Tooltip.Root {...chartTooltipRootProps}>
 				{#snippet children({ data })}
 					<Tooltip.Header>
 						{m.hourly_token_value_title({

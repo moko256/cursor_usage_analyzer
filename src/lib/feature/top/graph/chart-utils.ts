@@ -44,6 +44,7 @@ export {
 } from './chart-format';
 
 export {
+	chartTooltipRootProps,
 	errorMinusColor,
 	errorPlusColor,
 	getDailyModelColors,

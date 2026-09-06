@@ -7,6 +7,7 @@
 		formatChartValue,
 		modelAxisPadding,
 		truncateModelLabel,
+		chartTooltipRootProps,
 		type ChartMetric,
 		type ModelBreakdownValue,
 		type ModelIndexTable
@@ -76,7 +77,7 @@
 			{/each}
 		{/snippet}
 		{#snippet tooltip()}
-			<Tooltip.Root>
+			<Tooltip.Root {...chartTooltipRootProps}>
 				{#snippet children({ data })}
 					<Tooltip.Header>{data.model}</Tooltip.Header>
 					{#each series as item (item.key)}
