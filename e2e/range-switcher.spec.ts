@@ -19,8 +19,8 @@ test('range switcher filters charts and usage totals', async ({ page }) => {
 
 	await expect(page.getByText('4 records loaded')).toBeVisible();
 	const usage = page.locator('section[aria-live="polite"]');
-	await expect(usage.locator('strong').nth(0)).toHaveText('On-demand usage: $10.0');
-	await expect(usage.locator('strong').nth(1)).toHaveText('Total tokens: 1,000');
+	await expect(usage.locator('strong').nth(0)).toHaveText('On-demand usage cost: $10.0');
+	await expect(usage.locator('strong').nth(1)).toHaveText('Total token count: 1,000');
 
 	const group = page.getByRole('group', { name: 'Chart date range' });
 	const day1 = group.getByRole('button', { name: '1 day' });
@@ -45,7 +45,7 @@ test('range switcher filters charts and usage totals', async ({ page }) => {
 	await expect(day1).not.toHaveAttribute('aria-current');
 	await expect(day7).not.toHaveAttribute('aria-current');
 	await expect(
-		page.getByRole('img', { name: 'Daily tokens by model. 1 models, 4 days.' })
+		page.getByRole('img', { name: 'Daily token count by model. 1 models, 4 days.' })
 	).toBeVisible();
 
 	await day7.click();
@@ -55,10 +55,10 @@ test('range switcher filters charts and usage totals', async ({ page }) => {
 	await expect(day7).toHaveAttribute('aria-current', 'true');
 	await expect(allTime).not.toHaveAttribute('aria-current');
 	await expect(
-		page.getByRole('img', { name: 'Daily tokens by model. 1 models, 2 days.' })
+		page.getByRole('img', { name: 'Daily token count by model. 1 models, 2 days.' })
 	).toBeVisible();
-	await expect(usage.locator('strong').nth(0)).toHaveText('On-demand usage: $3.0');
-	await expect(usage.locator('strong').nth(1)).toHaveText('Total tokens: 300');
+	await expect(usage.locator('strong').nth(0)).toHaveText('On-demand usage cost: $3.0');
+	await expect(usage.locator('strong').nth(1)).toHaveText('Total token count: 300');
 
 	await day1.click();
 	await expect(day1).not.toHaveClass(/outline/);
@@ -67,10 +67,10 @@ test('range switcher filters charts and usage totals', async ({ page }) => {
 	await expect(day1).toHaveAttribute('aria-current', 'true');
 	await expect(day7).not.toHaveAttribute('aria-current');
 	await expect(
-		page.getByRole('img', { name: 'Daily tokens by model. 1 models, 1 days.' })
+		page.getByRole('img', { name: 'Daily token count by model. 1 models, 1 days.' })
 	).toBeVisible();
-	await expect(usage.locator('strong').nth(0)).toHaveText('On-demand usage: $1.0');
-	await expect(usage.locator('strong').nth(1)).toHaveText('Total tokens: 100');
+	await expect(usage.locator('strong').nth(0)).toHaveText('On-demand usage cost: $1.0');
+	await expect(usage.locator('strong').nth(1)).toHaveText('Total token count: 100');
 
 	await allTime.click();
 	await expect(allTime).not.toHaveClass(/outline/);
@@ -79,8 +79,8 @@ test('range switcher filters charts and usage totals', async ({ page }) => {
 	await expect(allTime).toHaveAttribute('aria-current', 'true');
 	await expect(day1).not.toHaveAttribute('aria-current');
 	await expect(
-		page.getByRole('img', { name: 'Daily tokens by model. 1 models, 4 days.' })
+		page.getByRole('img', { name: 'Daily token count by model. 1 models, 4 days.' })
 	).toBeVisible();
-	await expect(usage.locator('strong').nth(0)).toHaveText('On-demand usage: $10.0');
-	await expect(usage.locator('strong').nth(1)).toHaveText('Total tokens: 1,000');
+	await expect(usage.locator('strong').nth(0)).toHaveText('On-demand usage cost: $10.0');
+	await expect(usage.locator('strong').nth(1)).toHaveText('Total token count: 1,000');
 });

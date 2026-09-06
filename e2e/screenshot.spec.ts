@@ -65,7 +65,7 @@ async function loadEnglishDashboard(page: Page, { zoom = true } = {}) {
 
 	await expect(page.getByText(/records loaded/)).toBeVisible();
 	await expect(page.locator('.chart-card')).toHaveCount(6);
-	await expect(page.getByRole('img', { name: /Daily tokens by model/ })).toBeVisible();
+	await expect(page.getByRole('img', { name: /Daily token count by model/ })).toBeVisible();
 	await expect(page.locator('.lc-bar, .lc-bars')).not.toHaveCount(0);
 	await page.evaluate(() => document.fonts.ready);
 }
@@ -76,7 +76,7 @@ async function expectScreenshotPage(
 	{ zoom = true } = {}
 ) {
 	await expect(page.getByRole('heading', { name: 'Cursor Usage Analyzer' })).toBeVisible();
-	await expect(page.getByText(/On-demand usage:/)).toBeVisible();
+	await expect(page.getByText(/On-demand usage cost:/)).toBeVisible();
 	if (zoom) {
 		await expect
 			.poll(() => page.evaluate(() => document.documentElement.style.zoom))

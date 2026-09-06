@@ -29,9 +29,6 @@
 	let title = $derived(
 		metric === 'tokens' ? m.tokens_per_day_heading() : m.models_per_day_heading()
 	);
-	let subtitle = $derived(
-		metric === 'tokens' ? m.daily_model_token_subtitle() : m.daily_model_cost_subtitle()
-	);
 	let ariaLabel = $derived(
 		metric === 'tokens'
 			? m.daily_model_token_chart_aria({
@@ -45,7 +42,7 @@
 	);
 </script>
 
-<ChartCard {title} {subtitle} {ariaLabel}>
+<ChartCard {title} {ariaLabel}>
 	<BarChart
 		data={days}
 		x="day"

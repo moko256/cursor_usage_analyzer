@@ -27,6 +27,7 @@
 <ChartCard
 	ariaLabel={m.token_calendar_chart_aria({ dayCount: calendar.data.length })}
 	class="calendar-card"
+	title={m.token_calendar_title()}
 >
 	<Chart
 		data={calendar.data}
@@ -78,6 +79,6 @@
 
 <style>
 	:global(.calendar-card .lc-rect:not([fill])) {
-		fill: light-dark(rgb(0 0 0 / 5%), rgb(0 0 0 / 30%));
+		fill: light-dark(rgb(0 0 0 / 5%), rgb(255 255 255 / 10%));
 	}
 </style>

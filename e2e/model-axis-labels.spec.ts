@@ -102,12 +102,14 @@ test('モデル別グラフの色が d3-scale-chromatic で割り当てられる
 test('モデル別の日次グラフが先頭に並ぶ', async ({ page }) => {
 	const cards = page.locator('.chart-card');
 
-	await expect(cards.nth(0).locator('figcaption strong')).toHaveText('Tokens / model / day');
+	await expect(cards.nth(0).locator('figcaption strong')).toHaveText(
+		'Token count (by model) / day'
+	);
 	await expect(cards.nth(0).locator('[role="img"]')).toHaveAttribute(
 		'aria-label',
-		/Daily tokens by model/
+		/Daily token count by model/
 	);
-	await expect(cards.nth(1).locator('figcaption strong')).toHaveText('Cost / model / day');
+	await expect(cards.nth(1).locator('figcaption strong')).toHaveText('Cost (by model) / day');
 	await expect(cards.nth(1).locator('[role="img"]')).toHaveAttribute(
 		'aria-label',
 		/Daily cost by model/
@@ -141,7 +143,7 @@ test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) =
 	await expect(group.locator('.chart-card')).toHaveCount(6);
 	await expect(page.locator('.calendar-group')).toHaveCount(0);
 	await expect(calendar).toHaveCount(1);
-	await expect(calendar.locator('figcaption strong')).toHaveCount(0);
+	await expect(calendar.locator('figcaption strong')).toHaveText('Token count calendar');
 	await expect(calendar.locator('figcaption span')).toHaveCount(0);
 	await expect(calendar.locator('.lc-rect')).toHaveCount(
 		new Date(chartMonthStart.getFullYear(), chartMonthStart.getMonth() + 1, 0).getDate()
@@ -172,13 +174,11 @@ test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) =
 
 	const hourly = group.locator('.hourly-token-card');
 	await expect(hourly).toHaveCount(1);
-	await expect(hourly.locator('figcaption strong')).toHaveText('Tokens / hour');
-	await expect(hourly.locator('figcaption span')).toHaveText(
-		'Cumulative token usage by local hour of day'
-	);
+	await expect(hourly.locator('figcaption strong')).toHaveText('Token count / time of day');
+	await expect(hourly.locator('figcaption span')).toHaveCount(0);
 	await expect(hourly.locator('[role="img"]')).toHaveAttribute(
 		'aria-label',
-		/Cumulative token usage by local hour across all data\. 24 one-hour periods\./
+		'Token count by time of day.'
 	);
 	await expect(hourly.locator('.lc-bar')).toHaveCount(24);
 
@@ -220,7 +220,8 @@ for (const colorScheme of ['light', 'dark'] as const) {
 
 			expect(cells[0]).toEqual({
 				fill: null,
-				computedFill: colorScheme === 'light' ? 'rgba(0, 0, 0, 0.05)' : 'rgba(0, 0, 0, 0.3)'
+				computedFill:
+					colorScheme === 'light' ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.1)'
 			});
 			expect(cells[1]?.fill).not.toBeNull();
 			expect(cells[1]?.computedFill).not.toBe(cells[0]?.computedFill);

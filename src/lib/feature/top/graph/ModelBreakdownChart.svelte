@@ -32,13 +32,12 @@
 	let title = $derived(
 		metric === 'tokens' ? m.tokens_per_model_heading() : m.cost_per_model_heading()
 	);
-	let subtitle = $derived(metric === 'tokens' ? m.model_token_subtitle() : m.model_cost_subtitle());
 	let ariaLabel = $derived(
 		metric === 'tokens' ? m.model_token_chart_aria() : m.model_cost_chart_aria()
 	);
 </script>
 
-<ChartCard {title} {subtitle} {ariaLabel} class="horizontal-card">
+<ChartCard {title} {ariaLabel} class="horizontal-card">
 	<BarChart
 		data={modelValues}
 		y="model"

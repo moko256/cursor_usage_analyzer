@@ -16,7 +16,7 @@ test('CSVファイルを添付すると解析結果が表示される', async ({
 	});
 
 	await expect(page.getByText('1件を読み込みました')).toBeVisible();
-	await expect(page.locator('section > strong').nth(0)).toHaveText('On-demand使用料: $12.3');
+	await expect(page.locator('section > strong').nth(0)).toHaveText('On-demand使用コスト: $12.3');
 	await expect(page.locator('section > strong').nth(1)).toHaveText('合計トークン数: 1,234');
 });
 
@@ -38,6 +38,6 @@ test('非CSVを選ぶとエラーになりグラフが消える', async ({ page 
 		buffer: Buffer.from('not a csv')
 	});
 
-	await expect(page.getByRole('alert')).toHaveText('CSVファイルを選択してください。');
+	await expect(page.getByRole('alert')).toHaveText('CSVファイルを選択してください');
 	await expect(page.locator('.chart-card')).toHaveCount(0);
 });
