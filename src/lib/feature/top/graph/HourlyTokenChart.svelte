@@ -37,8 +37,7 @@
 
 <ChartCard
 	title={m.tokens_per_hour_heading()}
-	subtitle={m.hourly_token_subtitle()}
-	ariaLabel={m.hourly_token_chart_aria({ hourCount: hourValues.length })}
+	ariaLabel={m.hourly_token_chart_aria()}
 	class="hourly-token-card"
 >
 	<BarChart

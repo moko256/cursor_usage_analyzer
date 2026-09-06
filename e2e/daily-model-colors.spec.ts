@@ -68,7 +68,7 @@ test('daily model colors stay stable when a shorter range drops other models', a
 		buffer: Buffer.from(csv)
 	});
 
-	const tokensChart = page.getByRole('img', { name: 'Daily tokens by model. 3 models, 3 days.' });
+	const tokensChart = page.getByRole('img', { name: 'Daily token count by model. 3 models, 3 days.' });
 	await expect(tokensChart).toBeVisible();
 
 	const allTimeFills = (await nonzeroBarFills(tokensChart)).sort((left, right) => left.x - right.x);
@@ -76,7 +76,7 @@ test('daily model colors stay stable when a shorter range drops other models', a
 	expect(allTimeFills.map((bar) => bar.fill)).toEqual(expectedModelColors);
 
 	await page.getByRole('button', { name: '1 day' }).click();
-	const oneDayChart = page.getByRole('img', { name: 'Daily tokens by model. 1 models, 1 days.' });
+	const oneDayChart = page.getByRole('img', { name: 'Daily token count by model. 1 models, 1 days.' });
 	await expect(oneDayChart).toBeVisible();
 
 	const oneDayFills = await nonzeroBarFills(oneDayChart);
@@ -98,7 +98,7 @@ test('token breakdown gradients from interpolatePuBu(0.2) to each model Observab
 	});
 
 	const breakdownChart = page.getByRole('img', {
-		name: 'Tokens by model. Bars increase from left to right.'
+		name: 'Token count by model.'
 	});
 	await expect(breakdownChart).toBeVisible();
 
@@ -136,7 +136,7 @@ test('daily model tooltip shows a color swatch for each model that day', async (
 		buffer: Buffer.from(tooltipCsv)
 	});
 
-	const tokensChart = page.getByRole('img', { name: 'Daily tokens by model. 3 models, 2 days.' });
+	const tokensChart = page.getByRole('img', { name: 'Daily token count by model. 3 models, 2 days.' });
 	const costChart = page.getByRole('img', { name: 'Daily cost by model. 3 models, 2 days.' });
 	await expect(tokensChart).toBeVisible();
 	await expect(costChart).toBeVisible();
@@ -196,7 +196,7 @@ test('10 models sample distinct Observable10 Lab colors', async ({ page }) => {
 	});
 
 	const tokensChart = page.getByRole('img', {
-		name: 'Daily tokens by model. 10 models, 1 days.'
+		name: 'Daily token count by model. 10 models, 1 days.'
 	});
 	await expect(tokensChart).toBeVisible();
 

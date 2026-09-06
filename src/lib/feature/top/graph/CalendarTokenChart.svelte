@@ -27,6 +27,7 @@
 <ChartCard
 	ariaLabel={m.token_calendar_chart_aria({ dayCount: calendar.data.length })}
 	class="calendar-card"
+	title={m.token_calendar_title()}
 >
 	<Chart
 		data={calendar.data}
