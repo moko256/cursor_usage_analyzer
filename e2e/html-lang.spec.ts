@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+test.use({ video: 'on' });
+
 for (const locale of ['ja', 'en'] as const) {
 	test(`client updates html lang to ${locale} after a wrong prerendered value`, async ({
 		page
@@ -21,3 +23,22 @@ for (const locale of ['ja', 'en'] as const) {
 		await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
 	});
 }
+
+test('client navigation updates html lang from Paraglide getLocale', async ({ page }) => {
+	await page.goto('/cursor_usage_analyzer/en/');
+	await page.waitForLoadState('networkidle');
+	await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+	await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
+
+	await page.evaluate(() => {
+		const a = document.createElement('a');
+		a.id = 'client-nav-ja';
+		a.href = '/cursor_usage_analyzer/ja/';
+		a.textContent = 'ja';
+		document.body.appendChild(a);
+	});
+	await page.locator('#client-nav-ja').click();
+	await expect(page).toHaveURL(/\/ja\/?$/);
+	await expect(page.locator('html')).toHaveAttribute('lang', 'ja');
+	await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
+});
