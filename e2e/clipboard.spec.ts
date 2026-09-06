@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { activeChartCards } from './helpers/chart-locators';
 
 const csv = [
 	'Date,Model,Total Tokens,Cost',
@@ -17,7 +18,7 @@ test('グラフのcopyボタンで画像をクリップボードにコピーで�
 		buffer: Buffer.from(csv)
 	});
 
-	await expect(page.locator('.chart-card')).toHaveCount(6);
+	await expect(activeChartCards(page)).toHaveCount(6);
 	await expect(page.getByRole('button', { name: 'copy' })).toHaveCount(6);
 
 	await page.getByRole('button', { name: 'copy' }).first().click();

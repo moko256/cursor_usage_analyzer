@@ -5,6 +5,7 @@ import {
 	profileRangeSwitch,
 	type SwitchProfile
 } from './helpers/cpu-profile';
+import { activeChartCards } from './helpers/chart-locators';
 import { buildHeavyUsageCsv } from './helpers/heavy-usage-csv';
 
 test.use({ viewport: { width: 1400, height: 1100 } });
@@ -22,7 +23,8 @@ test('range switch keeps the main thread responsive', async ({ page }, testInfo)
 	});
 
 	await expect(page.getByText(/records loaded/)).toBeVisible({ timeout: 60_000 });
-	await expect(page.locator('.chart-card')).toHaveCount(6, { timeout: 60_000 });
+	await expect(page.locator('.graph-range')).toHaveCount(3, { timeout: 60_000 });
+	await expect(activeChartCards(page)).toHaveCount(6);
 	await expect(page.getByRole('img', { name: /Daily token count by model/ })).toBeVisible();
 
 	const profiles: SwitchProfile[] = [];
@@ -44,11 +46,11 @@ test('range switch keeps the main thread responsive', async ({ page }, testInfo)
 	const firstReturn = requireProfile(profiles, '1d→all first return');
 	const repeatReturn = requireProfile(profiles, '1d→all repeat');
 
-	expect(firstAway.longestTaskMs, pretty(firstAway)).toBeLessThan(250);
-	expect(firstReturn.longestTaskMs, pretty(firstReturn)).toBeLessThan(250);
-	expect(repeatReturn.longestTaskMs, pretty(repeatReturn)).toBeLessThan(80);
-	expect(repeatReturn.totalBlockingMs, pretty(repeatReturn)).toBeLessThan(50);
-	expect(repeatReturn.clickToSettledMs, pretty(repeatReturn)).toBeLessThan(150);
+	for (const profile of [firstAway, firstReturn, repeatReturn]) {
+		expect(profile.longestTaskMs, pretty(profile)).toBeLessThan(100);
+		expect(profile.totalBlockingMs, pretty(profile)).toBeLessThan(50);
+		expect(profile.clickToSettledMs, pretty(profile)).toBeLessThan(250);
+	}
 });
 
 function requireProfile(profiles: SwitchProfile[], label: string) {

@@ -4,7 +4,10 @@
 	import DashboardCharts from '$lib/feature/top/graph/DashboardCharts.svelte';
 	import GraphGroup from '$lib/feature/top/graph/GraphGroup.svelte';
 	import RangeSwitcher from '$lib/feature/top/graph/RangeSwitcher.svelte';
-	import { rememberMountedRange } from '$lib/feature/top/graph/chart-range-mount';
+	import {
+		nextPremountRange,
+		rememberMountedRange
+	} from '$lib/feature/top/graph/chart-range-mount';
 	import type { DayRange } from '$lib/feature/top/graph/chart-utils';
 	import Header from '$lib/feature/top/Header.svelte';
 	import * as m from '$lib/paraglide/messages';
@@ -18,6 +21,7 @@
 	let view = $state.raw<ParseView>({ status: 'idle' });
 	let rangeDays = $state<DayRange>('all');
 	let mountedRanges = $state<DayRange[]>(['all']);
+	let premountGeneration = 0;
 	let dashboard = $derived(view.status === 'success' ? view.dashboard : null);
 	let range = $derived(dashboard?.ranges[rangeDays]);
 	let pickerView = $derived(toPickerView(view));
@@ -28,8 +32,26 @@
 	}
 
 	function resetMountedRanges() {
+		premountGeneration += 1;
 		rangeDays = 'all';
 		mountedRanges = ['all'];
+	}
+
+	function scheduleRangePremount() {
+		const generation = premountGeneration;
+		const premountNext = () => {
+			if (generation !== premountGeneration) return;
+			const next = nextPremountRange(mountedRanges);
+			if (next == null) return;
+			mountedRanges = rememberMountedRange(mountedRanges, next);
+			requestAnimationFrame(premountNext);
+		};
+
+		if (typeof requestIdleCallback === 'function') {
+			requestIdleCallback(premountNext, { timeout: 400 });
+		} else {
+			requestAnimationFrame(premountNext);
+		}
 	}
 
 	async function processFile(file: File | undefined) {
@@ -45,6 +67,7 @@
 
 		try {
 			view = { status: 'success', dashboard: await parseCsvFile(file, m.unknown_model()) };
+			scheduleRangePremount();
 		} catch (error) {
 			view = { status: 'error', message: csvParseErrorMessage(error) };
 		}
