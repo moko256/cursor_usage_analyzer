@@ -1,58 +1,18 @@
 <script lang="ts">
 	import { parseCsvFile } from '$lib/csv-parser';
 	import { csvParseErrorMessage } from '$lib/csv-parse-error-message';
-	import DashboardCharts from '$lib/feature/top/graph/DashboardCharts.svelte';
-	import GraphGroup from '$lib/feature/top/graph/GraphGroup.svelte';
-	import RangeSwitcher from '$lib/feature/top/graph/RangeSwitcher.svelte';
-	import {
-		nextPremountRange,
-		rememberMountedRange
-	} from '$lib/feature/top/graph/chart-range-mount';
-	import type { DayRange } from '$lib/feature/top/graph/chart-utils';
+	import NoScript from '$lib/components/NoScript.svelte';
+	import Dashboard from '$lib/feature/top/Dashboard.svelte';
 	import Header from '$lib/feature/top/Header.svelte';
 	import * as m from '$lib/paraglide/messages';
 	import { toPickerView, type ParseView } from './parse-view';
 	import Footer from './Footer.svelte';
 	import Picker from './Picker.svelte';
-	import Usage from './Usage.svelte';
 	import PrivacyNotice from './PrivacyNotice.svelte';
-	import NoScript from '$lib/components/NoScript.svelte';
 
 	let view = $state.raw<ParseView>({ status: 'idle' });
-	let rangeDays = $state<DayRange>('all');
-	let mountedRanges = $state<DayRange[]>(['all']);
-	let premountGeneration = 0;
 	let dashboard = $derived(view.status === 'success' ? view.dashboard : null);
-	let range = $derived(dashboard?.ranges[rangeDays]);
 	let pickerView = $derived(toPickerView(view));
-
-	function selectRange(days: DayRange) {
-		rangeDays = days;
-		mountedRanges = rememberMountedRange(mountedRanges, days);
-	}
-
-	function resetMountedRanges() {
-		premountGeneration += 1;
-		rangeDays = 'all';
-		mountedRanges = ['all'];
-	}
-
-	function scheduleRangePremount() {
-		const generation = premountGeneration;
-		const premountNext = () => {
-			if (generation !== premountGeneration) return;
-			const next = nextPremountRange(mountedRanges);
-			if (next == null) return;
-			mountedRanges = rememberMountedRange(mountedRanges, next);
-			requestAnimationFrame(premountNext);
-		};
-
-		if (typeof requestIdleCallback === 'function') {
-			requestIdleCallback(premountNext, { timeout: 400 });
-		} else {
-			requestAnimationFrame(premountNext);
-		}
-	}
 
 	async function processFile(file: File | undefined) {
 		if (!file || view.status === 'loading') return;
@@ -62,12 +22,10 @@
 			return;
 		}
 
-		resetMountedRanges();
 		view = { status: 'loading' };
 
 		try {
 			view = { status: 'success', dashboard: await parseCsvFile(file, m.unknown_model()) };
-			scheduleRangePremount();
 		} catch (error) {
 			view = { status: 'error', message: csvParseErrorMessage(error) };
 		}
@@ -86,21 +44,8 @@
 
 	<Picker view={pickerView} onFileSelected={processFile} />
 
-	{#if dashboard && range}
-		<section aria-label={m.dashboard_aria_label()}>
-			<RangeSwitcher days={rangeDays} onselect={selectRange} />
-			<Usage totalCost={range.totalCost} totalTokens={range.totalTokens} />
-			<GraphGroup>
-				{#each mountedRanges as days (days)}
-					<div
-						class={['graph-range', rangeDays === days && 'is-active']}
-						aria-hidden={rangeDays !== days}
-					>
-						<DashboardCharts range={dashboard.ranges[days]} modelIndices={dashboard.modelIndices} />
-					</div>
-				{/each}
-			</GraphGroup>
-		</section>
+	{#if dashboard}
+		<Dashboard {dashboard} />
 	{/if}
 
 	<PrivacyNotice />
