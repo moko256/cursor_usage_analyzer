@@ -43,8 +43,13 @@ export function getTokenBreakdownColor(
 	return interpolateRgb(tokenBreakdownGradientStart, modelColor)(stop);
 }
 
-/** 5 heat colors for the token calendar (scaleThreshold bins). Light → dark. */
-export const TOKEN_CALENDAR_COLORS = [0, 0.25, 0.5, 0.75, 1].map((stop) => interpolatePuBu(stop));
+/**
+ * 5 heat colors for the token calendar (scaleThreshold bins).
+ * Light: light → dark as tokens increase. Dark: reversed so high usage is brighter.
+ */
+export const TOKEN_CALENDAR_COLORS = [0, 0.25, 0.5, 0.75, 1].map(
+	(stop) => 'light-dark(' + interpolatePuBu(stop) + ', ' + interpolatePuBu(1 - stop) + ')'
+);
 
 /** Single-series hourly bar color. */
 export const HOURLY_TOKEN_COLOR = interpolatePuBu(0.7);

@@ -53,10 +53,10 @@ async function setPageZoom(page: Page) {
 	}, pageZoom);
 }
 
-async function loadEnglishDashboard(page: Page) {
+async function loadEnglishDashboard(page: Page, { zoom = true } = {}) {
 	await page.goto('/cursor_usage_analyzer/en/');
 	await page.waitForLoadState('networkidle');
-	await setPageZoom(page);
+	if (zoom) await setPageZoom(page);
 	await page.locator('input[type="file"]').setInputFiles({
 		name: 'usage.csv',
 		mimeType: 'text/csv',
@@ -70,14 +70,45 @@ async function loadEnglishDashboard(page: Page) {
 	await page.evaluate(() => document.fonts.ready);
 }
 
+async function expectScreenshotPage(
+	page: Page,
+	colorScheme: (typeof colorSchemes)[number],
+	{ zoom = true } = {}
+) {
+	await expect(page.getByRole('heading', { name: 'Cursor Usage Analyzer' })).toBeVisible();
+	await expect(page.getByText(/On-demand usage cost:/)).toBeVisible();
+	if (zoom) {
+		await expect
+			.poll(() => page.evaluate(() => document.documentElement.style.zoom))
+			.toBe(pageZoom);
+	}
+
+	const { prefersDark, background } = await page.evaluate(() => ({
+		prefersDark: matchMedia('(prefers-color-scheme: dark)').matches,
+		background: getComputedStyle(document.documentElement).backgroundColor
+	}));
+	expect(prefersDark).toBe(colorScheme === 'dark');
+	if (colorScheme === 'dark') {
+		expect(luminance(background)).toBeLessThan(0.5);
+	} else {
+		expect(luminance(background)).toBeGreaterThan(0.5);
+	}
+}
+
+function screenshotAssetPath(name: string) {
+	return fileURLToPath(new URL(`../assets/${name}`, import.meta.url));
+}
+
+const screenshotUse = {
+	viewport,
+	locale: 'en-US',
+	timezoneId: 'UTC',
+	deviceScaleFactor: 1,
+	reducedMotion: 'reduce'
+} as const;
+
 test.describe('README screenshots', () => {
-	test.use({
-		viewport,
-		locale: 'en-US',
-		timezoneId: 'UTC',
-		deviceScaleFactor: 1,
-		reducedMotion: 'reduce'
-	});
+	test.use(screenshotUse);
 
 	for (const colorScheme of colorSchemes) {
 		test.describe(colorScheme, () => {
@@ -87,34 +118,44 @@ test.describe('README screenshots', () => {
 				page
 			}) => {
 				await loadEnglishDashboard(page);
+				await expectScreenshotPage(page, colorScheme);
 
-				await expect(page.getByRole('heading', { name: 'Cursor Usage Analyzer' })).toBeVisible();
-				await expect(page.getByText(/On-demand usage cost:/)).toBeVisible();
-				await expect
-					.poll(() => page.evaluate(() => document.documentElement.style.zoom))
-					.toBe(pageZoom);
-
-				const { prefersDark, background } = await page.evaluate(() => ({
-					prefersDark: matchMedia('(prefers-color-scheme: dark)').matches,
-					background: getComputedStyle(document.documentElement).backgroundColor
-				}));
-				expect(prefersDark).toBe(colorScheme === 'dark');
-				if (colorScheme === 'dark') {
-					expect(luminance(background)).toBeLessThan(0.5);
-				} else {
-					expect(luminance(background)).toBeGreaterThan(0.5);
-				}
-
-				const screenshotPath = fileURLToPath(
-					new URL(`../assets/screenshot-${colorScheme}.png`, import.meta.url)
-				);
 				const screenshot = await page.screenshot({
-					path: screenshotPath,
+					path: screenshotAssetPath(`screenshot-${colorScheme}.png`),
 					animations: 'disabled',
 					caret: 'hide'
 				});
 
 				expect(pngSize(screenshot)).toEqual(viewport);
+			});
+		});
+	}
+});
+
+test.describe('full-page screenshots', () => {
+	test.use(screenshotUse);
+
+	for (const colorScheme of colorSchemes) {
+		test.describe(colorScheme, () => {
+			test.use({ colorScheme });
+
+			test(`saves an English ${colorScheme} full-page screenshot under assets/`, async ({
+				page
+			}) => {
+				await loadEnglishDashboard(page, { zoom: false });
+				await expectScreenshotPage(page, colorScheme, { zoom: false });
+				await expect(page.locator('.calendar-card')).toBeVisible();
+
+				const screenshot = await page.screenshot({
+					path: screenshotAssetPath(`screenshot-${colorScheme}-full.png`),
+					fullPage: true,
+					animations: 'disabled',
+					caret: 'hide'
+				});
+
+				const size = pngSize(screenshot);
+				expect(size.width).toBe(viewport.width);
+				expect(size.height).toBeGreaterThan(viewport.height);
 			});
 		});
 	}
