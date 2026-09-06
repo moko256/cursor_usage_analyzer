@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages';
-	import { Bar, Bars, BarChart, Tooltip } from 'layerchart/svg';
+	import { Bars, BarChart, Tooltip } from 'layerchart/svg';
 	import {
 		buildModelBreakdownSeries,
 		formatChartAxis,
@@ -53,26 +53,14 @@
 	>
 		{#snippet marks({ context })}
 			{#each context.series.visibleSeries as s (s.key)}
-				{@const fillFor = fillByKey.get(s.key)}
 				<Bars
 					seriesKey={s.key}
+					fill={fillByKey.get(s.key)}
 					radius={4}
 					strokeWidth={1}
 					rounded={(d) => (context.series.isStackTop(s.key, d) ? 'edge' : 'none')}
 					opacity={(d) => (context.series.isHighlighted(context.cKey(d) ?? s.key, true) ? 1 : 0.1)}
-				>
-					{#each modelValues as d (d.model)}
-						<Bar
-							data={d}
-							seriesKey={s.key}
-							fill={fillFor?.(d)}
-							radius={4}
-							strokeWidth={1}
-							rounded={context.series.isStackTop(s.key, d) ? 'edge' : 'none'}
-							opacity={context.series.isHighlighted(context.cKey(d) ?? s.key, true) ? 1 : 0.1}
-						/>
-					{/each}
-				</Bars>
+				/>
 			{/each}
 		{/snippet}
 		{#snippet tooltip()}

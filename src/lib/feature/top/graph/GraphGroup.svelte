@@ -15,13 +15,6 @@
 
 <style>
 	.graph-group {
-		display: grid;
 		min-width: 0;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: var(--pico-spacing);
-
-		@media (max-width: 700px) {
-			grid-template-columns: minmax(0, 1fr);
-		}
 	}
 </style>
