@@ -1,3 +1,4 @@
+import { interpolatePuBu } from 'd3-scale-chromatic';
 import { expect, test, type Locator } from '@playwright/test';
 
 const today = new Date();
@@ -17,6 +18,13 @@ const breakdownCsv = [
 const zeroTokenCalendarCsv = [
 	'Date,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost',
 	`${new Date(chartMonthStart.getTime() + 86_400_000).toISOString()},alpha,0,0,0,100,100,1.00`
+].join('\n');
+
+/** Two bins: 100 tokens → stop 0.25, 100000 tokens → stop 1 (max). */
+const heatmapCalendarCsv = [
+	'Date,Model,Total Tokens,Cost',
+	`${chartMonthStart.toISOString()},alpha,100,1`,
+	`${new Date(chartMonthStart.getTime() + 86_400_000).toISOString()},alpha,100000,1`
 ].join('\n');
 
 const models = ['claude-4.5-sonnet-thinking', 'gpt-5.6-luna-high', 'composer-2.5'];
@@ -216,6 +224,43 @@ for (const colorScheme of ['light', 'dark'] as const) {
 			});
 			expect(cells[1]?.fill).not.toBeNull();
 			expect(cells[1]?.computedFill).not.toBe(cells[0]?.computedFill);
+		});
+	});
+
+	test.describe(`tokenカレンダーのヒート色 (${colorScheme})`, () => {
+		test.use({ colorScheme });
+
+		test('トークン数が多いセルはライトモードで暗く、ダークモードで明るくなる', async ({ page }) => {
+			await page.locator('input[type="file"]').setInputFiles({
+				name: 'heatmap-calendar.csv',
+				mimeType: 'text/csv',
+				buffer: Buffer.from(heatmapCalendarCsv)
+			});
+
+			const calendar = page.locator('.calendar-card');
+			await expect(calendar.locator('.lc-rect')).toHaveCount(
+				new Date(chartMonthStart.getFullYear(), chartMonthStart.getMonth() + 1, 0).getDate()
+			);
+
+			const fills = [
+				...new Set(
+					await calendar.locator('.lc-rect').evaluateAll((elements) =>
+						elements
+							.map((element) => {
+								if (!element.getAttribute('fill')) return null;
+								return getComputedStyle(element).fill;
+							})
+							.filter((fill): fill is string => fill !== null)
+					)
+				)
+			];
+
+			const lowStop = 0.25;
+			const highStop = 1;
+			const expectedLow = interpolatePuBu(colorScheme === 'dark' ? 1 - lowStop : lowStop);
+			const expectedHigh = interpolatePuBu(colorScheme === 'dark' ? 1 - highStop : highStop);
+
+			expect(fills).toEqual(expect.arrayContaining([expectedLow, expectedHigh]));
 		});
 	});
 }
