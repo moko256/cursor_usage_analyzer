@@ -21,15 +21,13 @@ function buildMarkerCsv(paddingBytes: number) {
 	].join('\n');
 }
 
-test('CSV bytes and Worker heap are released after parse', async ({ page }, testInfo) => {
-	const paddingBytes = 2 * 1024 * 1024;
+async function loadCsvAndSampleHeap(page: import('@playwright/test').Page, paddingBytes: number) {
 	const csv = buildMarkerCsv(paddingBytes);
 	const csvBytes = Buffer.byteLength(csv);
 
 	await page.goto('/cursor_usage_analyzer/en/');
 	await page.waitForLoadState('networkidle');
 	await collectGarbage(page);
-
 	const before = await getHeapUsage(page);
 
 	await page.locator('input[type="file"]').setInputFiles({
@@ -45,25 +43,53 @@ test('CSV bytes and Worker heap are released after parse', async ({ page }, test
 	const after = await getHeapUsage(page);
 	const snapshot = await takeHeapSnapshot(page);
 	const markerHits = countNeedleInSnapshot(snapshot, MARKER);
-	const growth = after.usedSize - before.usedSize;
 
-	const report = {
+	return {
 		csvBytes,
 		paddingBytes,
 		beforeUsed: before.usedSize,
 		afterUsed: after.usedSize,
-		growth,
-		growthFormatted: formatBytes(growth),
-		csvFormatted: formatBytes(csvBytes),
-		markerHits,
-		retainedFraction: growth / csvBytes
+		growth: after.usedSize - before.usedSize,
+		markerHits
+	};
+}
+
+test('CSV bytes and Worker heap are released after parse', async ({ page }, testInfo) => {
+	const smallPadding = 512 * 1024;
+	const largePadding = 2.5 * 1024 * 1024;
+
+	const small = await loadCsvAndSampleHeap(page, smallPadding);
+	const large = await loadCsvAndSampleHeap(page, largePadding);
+
+	const paddingDelta = large.paddingBytes - small.paddingBytes;
+	const retainedDelta = large.afterUsed - small.afterUsed;
+
+	const report = {
+		small: {
+			...small,
+			growthFormatted: formatBytes(small.growth),
+			csvFormatted: formatBytes(small.csvBytes)
+		},
+		large: {
+			...large,
+			growthFormatted: formatBytes(large.growth),
+			csvFormatted: formatBytes(large.csvBytes)
+		},
+		paddingDelta,
+		retainedDelta,
+		retainedDeltaFormatted: formatBytes(retainedDelta),
+		paddingDeltaFormatted: formatBytes(paddingDelta)
 	};
 	writeFileSync(testInfo.outputPath('csv-heap-report.json'), JSON.stringify(report, null, 2));
 	console.log(JSON.stringify(report, null, 2));
 
 	// Unused CSV payload must not remain on the main heap after Worker terminate + GC.
-	expect(markerHits, `marker still in heap snapshot: ${JSON.stringify(report)}`).toBe(0);
+	expect(small.markerHits, `small marker still in heap: ${JSON.stringify(report)}`).toBe(0);
+	expect(large.markerHits, `large marker still in heap: ${JSON.stringify(report)}`).toBe(0);
 
-	// Dashboard + charts for one row should not retain nearly the whole CSV.
-	expect(growth, `heap grew too much: ${JSON.stringify(report)}`).toBeLessThan(csvBytes * 0.35);
+	// Extra unused CSV bytes must not show up as proportional retained heap.
+	expect(
+		retainedDelta,
+		`retained heap scaled with unused CSV padding: ${JSON.stringify(report)}`
+	).toBeLessThan(paddingDelta * 0.25);
 });
