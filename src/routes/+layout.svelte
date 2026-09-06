@@ -12,7 +12,7 @@
 
 <svelte:document
 	{@attach (doc) => {
-		page.url;
+		void page.url;
 		applyDocumentLocale(doc.documentElement, getLocale());
 	}}
 />
