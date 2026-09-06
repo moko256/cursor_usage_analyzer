@@ -5,13 +5,15 @@
 	import { asset, resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { applyDocumentLocale } from '$lib/html-lang';
+	import { getLocale } from '$lib/paraglide/runtime';
 
 	let { children } = $props();
 </script>
 
 <svelte:document
 	{@attach (doc) => {
-		applyDocumentLocale(doc.documentElement, page.url);
+		void page.url;
+		applyDocumentLocale(doc.documentElement, getLocale());
 	}}
 />
 
