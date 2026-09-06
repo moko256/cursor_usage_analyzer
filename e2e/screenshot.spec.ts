@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
+import { activeChartCards, activeLocator } from './helpers/chart-locators';
 
 const viewport = { width: 1280, height: 720 } as const;
 const pageZoom = '0.75';
@@ -64,7 +65,7 @@ async function loadEnglishDashboard(page: Page, { zoom = true } = {}) {
 	});
 
 	await expect(page.getByText(/records loaded/)).toBeVisible();
-	await expect(page.locator('.chart-card')).toHaveCount(6);
+	await expect(activeChartCards(page)).toHaveCount(6);
 	await expect(page.getByRole('img', { name: /Daily token count by model/ })).toBeVisible();
 	await expect(page.locator('.lc-bar, .lc-bars')).not.toHaveCount(0);
 	await page.evaluate(() => document.fonts.ready);
@@ -144,7 +145,7 @@ test.describe('full-page screenshots', () => {
 			}) => {
 				await loadEnglishDashboard(page, { zoom: false });
 				await expectScreenshotPage(page, colorScheme, { zoom: false });
-				await expect(page.locator('.calendar-card')).toBeVisible();
+				await expect(activeLocator(page, '.calendar-card')).toBeVisible();
 
 				const screenshot = await page.screenshot({
 					path: screenshotAssetPath(`screenshot-${colorScheme}-full.png`),

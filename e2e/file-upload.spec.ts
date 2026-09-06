@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { activeChartCards } from './helpers/chart-locators';
 
 test('CSVファイルを添付すると解析結果が表示される', async ({ page }) => {
 	await page.goto('/cursor_usage_analyzer/ja/');
@@ -30,7 +31,7 @@ test('非CSVを選ぶとエラーになりグラフが消える', async ({ page 
 		mimeType: 'text/csv',
 		buffer: Buffer.from('Date,Model,Total Tokens,Cost\n2026-08-28T17:00:00.000Z,alpha,10,1\n')
 	});
-	await expect(page.locator('.chart-card')).toHaveCount(6);
+	await expect(activeChartCards(page)).toHaveCount(6);
 
 	await fileInput.setInputFiles({
 		name: 'notes.txt',

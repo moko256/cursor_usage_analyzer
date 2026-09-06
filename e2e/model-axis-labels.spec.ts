@@ -1,5 +1,6 @@
 import { interpolatePuBu } from 'd3-scale-chromatic';
 import { expect, test, type Locator } from '@playwright/test';
+import { activeChartCards, activeLocator } from './helpers/chart-locators';
 
 const today = new Date();
 const chartMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
@@ -76,11 +77,11 @@ test.beforeEach(async ({ page }) => {
 		buffer: Buffer.from(csv)
 	});
 
-	await expect(page.locator('.chart-card')).toHaveCount(6);
+	await expect(activeChartCards(page)).toHaveCount(6);
 });
 
 test('モデル別グラフの色が d3-scale-chromatic で割り当てられる', async ({ page }) => {
-	const dailyFills = await uniqueBarFills(page.locator('.chart-card').nth(0));
+	const dailyFills = await uniqueBarFills(activeChartCards(page).nth(0));
 	expect(dailyFills.length).toBeGreaterThanOrEqual(models.length);
 	expect(new Set(dailyFills.map((item) => item.computed)).size).toBe(dailyFills.length);
 
@@ -89,9 +90,9 @@ test('モデル別グラフの色が d3-scale-chromatic で割り当てられる
 		mimeType: 'text/csv',
 		buffer: Buffer.from(breakdownCsv)
 	});
-	await expect(page.locator('.chart-card')).toHaveCount(6);
+	await expect(activeChartCards(page)).toHaveCount(6);
 
-	const breakdownCard = page.locator('.chart-card.horizontal-card').nth(0);
+	const breakdownCard = activeLocator(page, '.chart-card.horizontal-card').nth(0);
 	await expect(breakdownCard.locator('.lc-bar')).not.toHaveCount(0);
 
 	const breakdownFills = await uniqueBarFills(breakdownCard);
@@ -100,7 +101,7 @@ test('モデル別グラフの色が d3-scale-chromatic で割り当てられる
 });
 
 test('モデル別の日次グラフが先頭に並ぶ', async ({ page }) => {
-	const cards = page.locator('.chart-card');
+	const cards = activeChartCards(page);
 
 	await expect(cards.nth(0).locator('figcaption strong')).toHaveText(
 		'Token count (by model) / day'
@@ -117,7 +118,7 @@ test('モデル別の日次グラフが先頭に並ぶ', async ({ page }) => {
 });
 
 test('トークン軸の目盛りラベルがSI接頭辞で丸められる', async ({ page }) => {
-	const cards = page.locator('.chart-card');
+	const cards = activeChartCards(page);
 	const dailyTokenLabels = await cards.nth(0).locator('text.lc-axis-tick-label').allTextContents();
 	const modelTokenLabels = await cards.nth(2).locator('text.lc-axis-tick-label').allTextContents();
 
@@ -128,7 +129,7 @@ test('トークン軸の目盛りラベルがSI接頭辞で丸められる', asy
 });
 
 test('コスト軸の目盛りラベルがドル付きで揃う', async ({ page }) => {
-	const cards = page.locator('.chart-card');
+	const cards = activeChartCards(page);
 	const dailyCostLabels = await cards.nth(1).locator('text.lc-axis-tick-label').allTextContents();
 	const modelCostLabels = await cards.nth(3).locator('text.lc-axis-tick-label').allTextContents();
 
@@ -137,10 +138,9 @@ test('コスト軸の目盛りラベルがドル付きで揃う', async ({ page 
 });
 
 test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) => {
-	const group = page.locator('.graph-group');
-	const calendar = group.locator('.calendar-card');
+	const calendar = activeLocator(page, '.calendar-card');
 
-	await expect(group.locator('.chart-card')).toHaveCount(6);
+	await expect(activeChartCards(page)).toHaveCount(6);
 	await expect(page.locator('.calendar-group')).toHaveCount(0);
 	await expect(calendar).toHaveCount(1);
 	await expect(calendar.locator('figcaption strong')).toHaveText('Token count calendar');
@@ -172,7 +172,7 @@ test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) =
 	expect(edgeCells).toHaveLength(3);
 	expect(edgeCells.every((cell) => cell.insideSvg)).toBe(true);
 
-	const hourly = group.locator('.hourly-token-card');
+	const hourly = activeLocator(page, '.hourly-token-card');
 	await expect(hourly).toHaveCount(1);
 	await expect(hourly.locator('figcaption strong')).toHaveText('Token count / time of day');
 	await expect(hourly.locator('figcaption span')).toHaveCount(0);
@@ -206,7 +206,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 				buffer: Buffer.from(zeroTokenCalendarCsv)
 			});
 
-			const calendar = page.locator('.calendar-card');
+			const calendar = activeLocator(page, '.calendar-card');
 			await expect(calendar.locator('.lc-rect')).toHaveCount(
 				new Date(chartMonthStart.getFullYear(), chartMonthStart.getMonth() + 1, 0).getDate()
 			);
@@ -237,7 +237,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 				buffer: Buffer.from(heatmapCalendarCsv)
 			});
 
-			const calendar = page.locator('.calendar-card');
+			const calendar = activeLocator(page, '.calendar-card');
 			await expect(calendar.locator('.lc-rect')).toHaveCount(
 				new Date(chartMonthStart.getFullYear(), chartMonthStart.getMonth() + 1, 0).getDate()
 			);
@@ -266,7 +266,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 }
 
 test('横棒グラフの軸にモデル名が描画される', async ({ page }) => {
-	const cards = await page.locator('.chart-card.horizontal-card').all();
+	const cards = await activeLocator(page, '.chart-card.horizontal-card').all();
 	expect(cards).toHaveLength(2);
 
 	for (const card of cards) {
@@ -279,7 +279,7 @@ test('横棒グラフの軸にモデル名が描画される', async ({ page }) 
 });
 
 test('軸の目盛りラベルが切り取られない', async ({ page }) => {
-	const cards = await page.locator('.chart-card:not(.calendar-card):not(.empty-card)').all();
+	const cards = await activeLocator(page, '.chart-card:not(.calendar-card):not(.empty-card)').all();
 
 	for (const card of cards) {
 		const labels = await readTickLabels(card);
@@ -296,7 +296,7 @@ test('モデル別ツールチップに0のトークン内訳とコスト内訳�
 		buffer: Buffer.from(breakdownCsv)
 	});
 
-	const cards = page.locator('.chart-card.horizontal-card');
+	const cards = activeLocator(page, '.chart-card.horizontal-card');
 	await expect(cards).toHaveCount(2);
 
 	for (const [index, card] of (await cards.all()).entries()) {
