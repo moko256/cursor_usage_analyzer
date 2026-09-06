@@ -27,7 +27,7 @@
 	<link rel="manifest" href={resolve('/manifest.webmanifest')} />
 	<link rel="icon" href={asset('/favicon.ico')} sizes="16x16" />
 	<link rel="icon" href={icon_svg} type="image/svg+xml" />
-	<link rel="apple-touch-icon" href={asset('/apple-touch-icon.png')} />
+	<link rel="apple-touch-icon" href={asset('/icons/apple-touch-icon.png')} />
 
 	<HeadUrlLinks />
 </svelte:head>
