@@ -55,8 +55,20 @@ export function terserMinifyPlugin(): Plugin {
 		name: 'terser-minify',
 		apply: 'build',
 		enforce: 'post',
-		async renderChunk(code) {
-			const result = await minify(code, terserOptions);
+		applyToEnvironment(environment) {
+			// Static HTML inlines the client bundle. Skip SSR chunks.
+			return environment.name !== 'ssr';
+		},
+		async renderChunk(code, _chunk, outputOptions) {
+			const isModule = outputOptions.format === 'es' || outputOptions.format === 'esm';
+			const result = await minify(code, {
+				...terserOptions,
+				module: isModule,
+				compress: {
+					...terserOptions.compress,
+					module: isModule
+				}
+			});
 
 			if (result.code == null) {
 				throw new Error('Terser produced empty output');
