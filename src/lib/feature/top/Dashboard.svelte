@@ -3,7 +3,10 @@
 	import DashboardCharts from '$lib/feature/top/graph/DashboardCharts.svelte';
 	import GraphGroup from '$lib/feature/top/graph/GraphGroup.svelte';
 	import RangeSwitcher from '$lib/feature/top/graph/RangeSwitcher.svelte';
-	import { rememberMountedRange, nextPremountRange } from '$lib/feature/top/graph/chart-range-mount';
+	import {
+		rememberMountedRange,
+		nextPremountRange
+	} from '$lib/feature/top/graph/chart-range-mount';
 	import type { DashboardData, DayRange } from '$lib/feature/top/graph/chart-utils';
 	import * as m from '$lib/paraglide/messages';
 	import Usage from './Usage.svelte';
@@ -57,7 +60,10 @@
 	<Usage totalCost={range.totalCost} totalTokens={range.totalTokens} />
 	<GraphGroup>
 		{#each mountedRanges as days (days)}
-			<div class={['graph-range', rangeDays === days && 'is-active']} aria-hidden={rangeDays !== days}>
+			<div
+				class={['graph-range', rangeDays === days && 'is-active']}
+				aria-hidden={rangeDays !== days}
+			>
 				<DashboardCharts range={dashboard.ranges[days]} modelIndices={dashboard.modelIndices} />
 			</div>
 		{/each}
