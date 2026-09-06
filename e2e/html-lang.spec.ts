@@ -1,7 +1,5 @@
 import { expect, test } from '@playwright/test';
 
-test.use({ video: 'on' });
-
 for (const locale of ['ja', 'en'] as const) {
 	test(`client updates html lang to ${locale} after a wrong prerendered value`, async ({
 		page
