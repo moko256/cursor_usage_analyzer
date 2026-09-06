@@ -4,9 +4,10 @@
 
 	interface Props {
 		days: DayRange;
+		onselect: (days: DayRange) => void;
 	}
 
-	let { days = $bindable() }: Props = $props();
+	let { days, onselect }: Props = $props();
 
 	function rangeLabel(range: DayRange) {
 		switch (range) {
@@ -26,7 +27,7 @@
 			type="button"
 			class={days === range ? undefined : 'outline secondary'}
 			aria-current={days === range ? 'true' : undefined}
-			onclick={() => (days = range)}
+			onclick={() => onselect(range)}
 		>
 			{rangeLabel(range)}
 		</button>

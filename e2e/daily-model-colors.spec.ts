@@ -1,6 +1,7 @@
 import { interpolateLab, interpolateRgb } from 'd3-interpolate';
 import { interpolatePuBu, schemeObservable10 } from 'd3-scale-chromatic';
 import { expect, test, type Locator } from '@playwright/test';
+import { activeGraphRange } from './helpers/chart-locators';
 
 test.use({ viewport: { width: 1400, height: 1100 } });
 
@@ -101,7 +102,7 @@ test('token breakdown gradients from interpolatePuBu(0.2) to each model Observab
 		buffer: Buffer.from(csv)
 	});
 
-	const breakdownChart = page.getByRole('img', {
+	const breakdownChart = activeGraphRange(page).getByRole('img', {
 		name: 'Token count by model.',
 		exact: true
 	});

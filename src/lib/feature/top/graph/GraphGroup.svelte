@@ -15,13 +15,23 @@
 
 <style>
 	.graph-group {
-		display: grid;
+		position: relative;
 		min-width: 0;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: var(--pico-spacing);
+	}
 
-		@media (max-width: 700px) {
-			grid-template-columns: minmax(0, 1fr);
-		}
+	.graph-group :global(.graph-range) {
+		min-width: 0;
+	}
+
+	.graph-group :global(.graph-range.is-active) {
+		position: relative;
+	}
+
+	.graph-group :global(.graph-range:not(.is-active)) {
+		position: absolute;
+		inset-inline: 0;
+		top: 0;
+		visibility: hidden;
+		pointer-events: none;
 	}
 </style>
