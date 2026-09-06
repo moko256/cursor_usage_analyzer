@@ -53,10 +53,10 @@ async function setPageZoom(page: Page) {
 	}, pageZoom);
 }
 
-async function loadEnglishDashboard(page: Page) {
+async function loadEnglishDashboard(page: Page, { zoom = true } = {}) {
 	await page.goto('/cursor_usage_analyzer/en/');
 	await page.waitForLoadState('networkidle');
-	await setPageZoom(page);
+	if (zoom) await setPageZoom(page);
 	await page.locator('input[type="file"]').setInputFiles({
 		name: 'usage.csv',
 		mimeType: 'text/csv',
@@ -70,10 +70,18 @@ async function loadEnglishDashboard(page: Page) {
 	await page.evaluate(() => document.fonts.ready);
 }
 
-async function expectScreenshotPage(page: Page, colorScheme: (typeof colorSchemes)[number]) {
+async function expectScreenshotPage(
+	page: Page,
+	colorScheme: (typeof colorSchemes)[number],
+	{ zoom = true } = {}
+) {
 	await expect(page.getByRole('heading', { name: 'Cursor Usage Analyzer' })).toBeVisible();
 	await expect(page.getByText(/On-demand usage:/)).toBeVisible();
-	await expect.poll(() => page.evaluate(() => document.documentElement.style.zoom)).toBe(pageZoom);
+	if (zoom) {
+		await expect
+			.poll(() => page.evaluate(() => document.documentElement.style.zoom))
+			.toBe(pageZoom);
+	}
 
 	const { prefersDark, background } = await page.evaluate(() => ({
 		prefersDark: matchMedia('(prefers-color-scheme: dark)').matches,
@@ -134,8 +142,8 @@ test.describe('full-page screenshots', () => {
 			test(`saves an English ${colorScheme} full-page screenshot under assets/`, async ({
 				page
 			}) => {
-				await loadEnglishDashboard(page);
-				await expectScreenshotPage(page, colorScheme);
+				await loadEnglishDashboard(page, { zoom: false });
+				await expectScreenshotPage(page, colorScheme, { zoom: false });
 				await expect(page.locator('.calendar-card')).toBeVisible();
 
 				const screenshot = await page.screenshot({
