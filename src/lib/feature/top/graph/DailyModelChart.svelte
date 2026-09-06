@@ -9,6 +9,7 @@
 		modelsFromDays,
 		verticalChartHeight,
 		verticalChartPadding,
+		chartTooltipRootProps,
 		type ChartMetric,
 		type DailyValue,
 		type ModelIndexTable
@@ -58,7 +59,7 @@
 		}}
 	>
 		{#snippet tooltip()}
-			<Tooltip.Root>
+			<Tooltip.Root {...chartTooltipRootProps}>
 				{#snippet children({ data })}
 					<Tooltip.Header>{formatDay(data.day)}</Tooltip.Header>
 					<Tooltip.List>
