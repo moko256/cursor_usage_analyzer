@@ -15,16 +15,22 @@
 
 <style>
 	.graph-group {
-		display: grid;
+		position: relative;
 		min-width: 0;
 	}
 
 	.graph-group :global(.graph-range) {
-		grid-area: 1 / 1;
 		min-width: 0;
 	}
 
+	.graph-group :global(.graph-range.is-active) {
+		position: relative;
+	}
+
 	.graph-group :global(.graph-range:not(.is-active)) {
+		position: absolute;
+		inset-inline: 0;
+		top: 0;
 		visibility: hidden;
 		pointer-events: none;
 	}
