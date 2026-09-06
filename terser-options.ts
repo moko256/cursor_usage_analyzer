@@ -49,7 +49,11 @@ export const terserOptions = {
 	}
 } satisfies MinifyOptions;
 
-/** Runs after Oxc minify so Terser can drop console.* and shrink inlined HTML. */
+/**
+ * Runs after Oxc minify so Terser can drop console.* and shrink inlined HTML.
+ * Oxc `drop_console` is boolean-only and would also remove `console.error`.
+ * Oxc `manualPureFunctions` can keep `console.error` but produced larger HTML.
+ */
 export function terserMinifyPlugin(): Plugin {
 	return {
 		name: 'terser-minify',
