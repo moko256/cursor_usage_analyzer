@@ -60,7 +60,7 @@ export function terserMinifyPlugin(): Plugin {
 			return environment.name !== 'ssr';
 		},
 		async renderChunk(code, _chunk, outputOptions) {
-			const isModule = outputOptions.format === 'es' || outputOptions.format === 'esm';
+			const isModule = outputOptions.format === 'es';
 			const result = await minify(code, {
 				...terserOptions,
 				module: isModule,
