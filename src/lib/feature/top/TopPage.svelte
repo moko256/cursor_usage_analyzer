@@ -69,7 +69,10 @@
 			<Usage totalCost={range.totalCost} totalTokens={range.totalTokens} />
 			<GraphGroup>
 				{#each mountedRanges as days (days)}
-					<div class="graph-range" hidden={rangeDays !== days} inert={rangeDays !== days}>
+					<div
+						class={['graph-range', rangeDays === days && 'is-active']}
+						aria-hidden={rangeDays !== days}
+					>
 						<DashboardCharts range={dashboard.ranges[days]} modelIndices={dashboard.modelIndices} />
 					</div>
 				{/each}

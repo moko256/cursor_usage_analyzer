@@ -55,7 +55,7 @@
 			{#each context.series.visibleSeries as s (s.key)}
 				<Bars
 					seriesKey={s.key}
-					fill={fillByKey.get(s.key)}
+					fill={fillByKey.get(s.key) as never}
 					radius={4}
 					strokeWidth={1}
 					rounded={(d) => (context.series.isStackTop(s.key, d) ? 'edge' : 'none')}

@@ -15,6 +15,17 @@
 
 <style>
 	.graph-group {
+		display: grid;
 		min-width: 0;
+	}
+
+	.graph-group :global(.graph-range) {
+		grid-area: 1 / 1;
+		min-width: 0;
+	}
+
+	.graph-group :global(.graph-range:not(.is-active)) {
+		visibility: hidden;
+		pointer-events: none;
 	}
 </style>
