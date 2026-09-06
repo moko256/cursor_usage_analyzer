@@ -14,6 +14,11 @@ const breakdownCsv = [
 	'2026-08-25T10:00:00.000Z,alpha,0,20,0,80,100,1.00'
 ].join('\n');
 
+const zeroTokenCalendarCsv = [
+	'Date,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost',
+	`${new Date(chartMonthStart.getTime() + 86_400_000).toISOString()},alpha,0,0,0,100,100,1.00`
+].join('\n');
+
 const models = ['claude-4.5-sonnet-thinking', 'gpt-5.6-luna-high', 'composer-2.5'];
 
 /**
@@ -181,6 +186,39 @@ test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) =
 		'21:00'
 	]);
 });
+
+for (const colorScheme of ['light', 'dark'] as const) {
+	test.describe(`tokenカレンダーの0トークン色 (${colorScheme})`, () => {
+		test.use({ colorScheme });
+
+		test('0トークンのセルはカレンダーのフォールバック色を使う', async ({ page }) => {
+			await page.locator('input[type="file"]').setInputFiles({
+				name: 'zero-token-calendar.csv',
+				mimeType: 'text/csv',
+				buffer: Buffer.from(zeroTokenCalendarCsv)
+			});
+
+			const calendar = page.locator('.calendar-card');
+			await expect(calendar.locator('.lc-rect')).toHaveCount(
+				new Date(chartMonthStart.getFullYear(), chartMonthStart.getMonth() + 1, 0).getDate()
+			);
+
+			const cells = await calendar.locator('.lc-rect').evaluateAll((elements) =>
+				elements.slice(0, 2).map((element) => ({
+					fill: element.getAttribute('fill'),
+					computedFill: getComputedStyle(element).fill
+				}))
+			);
+
+			expect(cells[0]).toEqual({
+				fill: null,
+				computedFill: colorScheme === 'light' ? 'rgba(0, 0, 0, 0.05)' : 'rgba(0, 0, 0, 0.3)'
+			});
+			expect(cells[1]?.fill).not.toBeNull();
+			expect(cells[1]?.computedFill).not.toBe(cells[0]?.computedFill);
+		});
+	});
+}
 
 test('横棒グラフの軸にモデル名が描画される', async ({ page }) => {
 	const cards = await page.locator('.chart-card.horizontal-card').all();

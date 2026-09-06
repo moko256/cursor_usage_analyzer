@@ -51,7 +51,7 @@
 								width={cellSize[0] - cellPadding * 2}
 								height={cellSize[1] - cellPadding * 2}
 								rx={4}
-								fill={cell.color ?? TOKEN_CALENDAR_COLORS[0]}
+								fill={cell.data.tokens === 0 ? undefined : cell.color}
 								onpointermove={(event) => context.tooltip?.show(event, cell.data)}
 								onpointerleave={() => context.tooltip?.hide()}
 							/>
@@ -75,3 +75,9 @@
 		{/snippet}
 	</Chart>
 </ChartCard>
+
+<style>
+	:global(.calendar-card .lc-rect:not([fill])) {
+		fill: light-dark(rgb(0 0 0 / 5%), rgb(0 0 0 / 30%));
+	}
+</style>
