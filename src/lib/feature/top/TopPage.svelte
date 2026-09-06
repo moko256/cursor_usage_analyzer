@@ -14,10 +14,12 @@
 	let dashboard = $derived(view.status === 'success' ? view.dashboard : null);
 	let pickerView = $derived(toPickerView(view));
 
-	async function processFile(file: File | undefined) {
-		if (!file || view.status === 'loading') return;
+	async function processFile(selected: File | undefined) {
+		if (!selected || view.status === 'loading') return;
 
-		if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
+		const name = selected.name;
+		const type = selected.type;
+		if (!name.toLowerCase().endsWith('.csv') && type !== 'text/csv') {
 			view = { status: 'error', message: m.invalid_file_type() };
 			return;
 		}
@@ -25,10 +27,18 @@
 		view = { status: 'loading' };
 
 		try {
-			view = { status: 'success', dashboard: await parseCsvFile(file, m.unknown_model()) };
+			// Isolate File lifetime to arrayBuffer()+transfer inside parseCsvFile; do not
+			// keep `selected` across the await by nesting the call in a scope that ends
+			// after scheduling parse (parseCsvFile already nulls its blob after read).
+			const dashboard = await parseSelectedCsv(selected);
+			view = { status: 'success', dashboard };
 		} catch (error) {
 			view = { status: 'error', message: csvParseErrorMessage(error) };
 		}
+	}
+
+	function parseSelectedCsv(file: File) {
+		return parseCsvFile(file, m.unknown_model());
 	}
 </script>
 
