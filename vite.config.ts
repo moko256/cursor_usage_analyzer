@@ -4,6 +4,7 @@ import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 import inlangSettings from './project.inlang/settings.json' with { type: 'json' };
 import { siteBase, siteHost, siteProtocol } from './site-url.ts';
+import { terserMinifyPlugin } from './terser-options.ts';
 
 export default defineConfig(({ command }) => {
 	const isRelease = command == 'build';
@@ -69,7 +70,8 @@ export default defineConfig(({ command }) => {
 						})
 					}
 				]
-			})
+			}),
+			terserMinifyPlugin()
 		],
 		test: {
 			expect: { requireAssertions: true },
