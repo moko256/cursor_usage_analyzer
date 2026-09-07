@@ -161,9 +161,13 @@ test('daily model tooltip shows a color swatch for each model that day', async (
 		const stackedTooltip = page.locator('.lc-tooltip-root:not([inert])');
 		await expect(stackedTooltip).toBeVisible();
 		await expect(stackedTooltip.locator('.lc-tooltip-header')).toHaveText('Aug 20');
-		await expect(stackedTooltip.locator('.lc-tooltip-item-label')).toHaveText(['alpha', 'beta']);
+		await expect(stackedTooltip.locator('.lc-tooltip-item-label')).toHaveText([
+			'alpha',
+			'beta',
+			'Total'
+		]);
 		await expect(stackedTooltip.locator('.lc-tooltip-item-value')).toHaveText(
-			isTokens ? ['100', '200'] : ['$1.00', '$2.00']
+			isTokens ? ['100', '200', '300'] : ['$1.00', '$2.00', '$3.00']
 		);
 		await expect(stackedTooltip.locator('.lc-tooltip-item-color')).toHaveCount(2);
 		const stackedSwatches = await tooltipSwatches(stackedTooltip);
@@ -174,9 +178,9 @@ test('daily model tooltip shows a color swatch for each model that day', async (
 		const singleTooltip = page.locator('.lc-tooltip-root:not([inert])');
 		await expect(singleTooltip).toBeVisible();
 		await expect(singleTooltip.locator('.lc-tooltip-header')).toHaveText('Aug 25');
-		await expect(singleTooltip.locator('.lc-tooltip-item-label')).toHaveText(['gamma']);
+		await expect(singleTooltip.locator('.lc-tooltip-item-label')).toHaveText(['gamma', 'Total']);
 		await expect(singleTooltip.locator('.lc-tooltip-item-value')).toHaveText(
-			isTokens ? ['300'] : ['$3.00']
+			isTokens ? ['300', '300'] : ['$3.00', '$3.00']
 		);
 		await expect(singleTooltip.locator('.lc-tooltip-item-color')).toHaveCount(1);
 		const singleSwatches = await tooltipSwatches(singleTooltip);
