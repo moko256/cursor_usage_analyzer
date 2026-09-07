@@ -79,13 +79,20 @@
 			<Tooltip.Root {...chartTooltipRootProps}>
 				{#snippet children({ data })}
 					<Tooltip.Header>{data.model}</Tooltip.Header>
-					{#each series as item (item.key)}
+					<Tooltip.List>
+						{#each series as item (item.key)}
+							<Tooltip.Item
+								label={item.label}
+								value={formatChartValue(Math.abs(item.value(data)), metric)}
+								color={item.fill(data)}
+							/>
+						{/each}
+						<Tooltip.Separator />
 						<Tooltip.Item
-							label={item.label}
-							value={formatChartValue(Math.abs(item.value(data)), metric)}
-							color={item.fill(data)}
+							label={m.chart_tooltip_total()}
+							value={formatChartValue(data[metric], metric)}
 						/>
-					{/each}
+					</Tooltip.List>
 				{/snippet}
 			</Tooltip.Root>
 		{/snippet}

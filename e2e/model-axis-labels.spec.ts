@@ -308,13 +308,15 @@ test('モデル別ツールチップに0のトークン内訳とコスト内訳�
 			'Input (w/ Cache Write)',
 			'Input (w/o Cache Write)',
 			'Cache Read',
-			'Output Tokens'
+			'Output Tokens',
+			'Total'
 		]);
 		await expect(tooltip.locator('.lc-tooltip-item-value')).toHaveText([
 			index === 0 ? '0' : '$0.00',
 			index === 0 ? '20' : '$0.20',
 			index === 0 ? '0' : '$0.00',
-			index === 0 ? '80' : '$0.80'
+			index === 0 ? '80' : '$0.80',
+			index === 0 ? '100' : '$1.00'
 		]);
 	}
 });

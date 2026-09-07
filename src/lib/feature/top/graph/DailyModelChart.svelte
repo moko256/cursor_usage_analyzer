@@ -67,6 +67,11 @@
 								color={colorByModel.get(model.model)}
 							/>
 						{/each}
+						<Tooltip.Separator />
+						<Tooltip.Item
+							label={m.chart_tooltip_total()}
+							value={formatChartValue(data[metric], metric)}
+						/>
 					</Tooltip.List>
 				{/snippet}
 			</Tooltip.Root>
