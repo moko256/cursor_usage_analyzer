@@ -86,12 +86,12 @@ export type RangeChartData = {
  * Built once in the worker so a model keeps the same color across date ranges.
  *
  * `names` is dictionary-sorted (`localeCompare`). `names[i]` has index `i`.
- * `indexByName` is a null-prototype object so CSV keys like `__proto__` stay
- * own properties. `count` is `names.length`.
+ * `indexByName` is a `Map` so CSV keys like `__proto__` cannot hit the
+ * prototype chain. `count` is `names.length`.
  */
 export type ModelIndexTable = {
 	names: string[];
-	indexByName: Record<string, number>;
+	indexByName: Map<string, number>;
 	count: number;
 };
 

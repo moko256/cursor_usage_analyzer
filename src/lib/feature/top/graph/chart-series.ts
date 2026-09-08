@@ -41,7 +41,7 @@ export function buildDailyModelSeries(
 
 	return models.map((model) => ({
 		key: model,
-		color: getDailyModelColors(modelIndices.indexByName[model] ?? 0, modelIndices.count),
+		color: getDailyModelColors(modelIndices.indexByName.get(model) ?? 0, modelIndices.count),
 		value: (day: DailyValue) => metricValue(day, model)
 	}));
 }
@@ -57,7 +57,7 @@ export function buildModelBreakdownSeries(
 		let colors = tokenColorsByModel.get(model);
 		if (!colors) {
 			const modelColor = getDailyModelColors(
-				modelIndices.indexByName[model] ?? 0,
+				modelIndices.indexByName.get(model) ?? 0,
 				modelIndices.count
 			);
 			colors = TOKEN_BREAKDOWN_KEYS.map((_, index) =>
