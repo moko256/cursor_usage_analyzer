@@ -3,7 +3,6 @@
 	import { BarChart, Tooltip } from 'layerchart/svg';
 	import {
 		buildDailyModelSeries,
-		dailyAxisDomain,
 		dailyAxisInterval,
 		dailyAxisTickFormat,
 		dailyAxisTickSpacing,
@@ -36,7 +35,6 @@
 		series.map((item) => ({ key: item.key, label: item.label, color: item.color }))
 	);
 	let chartDays = $derived(dailyChartPoints(days));
-	let xDomain = $derived(dailyAxisDomain(days));
 	let title = $derived(
 		metric === 'tokens' ? m.tokens_per_day_heading() : m.models_per_day_heading()
 	);
@@ -57,7 +55,6 @@
 	<BarChart
 		data={chartDays}
 		x="date"
-		{xDomain}
 		xInterval={dailyAxisInterval}
 		{series}
 		seriesLayout="stack"

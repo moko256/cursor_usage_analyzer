@@ -8,7 +8,6 @@ import {
 	buildTokenCalendar,
 	buildTokenCalendarThresholds,
 	filterPointsByDays,
-	dailyAxisDomain,
 	dailyAxisInterval,
 	dailyAxisTickFormat,
 	dailyAxisTickSpacing,
@@ -123,27 +122,7 @@ describe('dailyChartPoints', () => {
 	});
 });
 
-describe('dailyAxisDomain', () => {
-	it('returns undefined for an empty series', () => {
-		expect(dailyAxisDomain([])).toBeUndefined();
-	});
-
-	it('pads a short range to 30 days ending the day after the last point', () => {
-		expect(dailyAxisDomain([{ day: '2026-08-28', cost: 1, tokens: 10, models: [] }])).toEqual([
-			dateFromUtcDay('2026-07-30'),
-			dateFromUtcDay('2026-08-29')
-		]);
-	});
-
-	it('keeps the first day when the range is already wider than 30 days', () => {
-		expect(
-			dailyAxisDomain([
-				{ day: '2026-07-01', cost: 1, tokens: 10, models: [] },
-				{ day: '2026-08-28', cost: 2, tokens: 20, models: [] }
-			])
-		).toEqual([dateFromUtcDay('2026-07-01'), dateFromUtcDay('2026-08-29')]);
-	});
-
+describe('dailyAxisTicks', () => {
 	it('uses a one-day interval and spaced short day ticks', () => {
 		expect(dailyAxisInterval).toBe(timeDay);
 		expect(dailyAxisTickFormat).toEqual({ type: 'day', options: { variant: 'short' } });

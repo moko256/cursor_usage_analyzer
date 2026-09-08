@@ -1,6 +1,6 @@
 import { timeDay } from 'd3-time';
 import type { ChartMetric, DailyValue } from './chart-types';
-import { addUtcDays, dateFromUtcDay } from './chart-utc';
+import { dateFromUtcDay } from './chart-utc';
 
 export const verticalChartPadding = { top: 4, right: 24, bottom: 20, left: 41 } as const;
 export const verticalChartHeight = 270;
@@ -79,32 +79,18 @@ export function formatDay(value: string) {
 }
 
 /**
- * Daily bar charts use a local time scale sized for at most one month of days.
- * LayerChart places each bar in a `timeDay` interval; the domain is padded to
- * 30 days so sparse points keep calendar gaps instead of stretching as bands.
+ * Daily bar charts use a local time scale. LayerChart places each bar in a
+ * `timeDay` interval so the axis follows the data's own date range.
  */
-export const DAILY_AXIS_MAX_DAYS = 30;
 export const dailyAxisInterval = timeDay;
 export const dailyAxisTickFormat = { type: 'day', options: { variant: 'short' } } as const;
-/** Pixel gap between date-axis ticks on the month-wide daily charts. */
+/** Pixel gap between date-axis ticks on the daily charts. */
 export const dailyAxisTickSpacing = 30;
 
 export type DailyChartPoint = DailyValue & { date: Date };
 
 export function dailyChartPoints(days: DailyValue[]): DailyChartPoint[] {
 	return days.map((day) => ({ ...day, date: dateFromUtcDay(day.day) }));
-}
-
-export function dailyAxisDomain(days: DailyValue[]): [Date, Date] | undefined {
-	if (days.length === 0) return undefined;
-
-	const endDay = days[days.length - 1].day;
-	const firstDay = days[0].day;
-	const exclusiveEnd = addUtcDays(endDay, 1);
-	const paddedStart = addUtcDays(exclusiveEnd, -DAILY_AXIS_MAX_DAYS);
-	const startDay = firstDay < paddedStart ? firstDay : paddedStart;
-
-	return [dateFromUtcDay(startDay), dateFromUtcDay(exclusiveEnd)];
 }
 
 export function formatHour(value: number) {

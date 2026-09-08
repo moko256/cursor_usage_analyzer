@@ -30,10 +30,8 @@ export {
 } from './chart-utc';
 
 export {
-	DAILY_AXIS_MAX_DAYS,
 	compactNumberFormat,
 	currencyFormat,
-	dailyAxisDomain,
 	dailyAxisInterval,
 	dailyAxisTickFormat,
 	dailyAxisTickSpacing,
