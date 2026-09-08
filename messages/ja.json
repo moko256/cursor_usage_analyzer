@@ -19,6 +19,7 @@
 	"drop_here": "ここにドロップ",
 	"load_csv": "CSVファイルを読み込みます",
 	"invalid_file_type": "CSVファイルを選択してください",
+	"large_file_confirm": "大きなファイルです。このまま読み込みますか？",
 	"csv_read_failed": "CSVファイルを読み込めませんでした。もう一度お試しください",
 	"csv_empty": "CSVファイルにデータがありません",
 	"csv_missing_columns": "CSVに必須の列がありません",

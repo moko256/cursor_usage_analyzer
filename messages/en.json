@@ -19,6 +19,7 @@
 	"drop_here": "Drop here",
 	"load_csv": "Load a CSV file",
 	"invalid_file_type": "Please select a CSV file.",
+	"large_file_confirm": "This is a large file. Load it anyway?",
 	"csv_read_failed": "Could not read the CSV file. Please try again.",
 	"csv_empty": "The CSV file contains no data.",
 	"csv_missing_columns": "The CSV is missing a required column.",

@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { parseCsvFile } from '$lib/csv-parser';
 	import { csvParseErrorMessage } from '$lib/csv-parse-error-message';
+	import { isLargeCsvFile } from '$lib/csv-large-file';
+	import { parseCsvFile } from '$lib/csv-parser';
 	import NoScript from '$lib/components/NoScript.svelte';
 	import Dashboard from '$lib/feature/top/Dashboard.svelte';
 	import Header from '$lib/feature/top/Header.svelte';
@@ -21,6 +22,10 @@
 		const type = selected.type;
 		if (!name.toLowerCase().endsWith('.csv') && type !== 'text/csv') {
 			view = { status: 'error', message: m.invalid_file_type() };
+			return;
+		}
+
+		if (isLargeCsvFile(selected) && !window.confirm(m.large_file_confirm())) {
 			return;
 		}
 
