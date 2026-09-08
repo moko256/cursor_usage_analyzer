@@ -29,9 +29,6 @@ const heatmapCalendarCsv = [
 ].join('\n');
 
 const models = ['claude-4.5-sonnet-thinking', 'gpt-5.6-luna-high', 'composer-2.5'];
-const truncatedModels = models.map((model) =>
-	model.length > 19 ? `${model.slice(0, 19)}...` : model
-);
 
 /**
  * A tick label is laid out relative both to the nested `<svg>` LayerChart wraps it in and to the
@@ -277,11 +274,11 @@ test('横棒グラフの軸にモデル名が描画される', async ({ page }) 
 			.filter((label) => label.clippedBy.length === 0)
 			.map((label) => label.text);
 
-		expect(painted).toEqual(expect.arrayContaining(truncatedModels));
+		expect(painted).toEqual(expect.arrayContaining(models));
 	}
 });
 
-test('長いモデル名は軸で省略し、ツールチップでは全文を出す', async ({ page }) => {
+test('長いモデル名は軸で折り返し、ツールチップでは全文を出す', async ({ page }) => {
 	const longModel = 'an-unusually-long-model-identifier';
 	await page.locator('input[type="file"]').setInputFiles({
 		name: 'long-model.csv',
@@ -296,10 +293,9 @@ test('長いモデル名は軸で省略し、ツールチップでは全文を�
 	await expect(page.getByText(/records loaded/)).toBeVisible();
 	await expect(activeChartCards(page)).toHaveCount(6);
 
-	const truncated = `${longModel.slice(0, 19)}...`;
 	const cards = activeLocator(page, '.chart-card.horizontal-card');
 	await expect(
-		cards.first().locator('text.lc-axis-tick-label', { hasText: truncated })
+		cards.first().locator('text.lc-axis-tick-label', { hasText: longModel })
 	).toBeVisible();
 	await expect(cards).toHaveCount(2);
 
@@ -308,8 +304,14 @@ test('長いモデル名は軸で省略し、ツールチップでは全文を�
 			.filter((label) => label.clippedBy.length === 0)
 			.map((label) => label.text);
 
-		expect(painted).toContain(truncated);
-		expect(painted).not.toContain(longModel);
+		expect(painted).toContain(longModel);
+		expect(painted.some((text) => text.includes('...'))).toBe(false);
+
+		const tspanCount = await card
+			.locator('text.lc-axis-tick-label', { hasText: longModel })
+			.locator('tspan')
+			.count();
+		expect(tspanCount).toBeGreaterThan(1);
 	}
 
 	await cards.nth(0).locator('.lc-tooltip-rect').hover();

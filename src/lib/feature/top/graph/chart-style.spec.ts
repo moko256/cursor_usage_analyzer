@@ -7,7 +7,8 @@ import {
 	HOURLY_TOKEN_COLOR,
 	TOKEN_CALENDAR_COLORS,
 	modelAxisPadding,
-	modelTickLabelTruncate
+	modelTickLabelWidth,
+	wrapModelTickLabel
 } from './chart-style';
 
 const modelColorStops = 10;
@@ -97,16 +98,28 @@ describe('HOURLY_TOKEN_COLOR', () => {
 	});
 });
 
-describe('modelAxisPadding', () => {
-	it('sizes left padding from the truncated tick label, not the full model name', () => {
-		const short = modelAxisPadding(['composer-2.5']);
-		const long = modelAxisPadding(['a'.repeat(50)]);
-		const alreadyTruncated = modelAxisPadding([
-			'a'.repeat(modelTickLabelTruncate.maxChars) + modelTickLabelTruncate.ellipsis
-		]);
+describe('wrapModelTickLabel', () => {
+	it('keeps short names on one line', () => {
+		expect(wrapModelTickLabel('composer-2.5')).toBe('composer-2.5');
+	});
 
-		expect(long.left).toBe(alreadyTruncated.left);
-		expect(short.left).toBeLessThan(long.left);
-		expect(long).toMatchObject({ top: 4, right: 24, bottom: 20 });
+	it('breaks long hyphenated names onto multiple lines without dropping hyphens', () => {
+		expect(wrapModelTickLabel('an-unusually-long-model-identifier')).toBe(
+			['an-unusually-', 'long-model-', 'identifier'].join('\n')
+		);
+		expect(wrapModelTickLabel('an-unusually-long-model-identifier').replaceAll('\n', '')).toBe(
+			'an-unusually-long-model-identifier'
+		);
+	});
+});
+
+describe('modelAxisPadding', () => {
+	it('reserves left padding for wrapped model tick labels', () => {
+		expect(modelAxisPadding).toEqual({
+			top: 4,
+			right: 24,
+			bottom: 20,
+			left: modelTickLabelWidth + 8
+		});
 	});
 });
