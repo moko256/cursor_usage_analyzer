@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { writeFileSync } from 'node:fs';
+import { acceptLargeCsvDialog } from './helpers/csv-upload';
 import {
 	collectGarbage,
 	countNeedleInSnapshot,
@@ -30,10 +31,12 @@ async function loadCsvAndSampleHeap(page: import('@playwright/test').Page, paddi
 	await collectGarbage(page);
 	const before = await getHeapUsage(page);
 
+	const buffer = Buffer.from(csv);
+	acceptLargeCsvDialog(page, buffer.byteLength);
 	await page.locator('input[type="file"]').setInputFiles({
 		name: 'usage.csv',
 		mimeType: 'text/csv',
-		buffer: Buffer.from(csv)
+		buffer
 	});
 
 	await expect(page.getByText(/records loaded/)).toBeVisible({ timeout: 60_000 });

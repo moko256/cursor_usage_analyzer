@@ -6,6 +6,7 @@ import {
 	type SwitchProfile
 } from './helpers/cpu-profile';
 import { activeChartCards } from './helpers/chart-locators';
+import { setCsvInputFiles } from './helpers/csv-upload';
 import { buildHeavyUsageCsv } from './helpers/heavy-usage-csv';
 
 test.use({ viewport: { width: 1400, height: 1100 } });
@@ -16,11 +17,7 @@ test('range switch keeps the main thread responsive', async ({ page }, testInfo)
 	await installLongTaskObserver(page);
 	await page.goto('/cursor_usage_analyzer/en/');
 	await page.waitForLoadState('networkidle');
-	await page.locator('input[type="file"]').setInputFiles({
-		name: 'usage.csv',
-		mimeType: 'text/csv',
-		buffer: Buffer.from(csv)
-	});
+	await setCsvInputFiles(page, Buffer.from(csv));
 
 	await expect(page.getByText(/records loaded/)).toBeVisible({ timeout: 60_000 });
 	await expect(page.locator('.graph-range')).toHaveCount(3, { timeout: 60_000 });
