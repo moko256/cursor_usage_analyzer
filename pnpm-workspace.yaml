@@ -7,3 +7,6 @@ ignoredOptionalDependencies:
   - sass-embedded-unknown-all
 onlyBuiltDependencies:
   - esbuild
+overrides:
+  # GHSA-pxg6-pf52-xh8x: @sveltejs/kit still depends on cookie ^0.6.0.
+  cookie@<0.7.0: 0.7.2
