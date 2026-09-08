@@ -42,8 +42,6 @@ export default defineConfig(({ command }) => {
 						isE2E || !isRelease
 							? {
 									// Vite's dev modules, HMR need extra sources.
-									'frame-ancestors': ['none'],
-									'base-uri': ['none']
 								}
 							: {
 									// Production
