@@ -47,6 +47,14 @@ async function legendSwatchColors(chart: Locator) {
 		.evaluateAll((swatches) => swatches.map((swatch) => getComputedStyle(swatch).backgroundColor));
 }
 
+async function expectLegendBelowPlot(chart: Locator) {
+	const legendBox = await chart.locator('.chart-legend').boundingBox();
+	const plotBox = await chart.locator('.lc-root-container').boundingBox();
+	expect(legendBox).toBeTruthy();
+	expect(plotBox).toBeTruthy();
+	expect(legendBox!.y).toBeGreaterThan(plotBox!.y + plotBox!.height - 8);
+}
+
 async function loadCsv(page: Page) {
 	await page.goto('/cursor_usage_analyzer/en/');
 	await page.waitForLoadState('networkidle');
@@ -71,12 +79,7 @@ test('daily model charts show a color legend below the plot', async ({ page }) =
 
 		const swatches = await legendSwatchColors(chart);
 		expect(swatches).toEqual(expectedModelColors);
-
-		const legendBox = await chart.locator('.chart-legend').boundingBox();
-		const plotBox = await chart.locator('svg.lc-layout-svg').boundingBox();
-		expect(legendBox).toBeTruthy();
-		expect(plotBox).toBeTruthy();
-		expect(legendBox!.y).toBeGreaterThan(plotBox!.y + plotBox!.height - 8);
+		await expectLegendBelowPlot(chart);
 	}
 });
 
@@ -95,12 +98,7 @@ test('model breakdown charts show a token-type legend below the plot', async ({ 
 	for (const chart of [tokensChart, costChart]) {
 		await expect(chart).toBeVisible();
 		await expect(chart.locator('.chart-legend li')).toHaveText([...tokenLabels]);
-
-		const legendBox = await chart.locator('.chart-legend').boundingBox();
-		const plotBox = await chart.locator('svg.lc-layout-svg').boundingBox();
-		expect(legendBox).toBeTruthy();
-		expect(plotBox).toBeTruthy();
-		expect(legendBox!.y).toBeGreaterThan(plotBox!.y + plotBox!.height - 8);
+		await expectLegendBelowPlot(chart);
 	}
 });
 
