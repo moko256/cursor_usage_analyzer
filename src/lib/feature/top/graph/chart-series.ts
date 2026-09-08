@@ -41,6 +41,7 @@ export function buildDailyModelSeries(
 
 	return models.map((model) => ({
 		key: model,
+		label: model,
 		color: getDailyModelColors(modelIndices.indexByName.get(model) ?? 0, modelIndices.count),
 		value: (day: DailyValue) => metricValue(day, model)
 	}));
