@@ -10,8 +10,8 @@ test('CSVファイルを添付すると解析結果が表示される', async ({
 		mimeType: 'text/csv',
 		buffer: Buffer.from(
 			[
-				'Date,Model,Total Tokens,Cost',
-				'2026-08-28T17:00:00.000Z,gpt-5.6-luna-high,1234,12.34'
+				'Date,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost',
+				'2026-08-28T17:00:00.000Z,gpt-5.6-luna-high,0,0,0,0,1234,12.34'
 			].join('\n')
 		)
 	});
@@ -19,6 +19,19 @@ test('CSVファイルを添付すると解析結果が表示される', async ({
 	await expect(page.getByText('1件を読み込みました')).toBeVisible();
 	await expect(page.locator('section > strong').nth(0)).toHaveText('On-demand使用コスト: $12.3');
 	await expect(page.locator('section > strong').nth(1)).toHaveText('合計トークン数: 1,234');
+});
+
+test('必須列が欠けているとエラーになる', async ({ page }) => {
+	await page.goto('/cursor_usage_analyzer/ja/');
+	await page.waitForLoadState('networkidle');
+
+	await page.locator('input[type="file"]').setInputFiles({
+		name: 'usage.csv',
+		mimeType: 'text/csv',
+		buffer: Buffer.from('Date,Cost,Model\n2026-08-28T17:00:00.000Z,1.5,alpha\n')
+	});
+
+	await expect(page.getByRole('alert')).toHaveText('CSVに必須の列がありません');
 });
 
 test('非CSVを選ぶとエラーになりグラフが消える', async ({ page }) => {
@@ -29,7 +42,9 @@ test('非CSVを選ぶとエラーになりグラフが消える', async ({ page 
 	await fileInput.setInputFiles({
 		name: 'usage.csv',
 		mimeType: 'text/csv',
-		buffer: Buffer.from('Date,Model,Total Tokens,Cost\n2026-08-28T17:00:00.000Z,alpha,10,1\n')
+		buffer: Buffer.from(
+			'Date,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost\n2026-08-28T17:00:00.000Z,alpha,0,0,0,0,10,1\n'
+		)
 	});
 	await expect(activeChartCards(page)).toHaveCount(6);
 

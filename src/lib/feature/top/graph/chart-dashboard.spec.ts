@@ -73,7 +73,7 @@ describe('buildDashboardData', () => {
 		expect(dashboard.ranges.all.byModelBreakdown[0]?.model).toBe('不明');
 		expect(dashboard.modelIndices).toEqual({
 			names: ['不明'],
-			indexByName: { 不明: 0 },
+			indexByName: new Map([['不明', 0]]),
 			count: 1
 		});
 	});
@@ -83,7 +83,10 @@ describe('buildDashboardData', () => {
 
 		expect(dashboard.modelIndices).toEqual({
 			names: ['alpha', 'beta'],
-			indexByName: { alpha: 0, beta: 1 },
+			indexByName: new Map([
+				['alpha', 0],
+				['beta', 1]
+			]),
 			count: 2
 		});
 	});

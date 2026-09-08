@@ -21,7 +21,7 @@
 	"invalid_file_type": "CSVファイルを選択してください",
 	"csv_read_failed": "CSVファイルを読み込めませんでした。もう一度お試しください",
 	"csv_empty": "CSVファイルにデータがありません",
-	"csv_missing_columns": "CSVにDate列、Cost列、Model列が必要です",
+	"csv_missing_columns": "CSVに必須の列がありません",
 	"csv_no_valid_data": "有効なDateとCostのデータが見つかりません",
 	"background_parsing_unavailable": "このブラウザではバックグラウンド解析を利用できません",
 	"background_parsing_failed": "CSVファイルをバックグラウンドで解析できませんでした",

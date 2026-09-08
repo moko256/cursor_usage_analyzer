@@ -16,8 +16,8 @@ const MARKER = `HEAP_CSV_MARKER_${'x'.repeat(48)}_END`;
 function buildMarkerCsv(paddingBytes: number) {
 	const pad = MARKER.repeat(Math.ceil(paddingBytes / MARKER.length)).slice(0, paddingBytes);
 	return [
-		'Date,Model,Total Tokens,Cost,UnusedPayload',
-		`2026-08-28T17:00:00.000Z,alpha,1234,12.34,"${pad}"`
+		'Date,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost,UnusedPayload',
+		`2026-08-28T17:00:00.000Z,alpha,0,0,0,0,1234,12.34,"${pad}"`
 	].join('\n');
 }
 

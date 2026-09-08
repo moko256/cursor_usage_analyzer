@@ -1,5 +1,11 @@
 import CsvParserWorker from '$lib/csv-parser.worker?worker&inline';
 import type { DashboardData } from '$lib/feature/top/graph/chart-types';
+import {
+	pickUsedCsvColumns,
+	resolveCsvColumnIndex,
+	type CsvColumnIndex,
+	type CsvColumnValues
+} from './csv-columns';
 
 export type TokenBreakdown = {
 	inputWithCacheWrite: number;
@@ -66,55 +72,31 @@ function detachString(value: string): string {
  * the extracted points.
  */
 export function parseCsvText(text: string): CsvPoint[] {
-	let headers: string[] | null = null;
-	let dateIndex = -1;
-	let costIndex = -1;
-	let modelIndex = -1;
-	let tokenIndex = -1;
-	let inputTokenIndex = -1;
-	let outputTokenIndex = -1;
-	let inputWithCacheWriteIndex = -1;
-	let inputWithoutCacheWriteIndex = -1;
-	let cacheReadIndex = -1;
-
+	let columns: CsvColumnIndex | null = null;
 	const points: CsvPoint[] = [];
 	const timestamps: number[] = [];
 	let sawRecord = false;
 
 	forEachRecord(text, (record) => {
 		sawRecord = true;
-		if (headers === null) {
-			headers = record.map((header) => normalizeHeader(header));
-			dateIndex = headers.indexOf('date');
-			costIndex = headers.indexOf('cost');
-			modelIndex = headers.indexOf('model');
-			tokenIndex = findHeaderIndex(headers, ['tokens', 'token', 'totaltokens']);
-			inputTokenIndex = findHeaderIndex(headers, ['inputtokens', 'inputtoken']);
-			outputTokenIndex = findHeaderIndex(headers, ['outputtokens', 'outputtoken']);
-			inputWithCacheWriteIndex = headers.indexOf('inputwcachewrite');
-			inputWithoutCacheWriteIndex = headers.indexOf('inputwocachewrite');
-			cacheReadIndex = headers.indexOf('cacheread');
-
-			if (dateIndex === -1 || costIndex === -1 || modelIndex === -1) {
+		if (columns === null) {
+			columns = resolveCsvColumnIndex(record);
+			if (columns === null) {
 				throw new CsvParseError('missing_columns');
 			}
 			return;
 		}
 
-		const date = detachString(record[dateIndex]?.trim() ?? '');
+		const row = pickUsedCsvColumns(record, columns, detachString);
+		const date = row.date.trim();
 		if (!isoDateTimePattern.test(date)) return;
 		const timestamp = Date.parse(date);
 		if (!Number.isFinite(timestamp)) return;
 
-		const model = detachString(record[modelIndex]?.trim() ?? '');
-		const tokens = parseTokens(record, tokenIndex, inputTokenIndex, outputTokenIndex);
-		const tokenBreakdown = parseTokenBreakdown(record, {
-			inputWithCacheWriteIndex,
-			inputWithoutCacheWriteIndex,
-			cacheReadIndex,
-			outputTokenIndex
-		});
-		const parsedCost = parseCost(record[costIndex]);
+		const model = row.model.trim();
+		const tokens = parseNonNegativeNumber(row.tokens);
+		const tokenBreakdown = parseTokenBreakdown(row);
+		const parsedCost = parseCost(row.cost);
 		if (parsedCost !== null) {
 			points.push({ date, model, tokens, ...tokenBreakdown, ...parsedCost });
 			timestamps.push(timestamp);
@@ -132,30 +114,14 @@ export function parseCsvText(text: string): CsvPoint[] {
 	return sortPointsByTimestamp(points, timestamps);
 }
 
-function normalizeHeader(value: string) {
-	return value
-		.replace(/^\uFEFF/, '')
-		.trim()
-		.toLowerCase()
-		.replace(/[^a-z0-9]/g, '');
-}
-
-function findHeaderIndex(headers: string[], names: string[]) {
-	for (const name of names) {
-		const index = headers.indexOf(name);
-		if (index !== -1) return index;
-	}
-	return -1;
-}
-
 function sortPointsByTimestamp(points: CsvPoint[], timestamps: number[]): CsvPoint[] {
 	const order = timestamps.map((_, index) => index);
 	order.sort((left, right) => timestamps[left] - timestamps[right]);
 	return order.map((index) => points[index]);
 }
 
-function parseCost(value: string | undefined): Pick<CsvPoint, 'cost'> | null {
-	const rawCost = value?.trim() ?? '';
+function parseCost(value: string): Pick<CsvPoint, 'cost'> | null {
+	const rawCost = value.trim();
 	if (rawCost === '') return { cost: null };
 
 	const normalized = rawCost.toLowerCase();
@@ -167,44 +133,18 @@ function parseCost(value: string | undefined): Pick<CsvPoint, 'cost'> | null {
 	return Number.isFinite(cost) ? { cost } : null;
 }
 
-function parseNonNegativeNumber(value: string | undefined) {
-	const number = Number(value?.trim() ?? '');
+function parseNonNegativeNumber(value: string) {
+	const number = Number(value.trim());
 	return Number.isFinite(number) && number >= 0 ? number : 0;
 }
 
-function parseTokens(
-	record: string[],
-	tokenIndex: number,
-	inputTokenIndex: number,
-	outputTokenIndex: number
-) {
-	if (tokenIndex !== -1) return parseNonNegativeNumber(record[tokenIndex]);
-
-	return (
-		parseNonNegativeNumber(record[inputTokenIndex]) +
-		parseNonNegativeNumber(record[outputTokenIndex])
-	);
-}
-
-function parseTokenBreakdown(
-	record: string[],
-	indices: {
-		inputWithCacheWriteIndex: number;
-		inputWithoutCacheWriteIndex: number;
-		cacheReadIndex: number;
-		outputTokenIndex: number;
-	}
-): TokenBreakdown {
+function parseTokenBreakdown(row: CsvColumnValues): TokenBreakdown {
 	return {
-		inputWithCacheWrite: parseOptionalColumn(record, indices.inputWithCacheWriteIndex),
-		inputWithoutCacheWrite: parseOptionalColumn(record, indices.inputWithoutCacheWriteIndex),
-		cacheRead: parseOptionalColumn(record, indices.cacheReadIndex),
-		outputTokens: parseOptionalColumn(record, indices.outputTokenIndex)
+		inputWithCacheWrite: parseNonNegativeNumber(row.inputWithCacheWrite),
+		inputWithoutCacheWrite: parseNonNegativeNumber(row.inputWithoutCacheWrite),
+		cacheRead: parseNonNegativeNumber(row.cacheRead),
+		outputTokens: parseNonNegativeNumber(row.outputTokens)
 	};
-}
-
-function parseOptionalColumn(record: string[], index: number) {
-	return index === -1 ? 0 : parseNonNegativeNumber(record[index]);
 }
 
 /**

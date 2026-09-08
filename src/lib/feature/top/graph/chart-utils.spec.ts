@@ -185,7 +185,11 @@ describe('buildModelIndexTable', () => {
 			])
 		).toEqual({
 			names: ['alpha', 'beta', 'zeta'],
-			indexByName: { alpha: 0, beta: 1, zeta: 2 },
+			indexByName: new Map([
+				['alpha', 0],
+				['beta', 1],
+				['zeta', 2]
+			]),
 			count: 3
 		});
 	});
@@ -195,9 +199,27 @@ describe('buildModelIndexTable', () => {
 			buildModelIndexTable([csvPoint({ model: '' }), csvPoint({ model: 'alpha' })], '不明')
 		).toEqual({
 			names: ['alpha', '不明'],
-			indexByName: { alpha: 0, 不明: 1 },
+			indexByName: new Map([
+				['alpha', 0],
+				['不明', 1]
+			]),
 			count: 2
 		});
+	});
+
+	it('stores prototype-key model names as own properties', () => {
+		const table = buildModelIndexTable([
+			csvPoint({ model: '__proto__' }),
+			csvPoint({ model: 'constructor' })
+		]);
+
+		expect(table.indexByName.get('__proto__')).toBe(table.names.indexOf('__proto__'));
+		expect(table.indexByName.get('constructor')).toBe(table.names.indexOf('constructor'));
+
+		const cloned = structuredClone(table);
+		expect(cloned.indexByName).toBeInstanceOf(Map);
+		expect(cloned.indexByName.get('__proto__')).toBe(table.indexByName.get('__proto__'));
+		expect(cloned.indexByName.get('constructor')).toBe(table.indexByName.get('constructor'));
 	});
 });
 
@@ -214,7 +236,11 @@ describe('buildDailyModelSeries', () => {
 
 		expect(modelIndices).toEqual({
 			names: ['alpha', 'beta', 'gamma'],
-			indexByName: { alpha: 0, beta: 1, gamma: 2 },
+			indexByName: new Map([
+				['alpha', 0],
+				['beta', 1],
+				['gamma', 2]
+			]),
 			count: 3
 		});
 		expect(allSeries.map((item) => item.color)).toEqual([
