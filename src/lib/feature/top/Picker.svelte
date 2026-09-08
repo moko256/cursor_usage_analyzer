@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages';
-	import type { PickerView } from './parse-view';
+	import { csvProgressValue, type PickerView } from './parse-view';
 
 	interface Props {
 		view: PickerView;
@@ -78,7 +78,11 @@
 		>
 			{#if view.status === 'loading'}
 				<span>{m.parsing()}</span>
-				<progress aria-label={m.parsing_csv()}></progress>
+				<progress
+					aria-label={m.parsing_csv()}
+					max={view.totalChars}
+					value={csvProgressValue(view.processedChars, view.totalChars)}
+				></progress>
 			{:else if view.status === 'error'}
 				{view.message}
 			{:else}

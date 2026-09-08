@@ -32,7 +32,9 @@
 		view = { status: 'loading' };
 
 		try {
-			const parsing = parseCsvFile(selected, m.unknown_model());
+			const parsing = parseCsvFile(selected, m.unknown_model(), (progress) => {
+				view = { status: 'loading', ...progress };
+			});
 			selected = undefined;
 			view = { status: 'success', dashboard: await parsing };
 		} catch (error) {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildDashboardData } from '$lib/feature/top/graph/chart-dashboard';
 import { csvPoint } from '$lib/csv-point.fixture';
-import { toPickerView, type ParseView } from './parse-view';
+import { csvProgressValue, toPickerView, type ParseView } from './parse-view';
 
 describe('toPickerView', () => {
 	it('keeps idle, loading, and error views as-is', () => {
@@ -14,6 +14,12 @@ describe('toPickerView', () => {
 		expect(toPickerView(error)).toEqual(error);
 	});
 
+	it('keeps loading scan progress fields', () => {
+		const loading = { status: 'loading', processedChars: 4, totalChars: 10 } as const;
+
+		expect(toPickerView(loading)).toEqual(loading);
+	});
+
 	it('exposes only the record count on success', () => {
 		const view: ParseView = {
 			status: 'success',
@@ -21,5 +27,14 @@ describe('toPickerView', () => {
 		};
 
 		expect(toPickerView(view)).toEqual({ status: 'success', pointCount: 1 });
+	});
+});
+
+describe('csvProgressValue', () => {
+	it('omits value at start and at 100%', () => {
+		expect(csvProgressValue(undefined, undefined)).toBeUndefined();
+		expect(csvProgressValue(0, 10)).toBe(0);
+		expect(csvProgressValue(4, 10)).toBe(4);
+		expect(csvProgressValue(10, 10)).toBeUndefined();
 	});
 });

@@ -37,21 +37,54 @@ export class CsvParseError extends Error {
 	}
 }
 
+/** Worker posts mid-parse progress at least this often. 100% is unthrottled. */
+export const CSV_PARSE_PROGRESS_INTERVAL_MS = 15;
+
 export type WorkerRequest = {
 	/** Transferred ArrayBuffer of the CSV bytes; ownership moves to the worker. */
 	buffer: ArrayBuffer;
 	unknownModel: string;
 };
 
-type WorkerSuccess = {
+export type CsvParseProgress = {
+	processedChars: number;
+	totalChars: number;
+};
+
+export type WorkerProgress = {
+	type: 'progress';
+} & CsvParseProgress;
+
+export type WorkerSuccess = {
 	type: 'success';
 	dashboard: DashboardData;
 };
 
-type WorkerFailure = {
+export type WorkerFailure = {
 	type: 'error';
 	code: CsvParseErrorCode;
 };
+
+export type WorkerResponse = WorkerProgress | WorkerSuccess | WorkerFailure;
+
+/**
+ * Posts scan progress, skipping 100% and updates that arrive sooner than
+ * `intervalMs`. The worker sends 100% once after `parseCsvText` returns.
+ */
+export function createThrottledCsvProgress(
+	post: (progress: CsvParseProgress) => void,
+	intervalMs: number = CSV_PARSE_PROGRESS_INTERVAL_MS,
+	now: () => number = () => performance.now()
+): (progress: CsvParseProgress) => void {
+	let lastSentAt = Number.NEGATIVE_INFINITY;
+	return (progress) => {
+		if (progress.processedChars >= progress.totalChars) return;
+		const at = now();
+		if (at - lastSentAt < intervalMs) return;
+		lastSentAt = at;
+		post(progress);
+	};
+}
 
 const isoDateTimePattern =
 	/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?$/;
@@ -71,37 +104,44 @@ function detachString(value: string): string {
  * Records are visited one at a time so the full `string[][]` never sits beside
  * the extracted points.
  */
-export function parseCsvText(text: string): CsvPoint[] {
+export function parseCsvText(
+	text: string,
+	onProgress?: (progress: CsvParseProgress) => void
+): CsvPoint[] {
 	let columns: CsvColumnIndex | null = null;
 	const points: CsvPoint[] = [];
 	const timestamps: number[] = [];
 	let sawRecord = false;
 
-	forEachRecord(text, (record) => {
-		sawRecord = true;
-		if (columns === null) {
-			columns = resolveCsvColumnIndex(record);
+	forEachRecord(
+		text,
+		(record) => {
+			sawRecord = true;
 			if (columns === null) {
-				throw new CsvParseError('missing_columns');
+				columns = resolveCsvColumnIndex(record);
+				if (columns === null) {
+					throw new CsvParseError('missing_columns');
+				}
+				return;
 			}
-			return;
-		}
 
-		const row = pickUsedCsvColumns(record, columns, detachString);
-		const date = row.date.trim();
-		if (!isoDateTimePattern.test(date)) return;
-		const timestamp = Date.parse(date);
-		if (!Number.isFinite(timestamp)) return;
+			const row = pickUsedCsvColumns(record, columns, detachString);
+			const date = row.date.trim();
+			if (!isoDateTimePattern.test(date)) return;
+			const timestamp = Date.parse(date);
+			if (!Number.isFinite(timestamp)) return;
 
-		const model = row.model.trim();
-		const tokens = parseNonNegativeNumber(row.tokens);
-		const tokenBreakdown = parseTokenBreakdown(row);
-		const parsedCost = parseCost(row.cost);
-		if (parsedCost !== null) {
-			points.push({ date, model, tokens, ...tokenBreakdown, ...parsedCost });
-			timestamps.push(timestamp);
-		}
-	});
+			const model = row.model.trim();
+			const tokens = parseNonNegativeNumber(row.tokens);
+			const tokenBreakdown = parseTokenBreakdown(row);
+			const parsedCost = parseCost(row.cost);
+			if (parsedCost !== null) {
+				points.push({ date, model, tokens, ...tokenBreakdown, ...parsedCost });
+				timestamps.push(timestamp);
+			}
+		},
+		onProgress
+	);
 
 	if (!sawRecord) {
 		throw new CsvParseError('empty');
@@ -153,11 +193,19 @@ function parseTokenBreakdown(row: CsvColumnValues): TokenBreakdown {
  * across the worker wait after the bytes are read. The worker is terminated
  * after it posts back the compact dashboard.
  */
-export function parseCsvFile(file: Blob, unknownModel: string): Promise<DashboardData> {
-	return file.arrayBuffer().then((buffer) => parseCsvArrayBuffer(buffer, unknownModel));
+export function parseCsvFile(
+	file: Blob,
+	unknownModel: string,
+	onProgress?: (progress: CsvParseProgress) => void
+): Promise<DashboardData> {
+	return file.arrayBuffer().then((buffer) => parseCsvArrayBuffer(buffer, unknownModel, onProgress));
 }
 
-function parseCsvArrayBuffer(buffer: ArrayBuffer, unknownModel: string): Promise<DashboardData> {
+function parseCsvArrayBuffer(
+	buffer: ArrayBuffer,
+	unknownModel: string,
+	onProgress?: (progress: CsvParseProgress) => void
+): Promise<DashboardData> {
 	return new Promise((resolve, reject) => {
 		if (typeof Worker === 'undefined') {
 			reject(new CsvParseError('background_parsing_unavailable'));
@@ -173,7 +221,14 @@ function parseCsvArrayBuffer(buffer: ArrayBuffer, unknownModel: string): Promise
 			worker.terminate();
 		};
 
-		worker.onmessage = (event: MessageEvent<WorkerSuccess | WorkerFailure>) => {
+		worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
+			if (event.data.type === 'progress') {
+				onProgress?.({
+					processedChars: event.data.processedChars,
+					totalChars: event.data.totalChars
+				});
+				return;
+			}
 			if (settled) return;
 			settled = true;
 			finish();
@@ -203,7 +258,11 @@ function parseCsvArrayBuffer(buffer: ArrayBuffer, unknownModel: string): Promise
  *
  * Visits one record at a time so unused columns can be GC'd before the next row.
  */
-function forEachRecord(text: string, visit: (record: string[]) => void): void {
+function forEachRecord(
+	text: string,
+	visit: (record: string[]) => void,
+	onProgress?: (progress: CsvParseProgress) => void
+): void {
 	const length = text.length;
 	let record: string[] = [];
 	let start = 0;
@@ -266,6 +325,7 @@ function forEachRecord(text: string, visit: (record: string[]) => void): void {
 			if (character === '\r' && text[index + 1] === '\n') index += 1;
 			index += 1;
 			start = index;
+			onProgress?.({ processedChars: index, totalChars: length });
 			continue;
 		}
 
@@ -273,5 +333,8 @@ function forEachRecord(text: string, visit: (record: string[]) => void): void {
 	}
 
 	if (insideQuotes) throw new CsvParseError('unclosed_quotes');
-	if (start < length || record.length > 0 || hasChunks) pushRecord(length);
+	if (start < length || record.length > 0 || hasChunks) {
+		pushRecord(length);
+		onProgress?.({ processedChars: length, totalChars: length });
+	}
 }
