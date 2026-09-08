@@ -15,6 +15,7 @@
 		type ModelIndexTable
 	} from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
+	import ChartLegend from './ChartLegend.svelte';
 
 	interface Props {
 		days: DailyValue[];
@@ -26,6 +27,9 @@
 	let models = $derived(modelsFromDays(days));
 	let series = $derived(buildDailyModelSeries(models, metric, modelIndices));
 	let colorByModel = $derived(new Map(series.map((item) => [item.key, item.color])));
+	let legendItems = $derived(
+		series.map((item) => ({ key: item.key, label: item.label, color: item.color }))
+	);
 	let title = $derived(
 		metric === 'tokens' ? m.tokens_per_day_heading() : m.models_per_day_heading()
 	);
@@ -77,4 +81,5 @@
 			</Tooltip.Root>
 		{/snippet}
 	</BarChart>
+	<ChartLegend items={legendItems} />
 </ChartCard>

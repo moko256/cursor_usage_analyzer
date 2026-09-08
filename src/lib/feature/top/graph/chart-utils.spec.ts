@@ -243,6 +243,7 @@ describe('buildDailyModelSeries', () => {
 			]),
 			count: 3
 		});
+		expect(allSeries.map((item) => item.label)).toEqual(['alpha', 'beta', 'gamma']);
 		expect(allSeries.map((item) => item.color)).toEqual([
 			getDailyModelColors(0, 3),
 			getDailyModelColors(1, 3),
