@@ -27,8 +27,9 @@ import {
 } from './chart-utc';
 
 /**
- * Fills every UTC calendar day from the oldest data month through today (or
- * through the last data month when the current UTC month has no rows).
+ * Fills every UTC calendar day from the Sunday on or before the oldest data
+ * month through today (or through the last data month when the current UTC
+ * month has no rows). Leading days pad LayerChart's Sunday-based week columns.
  * Day keys match `groupByDay`.
  */
 export function buildTokenCalendar(
@@ -55,11 +56,12 @@ export function buildTokenCalendar(
 	const oldestMonthStart = startOfUtcMonth(firstDay);
 	const currentMonthStart = startOfUtcMonth(todayUtc);
 	const hasCurrentMonthData = days.some((day) => day.day.startsWith(currentMonth));
-	const start = hasCurrentMonthData
+	const monthStart = hasCurrentMonthData
 		? oldestMonthStart < currentMonthStart
 			? oldestMonthStart
 			: currentMonthStart
 		: oldestMonthStart;
+	const start = startOfUtcWeek(monthStart);
 	const end = hasCurrentMonthData ? addUtcDays(todayUtc, 1) : startOfNextUtcMonth(lastDay);
 	const data: TokenCalendarDay[] = [];
 	const cursor = new Date(`${start}T00:00:00.000Z`);

@@ -1,6 +1,10 @@
 import { interpolatePuBu } from 'd3-scale-chromatic';
 import { expect, test, type Locator } from '@playwright/test';
-import { activeChartCards, activeLocator } from './helpers/chart-locators';
+import {
+	activeChartCards,
+	activeLocator,
+	sundayPaddedMonthDayCount
+} from './helpers/chart-locators';
 
 const today = new Date();
 const chartMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
@@ -145,8 +149,22 @@ test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) =
 	await expect(calendar).toHaveCount(1);
 	await expect(calendar.locator('figcaption strong')).toHaveText('Token count calendar');
 	await expect(calendar.locator('.lc-rect')).toHaveCount(
-		new Date(chartMonthStart.getFullYear(), chartMonthStart.getMonth() + 1, 0).getDate()
+		sundayPaddedMonthDayCount(chartMonthStart)
 	);
+
+	const week = await calendar.locator('.lc-rect').evaluateAll((elements) =>
+		elements.slice(0, 8).map((element) => {
+			const box = element.getBoundingClientRect();
+			return { left: box.left, top: box.top };
+		})
+	);
+	expect(week).toHaveLength(8);
+	for (let index = 1; index < 7; index += 1) {
+		expect(week[index]?.left).toBeCloseTo(week[0]?.left ?? 0, 0);
+		expect(week[index]?.top ?? 0).toBeGreaterThan(week[index - 1]?.top ?? 0);
+	}
+	expect(week[7]?.left ?? 0).toBeGreaterThan(week[0]?.left ?? 0);
+	expect(week[7]?.top).toBeCloseTo(week[0]?.top ?? 0, 0);
 
 	const edgeCells = await calendar.locator('.lc-rect').evaluateAll((elements) => {
 		const svg = elements[0]?.closest('svg');
@@ -206,22 +224,24 @@ for (const colorScheme of ['light', 'dark'] as const) {
 
 			const calendar = activeLocator(page, '.calendar-card');
 			await expect(calendar.locator('.lc-rect')).toHaveCount(
-				new Date(chartMonthStart.getFullYear(), chartMonthStart.getMonth() + 1, 0).getDate()
+				sundayPaddedMonthDayCount(chartMonthStart)
 			);
 
 			const cells = await calendar.locator('.lc-rect').evaluateAll((elements) =>
-				elements.slice(0, 2).map((element) => ({
+				elements.map((element) => ({
 					fill: element.getAttribute('fill'),
 					computedFill: getComputedStyle(element).fill
 				}))
 			);
+			const empty = cells.find((cell) => cell.fill === null);
+			const filled = cells.find((cell) => cell.fill !== null);
 
-			expect(cells[0]).toEqual({
+			expect(empty).toEqual({
 				fill: null,
 				computedFill: colorScheme === 'light' ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.1)'
 			});
-			expect(cells[1]?.fill).not.toBeNull();
-			expect(cells[1]?.computedFill).not.toBe(cells[0]?.computedFill);
+			expect(filled?.fill).not.toBeNull();
+			expect(filled?.computedFill).not.toBe(empty?.computedFill);
 		});
 	});
 
@@ -237,7 +257,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 
 			const calendar = activeLocator(page, '.calendar-card');
 			await expect(calendar.locator('.lc-rect')).toHaveCount(
-				new Date(chartMonthStart.getFullYear(), chartMonthStart.getMonth() + 1, 0).getDate()
+				sundayPaddedMonthDayCount(chartMonthStart)
 			);
 
 			const fills = [
