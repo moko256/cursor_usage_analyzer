@@ -4,12 +4,17 @@ import { interpolatePuBu, schemeObservable10 } from 'd3-scale-chromatic';
 /** Wrap width for horizontal model-name tick labels (`tickLabelProps.width`). */
 export const modelTickLabelWidth = 100;
 
-/** Fallback character width when `getStringWidth` is unavailable (SSR / tests). */
+/** Fallback character width when splitting hyphenated ids to fit `modelTickLabelWidth`. */
 const modelTickLabelCharWidth = 6;
 
+/**
+ * Setting `width` would otherwise enable LayerChart's default maxWidth truncation.
+ * `truncate: false` keeps the full name so `width` wraps instead of ellipsizing.
+ */
 export const modelTickLabelProps = {
 	width: modelTickLabelWidth,
-	textAnchor: 'end' as const
+	textAnchor: 'end' as const,
+	truncate: false
 };
 
 /**
