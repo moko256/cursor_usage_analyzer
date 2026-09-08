@@ -1,7 +1,7 @@
 ## Project Configuration
 
 - **Language**: TypeScript
-- **Package Manager**: pnpm
+- **Package Manager**: pnpm (`package.json#packageManager` pins 10.34.5; GitHub Actions uses pnpm 10)
 - **Add-ons**: ai-tools, paraglide, sveltekit-adapter, vitest, eslint, prettier
 
 ## Project
