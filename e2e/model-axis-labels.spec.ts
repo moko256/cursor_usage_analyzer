@@ -293,12 +293,17 @@ test('長いモデル名は軸で省略し、ツールチップでは全文を�
 			].join('\n')
 		)
 	});
-
-	const cards = await activeLocator(page, '.chart-card.horizontal-card').all();
-	expect(cards).toHaveLength(2);
+	await expect(page.getByText(/records loaded/)).toBeVisible();
+	await expect(activeChartCards(page)).toHaveCount(6);
 
 	const truncated = `${longModel.slice(0, 19)}...`;
-	for (const card of cards) {
+	const cards = activeLocator(page, '.chart-card.horizontal-card');
+	await expect(
+		cards.first().locator('text.lc-axis-tick-label', { hasText: truncated })
+	).toBeVisible();
+	await expect(cards).toHaveCount(2);
+
+	for (const card of await cards.all()) {
 		const painted = (await readTickLabels(card))
 			.filter((label) => label.clippedBy.length === 0)
 			.map((label) => label.text);
@@ -307,7 +312,7 @@ test('長いモデル名は軸で省略し、ツールチップでは全文を�
 		expect(painted).not.toContain(longModel);
 	}
 
-	await cards[0].locator('.lc-tooltip-rect').hover();
+	await cards.nth(0).locator('.lc-tooltip-rect').hover();
 	const tooltip = page.locator('.lc-tooltip-root:not([inert])');
 	await expect(tooltip).toBeVisible();
 	await expect(tooltip.locator('.lc-tooltip-header')).toHaveText(longModel);
