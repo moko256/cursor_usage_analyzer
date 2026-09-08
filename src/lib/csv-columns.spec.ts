@@ -30,7 +30,7 @@ describe('csv columns', () => {
 		]);
 	});
 
-	it('maps aliases and ignores unused or prototype-key headers', () => {
+	it('maps official headers and ignores unused or prototype-key headers', () => {
 		const index = resolveCsvColumnIndex(usedHeaders);
 
 		expect(index).toEqual({
@@ -85,5 +85,20 @@ describe('csv columns', () => {
 	it('rejects headers that omit a required column', () => {
 		expect(resolveCsvColumnIndex(['Date', 'Cost', 'Model'])).toBeNull();
 		expect(resolveCsvColumnIndex(['Timestamp', 'Amount', 'Model'])).toBeNull();
+	});
+
+	it('does not treat Tokens as Total Tokens', () => {
+		expect(
+			resolveCsvColumnIndex([
+				'Date',
+				'Model',
+				'Input (w/ Cache Write)',
+				'Input (w/o Cache Write)',
+				'Cache Read',
+				'Output Tokens',
+				'Tokens',
+				'Cost'
+			])
+		).toBeNull();
 	});
 });

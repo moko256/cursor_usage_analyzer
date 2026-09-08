@@ -1,12 +1,12 @@
 export const CSV_COLUMNS = {
-	date: { aliases: ['date'] },
-	cost: { aliases: ['cost'] },
-	model: { aliases: ['model'] },
-	tokens: { aliases: ['tokens', 'token', 'totaltokens'] },
-	outputTokens: { aliases: ['outputtokens', 'outputtoken'] },
-	inputWithCacheWrite: { aliases: ['inputwcachewrite'] },
-	inputWithoutCacheWrite: { aliases: ['inputwocachewrite'] },
-	cacheRead: { aliases: ['cacheread'] }
+	date: 'date',
+	cost: 'cost',
+	model: 'model',
+	tokens: 'totaltokens',
+	outputTokens: 'outputtokens',
+	inputWithCacheWrite: 'inputwcachewrite',
+	inputWithoutCacheWrite: 'inputwocachewrite',
+	cacheRead: 'cacheread'
 } as const;
 
 export type CsvColumnId = keyof typeof CSV_COLUMNS;
@@ -28,7 +28,7 @@ export function resolveCsvColumnIndex(headers: readonly string[]): CsvColumnInde
 	const index = {} as CsvColumnIndex;
 
 	for (const id of CSV_COLUMN_IDS) {
-		const found = findHeaderIndex(normalized, CSV_COLUMNS[id].aliases);
+		const found = normalized.indexOf(CSV_COLUMNS[id]);
 		if (found === -1) return null;
 		index[id] = found;
 	}
@@ -51,12 +51,4 @@ export function pickUsedCsvColumns(
 	}
 
 	return row;
-}
-
-function findHeaderIndex(headers: readonly string[], names: readonly string[]) {
-	for (const name of names) {
-		const found = headers.indexOf(name);
-		if (found !== -1) return found;
-	}
-	return -1;
 }
