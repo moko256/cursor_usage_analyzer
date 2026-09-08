@@ -42,13 +42,17 @@ export default defineConfig(({ command }) => {
 						isE2E || !isRelease
 							? {
 									// Vite's dev modules, HMR need extra sources.
+									'frame-ancestors': ['none'],
+									'base-uri': ['none']
 								}
 							: {
 									// Production
 									'default-src': ['none'],
 									'worker-src': ['blob:', 'data:'],
 									'manifest-src': ['self'],
-									'img-src': ['self']
+									'img-src': ['self'],
+									'frame-ancestors': ['none'],
+									'base-uri': ['none']
 								},
 					mode: 'hash'
 				},
