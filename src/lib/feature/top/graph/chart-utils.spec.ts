@@ -1,3 +1,4 @@
+import { timeDay } from 'd3-time';
 import { describe, expect, it } from 'vitest';
 import { csvPoint, modelBreakdown } from '$lib/csv-point.fixture';
 import {
@@ -7,6 +8,12 @@ import {
 	buildTokenCalendar,
 	buildTokenCalendarThresholds,
 	filterPointsByDays,
+	dailyAxisDomain,
+	dailyAxisInterval,
+	dailyAxisTickFormat,
+	dailyAxisTickSpacing,
+	dailyChartPoints,
+	dateFromUtcDay,
 	formatChartAxis,
 	formatChartValue,
 	formatCostAxis,
@@ -100,6 +107,47 @@ describe('formatDay', () => {
 		expect(formatDay('2026-08-28')).toBe('Aug 28');
 		expect(formatDay('2026-01-02')).toBe('Jan 2');
 		expect(formatDay('not-a-day')).toBe('not-a-day');
+	});
+});
+
+describe('dailyChartPoints', () => {
+	it('adds a local-midnight date for each UTC calendar day', () => {
+		const points = dailyChartPoints([
+			{ day: '2026-08-01', cost: 1, tokens: 10, models: [] },
+			{ day: '2026-08-28', cost: 2, tokens: 20, models: [] }
+		]);
+
+		expect(points.map((point) => point.day)).toEqual(['2026-08-01', '2026-08-28']);
+		expect(points[0].date).toEqual(dateFromUtcDay('2026-08-01'));
+		expect(points[1].date).toEqual(dateFromUtcDay('2026-08-28'));
+	});
+});
+
+describe('dailyAxisDomain', () => {
+	it('returns undefined for an empty series', () => {
+		expect(dailyAxisDomain([])).toBeUndefined();
+	});
+
+	it('pads a short range to 30 days ending the day after the last point', () => {
+		expect(dailyAxisDomain([{ day: '2026-08-28', cost: 1, tokens: 10, models: [] }])).toEqual([
+			dateFromUtcDay('2026-07-30'),
+			dateFromUtcDay('2026-08-29')
+		]);
+	});
+
+	it('keeps the first day when the range is already wider than 30 days', () => {
+		expect(
+			dailyAxisDomain([
+				{ day: '2026-07-01', cost: 1, tokens: 10, models: [] },
+				{ day: '2026-08-28', cost: 2, tokens: 20, models: [] }
+			])
+		).toEqual([dateFromUtcDay('2026-07-01'), dateFromUtcDay('2026-08-29')]);
+	});
+
+	it('uses a one-day interval and spaced short day ticks', () => {
+		expect(dailyAxisInterval).toBe(timeDay);
+		expect(dailyAxisTickFormat).toEqual({ type: 'day', options: { variant: 'short' } });
+		expect(dailyAxisTickSpacing).toBe(96);
 	});
 });
 

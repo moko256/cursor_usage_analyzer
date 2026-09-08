@@ -30,8 +30,14 @@ export {
 } from './chart-utc';
 
 export {
+	DAILY_AXIS_MAX_DAYS,
 	compactNumberFormat,
 	currencyFormat,
+	dailyAxisDomain,
+	dailyAxisInterval,
+	dailyAxisTickFormat,
+	dailyAxisTickSpacing,
+	dailyChartPoints,
 	formatChartAxis,
 	formatChartValue,
 	formatCostAxis,
@@ -42,6 +48,7 @@ export {
 	verticalChartHeight,
 	verticalChartPadding
 } from './chart-format';
+export type { DailyChartPoint } from './chart-format';
 
 export {
 	chartTooltipRootProps,
