@@ -13,7 +13,6 @@
 		type ModelIndexTable
 	} from './chart-utils';
 	import ChartCard from './ChartCard.svelte';
-	import ChartLegend from './ChartLegend.svelte';
 
 	interface Props {
 		modelValues: ModelBreakdownValue[];
@@ -25,9 +24,6 @@
 	let horizontalChartHeight = $derived(Math.max(190, modelValues.length * 36 + 55));
 	let padding = $derived(modelAxisPadding(modelValues.map((value) => value.model)));
 	let series = $derived(buildModelBreakdownSeries(modelValues, metric, modelIndices));
-	let legendItems = $derived(
-		series.map((item) => ({ key: item.key, label: item.label, color: item.color }))
-	);
 	let fillByKey = $derived(
 		new Map<string, (row: ModelBreakdownValue) => string>(
 			series.map((item) => [item.key, item.fill])
@@ -101,5 +97,4 @@
 			</Tooltip.Root>
 		{/snippet}
 	</BarChart>
-	<ChartLegend items={legendItems} />
 </ChartCard>

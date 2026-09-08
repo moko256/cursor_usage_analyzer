@@ -14,12 +14,6 @@ const csv = [
 
 const modelColorStops = 10;
 const models = ['alpha', 'beta', 'gamma'] as const;
-const tokenLabels = [
-	'Input (w/ Cache Write)',
-	'Input (w/o Cache Write)',
-	'Cache Read',
-	'Output Tokens'
-] as const;
 
 function expectedModelColor(index: number, length: number): string {
 	const stop = Math.min(index / Math.max(length, modelColorStops), 1);
@@ -83,7 +77,7 @@ test('daily model charts show a color legend below the plot', async ({ page }) =
 	}
 });
 
-test('model breakdown charts show a token-type legend below the plot', async ({ page }) => {
+test('model breakdown charts do not show a legend', async ({ page }) => {
 	await loadCsv(page);
 
 	const tokensChart = activeGraphRange(page).getByRole('img', {
@@ -97,8 +91,7 @@ test('model breakdown charts show a token-type legend below the plot', async ({ 
 
 	for (const chart of [tokensChart, costChart]) {
 		await expect(chart).toBeVisible();
-		await expect(chart.locator('.chart-legend li')).toHaveText([...tokenLabels]);
-		await expectLegendBelowPlot(chart);
+		await expect(chart.locator('.chart-legend')).toHaveCount(0);
 	}
 });
 
