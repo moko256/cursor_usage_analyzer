@@ -5,6 +5,9 @@ import { parseCsvText } from './csv-parser';
 const newCsvHeader =
 	'Date,Cloud Agent ID,Automation ID,Kind,Model,Max Mode,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost';
 
+const usedCsvHeader =
+	'Date,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost';
+
 describe('parseCsvText', () => {
 	it('extracts Total Tokens and Cost from the Cursor usage CSV', () => {
 		const points = parseCsvText(
@@ -101,15 +104,18 @@ describe('parseCsvText', () => {
 		});
 	});
 
-	it('uses 0 tokens when Total Tokens is missing', () => {
-		const points = parseCsvText('Date,Cost,Model\n2026-08-28T17:00:00.000Z,1.5,alpha');
-
-		expect(points).toEqual([csvPoint({ date: '2026-08-28T17:00:00.000Z', cost: 1.5 })]);
+	it('rejects CSVs that omit a required column', () => {
+		expect(() => parseCsvText('Date,Cost,Model\n2026-08-28T17:00:00.000Z,1.5,alpha')).toThrow(
+			'missing_columns'
+		);
+		expect(() =>
+			parseCsvText('Date,Cost,Model,Input Tokens,Output Tokens\n2026-05-01T10:00:00Z,1,alpha,12,8')
+		).toThrow('missing_columns');
 	});
 
 	it('supports quoted commas, escaped quotes, and a BOM', () => {
 		const points = parseCsvText(
-			'\uFEFFDate,Cost,Model,Total Tokens,Note\r\n"2026-03-01T10:00:00Z","10","alpha","42","say ""hello, world"""\r\n'
+			`\uFEFF${usedCsvHeader},Note\r\n"2026-03-01T10:00:00Z","alpha","0","0","0","0","42","10","say ""hello, world"""\r\n`
 		);
 
 		expect(points).toEqual([csvPoint({ date: '2026-03-01T10:00:00Z', cost: 10, tokens: 42 })]);
@@ -118,11 +124,11 @@ describe('parseCsvText', () => {
 	it('ignores rows with invalid dates or costs', () => {
 		const points = parseCsvText(
 			[
-				'Date,Cost,Model,Total Tokens',
-				'not-a-date,5,alpha,10',
-				'2026-04-01T10:00:00Z,not-a-number,alpha,10',
-				'2026-04-02T10:00:00Z,Free,alpha,10',
-				'2026-04-03T10:00:00Z,-,alpha,10'
+				usedCsvHeader,
+				'not-a-date,alpha,0,0,0,0,10,5',
+				'2026-04-01T10:00:00Z,alpha,0,0,0,0,10,not-a-number',
+				'2026-04-02T10:00:00Z,alpha,0,0,0,0,10,Free',
+				'2026-04-03T10:00:00Z,alpha,0,0,0,0,10,-'
 			].join('\n')
 		);
 
@@ -132,7 +138,7 @@ describe('parseCsvText', () => {
 		]);
 	});
 
-	it('requires Date and Cost headers', () => {
+	it('requires every declared column header', () => {
 		expect(() => parseCsvText('Timestamp,Amount,Model\n2026-01-01T00:00:00Z,1,alpha')).toThrow(
 			'missing_columns'
 		);
@@ -141,8 +147,8 @@ describe('parseCsvText', () => {
 	it('does not keep unused CSV columns on parsed points', () => {
 		const points = parseCsvText(
 			[
-				'Date,Cloud Agent ID,__proto__,User,Cost,Model',
-				'"2026-08-28T17:00:00.000Z","bc-secret","pollute","ada",1.5,alpha'
+				'Date,Cloud Agent ID,__proto__,User,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost',
+				'"2026-08-28T17:00:00.000Z","bc-secret","pollute","ada",alpha,0,0,0,0,0,1.5'
 			].join('\n')
 		);
 
@@ -154,28 +160,16 @@ describe('parseCsvText', () => {
 		expect(points[0]).not.toHaveProperty('User');
 	});
 
-	it('sums input and output tokens when total tokens are not provided', () => {
-		const points = parseCsvText(
-			'Date,Cost,Model,Input Tokens,Output Tokens\n2026-05-01T10:00:00Z,1,alpha,12,8'
-		);
-
-		expect(points[0]).toMatchObject({
-			tokens: 20,
-			inputWithCacheWrite: 0,
-			inputWithoutCacheWrite: 0,
-			cacheRead: 0,
-			outputTokens: 8
-		});
-	});
-
 	it('keeps quoted field content when quotes appear inside an unquoted value', () => {
-		const points = parseCsvText('Date,Cost,Model\n2026-08-28T17:00:00.000Z,1.5,"al"pha');
+		const points = parseCsvText(`${usedCsvHeader}\n2026-08-28T17:00:00.000Z,"al"pha,0,0,0,0,0,1.5`);
 
 		expect(points[0]?.model).toBe('alpha');
 	});
 
 	it('parses a trailing comma without dropping the row', () => {
-		const points = parseCsvText('Date,Cost,Model,\n2026-08-28T17:00:00.000Z,1.5,alpha,\n');
+		const points = parseCsvText(
+			`${usedCsvHeader},\n2026-08-28T17:00:00.000Z,alpha,0,0,0,0,0,1.5,\n`
+		);
 
 		expect(points).toHaveLength(1);
 		expect(points[0]).toMatchObject({
@@ -186,9 +180,9 @@ describe('parseCsvText', () => {
 	});
 
 	it('throws when a quoted field is left open', () => {
-		expect(() => parseCsvText('Date,Cost,Model\n"2026-08-28T17:00:00.000Z,1.5,alpha')).toThrow(
-			'unclosed_quotes'
-		);
+		expect(() =>
+			parseCsvText(`${usedCsvHeader}\n"2026-08-28T17:00:00.000Z,alpha,0,0,0,0,0,1.5`)
+		).toThrow('unclosed_quotes');
 	});
 
 	it('throws when the file has no records', () => {

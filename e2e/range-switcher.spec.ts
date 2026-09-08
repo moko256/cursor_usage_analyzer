@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test';
 
 const csv = [
-	'Date,Model,Total Tokens,Cost',
-	'2026-07-19T12:00:00.000Z,alpha,400,4',
-	'2026-08-18T12:00:00.000Z,alpha,300,3',
-	'2026-08-25T12:00:00.000Z,alpha,200,2',
-	'2026-08-28T12:00:00.000Z,alpha,100,1'
+	'Date,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost',
+	'2026-07-19T12:00:00.000Z,alpha,0,0,0,0,400,4',
+	'2026-08-18T12:00:00.000Z,alpha,0,0,0,0,300,3',
+	'2026-08-25T12:00:00.000Z,alpha,0,0,0,0,200,2',
+	'2026-08-28T12:00:00.000Z,alpha,0,0,0,0,100,1'
 ].join('\n');
 
 test('range switcher filters charts and usage totals', async ({ page }) => {

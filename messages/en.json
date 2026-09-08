@@ -21,7 +21,7 @@
 	"invalid_file_type": "Please select a CSV file.",
 	"csv_read_failed": "Could not read the CSV file. Please try again.",
 	"csv_empty": "The CSV file contains no data.",
-	"csv_missing_columns": "The CSV must include Date, Cost, and Model columns.",
+	"csv_missing_columns": "The CSV is missing a required column.",
 	"csv_no_valid_data": "No valid Date and Cost data was found.",
 	"background_parsing_unavailable": "Background parsing is not available in this browser.",
 	"background_parsing_failed": "Could not parse the CSV file in the background.",

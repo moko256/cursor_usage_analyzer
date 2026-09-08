@@ -1,7 +1,6 @@
 import CsvParserWorker from '$lib/csv-parser.worker?worker&inline';
 import type { DashboardData } from '$lib/feature/top/graph/chart-types';
 import {
-	hasRequiredCsvColumns,
 	pickUsedCsvColumns,
 	resolveCsvColumnIndex,
 	type CsvColumnIndex,
@@ -82,20 +81,20 @@ export function parseCsvText(text: string): CsvPoint[] {
 		sawRecord = true;
 		if (columns === null) {
 			columns = resolveCsvColumnIndex(record);
-			if (!hasRequiredCsvColumns(columns)) {
+			if (columns === null) {
 				throw new CsvParseError('missing_columns');
 			}
 			return;
 		}
 
 		const row = pickUsedCsvColumns(record, columns, detachString);
-		const date = row.date?.trim() ?? '';
+		const date = row.date.trim();
 		if (!isoDateTimePattern.test(date)) return;
 		const timestamp = Date.parse(date);
 		if (!Number.isFinite(timestamp)) return;
 
-		const model = row.model?.trim() ?? '';
-		const tokens = parseTokens(row);
+		const model = row.model.trim();
+		const tokens = parseNonNegativeNumber(row.tokens);
 		const tokenBreakdown = parseTokenBreakdown(row);
 		const parsedCost = parseCost(row.cost);
 		if (parsedCost !== null) {
@@ -121,8 +120,8 @@ function sortPointsByTimestamp(points: CsvPoint[], timestamps: number[]): CsvPoi
 	return order.map((index) => points[index]);
 }
 
-function parseCost(value: string | undefined): Pick<CsvPoint, 'cost'> | null {
-	const rawCost = value?.trim() ?? '';
+function parseCost(value: string): Pick<CsvPoint, 'cost'> | null {
+	const rawCost = value.trim();
 	if (rawCost === '') return { cost: null };
 
 	const normalized = rawCost.toLowerCase();
@@ -134,15 +133,9 @@ function parseCost(value: string | undefined): Pick<CsvPoint, 'cost'> | null {
 	return Number.isFinite(cost) ? { cost } : null;
 }
 
-function parseNonNegativeNumber(value: string | undefined) {
-	const number = Number(value?.trim() ?? '');
+function parseNonNegativeNumber(value: string) {
+	const number = Number(value.trim());
 	return Number.isFinite(number) && number >= 0 ? number : 0;
-}
-
-function parseTokens(row: CsvColumnValues) {
-	if (row.tokens !== undefined) return parseNonNegativeNumber(row.tokens);
-
-	return parseNonNegativeNumber(row.inputTokens) + parseNonNegativeNumber(row.outputTokens);
 }
 
 function parseTokenBreakdown(row: CsvColumnValues): TokenBreakdown {

@@ -1,11 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import {
-	CSV_COLUMN_IDS,
-	CSV_COLUMNS,
-	hasRequiredCsvColumns,
-	pickUsedCsvColumns,
-	resolveCsvColumnIndex
-} from './csv-columns';
+import { CSV_COLUMN_IDS, pickUsedCsvColumns, resolveCsvColumnIndex } from './csv-columns';
+
+const usedHeaders = [
+	'Date',
+	'Cloud Agent ID',
+	'__proto__',
+	'constructor',
+	'Model',
+	'Input (w/ Cache Write)',
+	'Input (w/o Cache Write)',
+	'Cache Read',
+	'Output Tokens',
+	'Total Tokens',
+	'Cost',
+	'User'
+];
 
 describe('csv columns', () => {
 	it('declares only the columns the charts read', () => {
@@ -14,58 +23,67 @@ describe('csv columns', () => {
 			'cost',
 			'model',
 			'tokens',
-			'inputTokens',
 			'outputTokens',
 			'inputWithCacheWrite',
 			'inputWithoutCacheWrite',
 			'cacheRead'
 		]);
-		expect(CSV_COLUMNS.date.required).toBe(true);
-		expect(CSV_COLUMNS.cost.required).toBe(true);
-		expect(CSV_COLUMNS.model.required).toBe(true);
 	});
 
 	it('maps aliases and ignores unused or prototype-key headers', () => {
-		const index = resolveCsvColumnIndex([
-			'Date',
-			'Cloud Agent ID',
-			'__proto__',
-			'constructor',
-			'Model',
-			'Total Tokens',
-			'Cost',
-			'User'
-		]);
+		const index = resolveCsvColumnIndex(usedHeaders);
 
 		expect(index).toEqual({
 			date: 0,
 			model: 4,
-			tokens: 5,
-			cost: 6
+			inputWithCacheWrite: 5,
+			inputWithoutCacheWrite: 6,
+			cacheRead: 7,
+			outputTokens: 8,
+			tokens: 9,
+			cost: 10
 		});
 		expect(index).not.toHaveProperty('__proto__');
 		expect(index).not.toHaveProperty('constructor');
-		expect(hasRequiredCsvColumns(index)).toBe(true);
 	});
 
 	it('copies only declared columns into the row Record', () => {
-		const index = resolveCsvColumnIndex(['Date', 'Cloud Agent ID', 'Cost', 'Model']);
+		const index = resolveCsvColumnIndex(usedHeaders);
+		expect(index).not.toBeNull();
+
 		const row = pickUsedCsvColumns(
-			['2026-08-28T17:00:00.000Z', 'bc-secret', '1.5', 'alpha', 'extra'],
-			index
+			[
+				'2026-08-28T17:00:00.000Z',
+				'bc-secret',
+				'pollute',
+				'ctor',
+				'alpha',
+				'1',
+				'2',
+				'3',
+				'4',
+				'10',
+				'1.5',
+				'ada'
+			],
+			index!
 		);
 
 		expect(row).toEqual({
 			date: '2026-08-28T17:00:00.000Z',
 			cost: '1.5',
-			model: 'alpha'
+			model: 'alpha',
+			tokens: '10',
+			outputTokens: '4',
+			inputWithCacheWrite: '1',
+			inputWithoutCacheWrite: '2',
+			cacheRead: '3'
 		});
-		expect(Object.keys(row)).toEqual(['date', 'cost', 'model']);
+		expect(Object.keys(row)).toEqual(CSV_COLUMN_IDS);
 	});
 
 	it('rejects headers that omit a required column', () => {
-		expect(hasRequiredCsvColumns(resolveCsvColumnIndex(['Timestamp', 'Amount', 'Model']))).toBe(
-			false
-		);
+		expect(resolveCsvColumnIndex(['Date', 'Cost', 'Model'])).toBeNull();
+		expect(resolveCsvColumnIndex(['Timestamp', 'Amount', 'Model'])).toBeNull();
 	});
 });

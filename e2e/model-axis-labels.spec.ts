@@ -5,10 +5,10 @@ import { activeChartCards, activeLocator } from './helpers/chart-locators';
 const today = new Date();
 const chartMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
 const csv = [
-	'Date,Model,Total Tokens,Cost',
-	`${chartMonthStart.toISOString()},claude-4.5-sonnet-thinking,120000,1.42`,
-	`${new Date(chartMonthStart.getTime() + 86_400_000).toISOString()},gpt-5.6-luna-high,80000,0.92`,
-	`${new Date(chartMonthStart.getTime() + 2 * 86_400_000).toISOString()},composer-2.5,30000,0.15`
+	'Date,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost',
+	`${chartMonthStart.toISOString()},claude-4.5-sonnet-thinking,0,0,0,0,120000,1.42`,
+	`${new Date(chartMonthStart.getTime() + 86_400_000).toISOString()},gpt-5.6-luna-high,0,0,0,0,80000,0.92`,
+	`${new Date(chartMonthStart.getTime() + 2 * 86_400_000).toISOString()},composer-2.5,0,0,0,0,30000,0.15`
 ].join('\n');
 
 const breakdownCsv = [
@@ -23,9 +23,9 @@ const zeroTokenCalendarCsv = [
 
 /** Two bins: 100 tokens → stop 0.25, 100000 tokens → stop 1 (max). */
 const heatmapCalendarCsv = [
-	'Date,Model,Total Tokens,Cost',
-	`${chartMonthStart.toISOString()},alpha,100,1`,
-	`${new Date(chartMonthStart.getTime() + 86_400_000).toISOString()},alpha,100000,1`
+	'Date,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost',
+	`${chartMonthStart.toISOString()},alpha,0,0,0,0,100,1`,
+	`${new Date(chartMonthStart.getTime() + 86_400_000).toISOString()},alpha,0,0,0,0,100000,1`
 ].join('\n');
 
 const models = ['claude-4.5-sonnet-thinking', 'gpt-5.6-luna-high', 'composer-2.5'];
