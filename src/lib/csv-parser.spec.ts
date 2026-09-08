@@ -138,6 +138,22 @@ describe('parseCsvText', () => {
 		);
 	});
 
+	it('does not keep unused CSV columns on parsed points', () => {
+		const points = parseCsvText(
+			[
+				'Date,Cloud Agent ID,__proto__,User,Cost,Model',
+				'"2026-08-28T17:00:00.000Z","bc-secret","pollute","ada",1.5,alpha'
+			].join('\n')
+		);
+
+		expect(points).toEqual([
+			csvPoint({ date: '2026-08-28T17:00:00.000Z', cost: 1.5, model: 'alpha' })
+		]);
+		expect(points[0]).not.toHaveProperty('Cloud Agent ID');
+		expect(points[0]).not.toHaveProperty('__proto__');
+		expect(points[0]).not.toHaveProperty('User');
+	});
+
 	it('sums input and output tokens when total tokens are not provided', () => {
 		const points = parseCsvText(
 			'Date,Cost,Model,Input Tokens,Output Tokens\n2026-05-01T10:00:00Z,1,alpha,12,8'
