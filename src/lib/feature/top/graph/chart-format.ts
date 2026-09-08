@@ -86,8 +86,8 @@ export function formatDay(value: string) {
 export const DAILY_AXIS_MAX_DAYS = 30;
 export const dailyAxisInterval = timeDay;
 export const dailyAxisTickFormat = { type: 'day', options: { variant: 'short' } } as const;
-/** Wider than LayerChart's 80px default so short day labels do not collide on a 30-day axis. */
-export const dailyAxisTickSpacing = 96;
+/** Pixel gap between date-axis ticks on the month-wide daily charts. */
+export const dailyAxisTickSpacing = 30;
 
 export type DailyChartPoint = DailyValue & { date: Date };
 

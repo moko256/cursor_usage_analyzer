@@ -147,7 +147,7 @@ describe('dailyAxisDomain', () => {
 	it('uses a one-day interval and spaced short day ticks', () => {
 		expect(dailyAxisInterval).toBe(timeDay);
 		expect(dailyAxisTickFormat).toEqual({ type: 'day', options: { variant: 'short' } });
-		expect(dailyAxisTickSpacing).toBe(96);
+		expect(dailyAxisTickSpacing).toBe(30);
 	});
 });
 
