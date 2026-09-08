@@ -7,16 +7,6 @@ ignoredOptionalDependencies:
   - sass-embedded-unknown-all
 onlyBuiltDependencies:
   - esbuild
-# pnpm 12+ defaults to a 24h minimumReleaseAge. These versions were pinned
-# while still inside that window, so frozen installs must exclude them.
-minimumReleaseAgeExclude:
-  - '@inlang/plugin-m-function-matcher@2.2.14'
-  - '@inlang/sdk@3.0.4'
-  - '@lix-js/sdk@0.15.1'
-  - '@lix-js/sdk-darwin-arm64@0.15.1'
-  - '@lix-js/sdk-linux-arm64@0.15.1'
-  - '@lix-js/sdk-linux-x64@0.15.1'
-  - '@lix-js/sdk-win32-x64@0.15.1'
 overrides:
   # GHSA-pxg6-pf52-xh8x: @sveltejs/kit still depends on cookie ^0.6.0.
   cookie@<0.7.0: 0.7.2
