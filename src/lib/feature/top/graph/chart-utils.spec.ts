@@ -22,6 +22,7 @@ import {
 	modelsFromDays,
 	sumCost,
 	sumTokens,
+	startOfUtcWeek,
 	utcDay,
 	utcDayAndLocalHour,
 	TOKEN_BREAKDOWN_KEYS,
@@ -134,6 +135,15 @@ describe('utcDay', () => {
 
 	it('falls back to the first 10 characters when the value is not a date', () => {
 		expect(utcDay('not-a-date')).toBe('not-a-date');
+	});
+});
+
+describe('startOfUtcWeek', () => {
+	it('returns the Sunday on or before the given UTC day', () => {
+		expect(startOfUtcWeek('2026-08-01')).toBe('2026-07-26');
+		expect(startOfUtcWeek('2026-08-02')).toBe('2026-08-02');
+		expect(startOfUtcWeek('2026-07-01')).toBe('2026-06-28');
+		expect(startOfUtcWeek('2026-02-01')).toBe('2026-02-01');
 	});
 });
 
@@ -412,10 +422,12 @@ describe('buildTokenCalendar', () => {
 
 		const calendar = buildTokenCalendar(days, new Date(2026, 7, 31, 12));
 
-		expect(calendar.range.start).toEqual(new Date(2026, 7, 1));
+		expect(calendar.range.start).toEqual(new Date(2026, 6, 26));
 		expect(calendar.range.end).toEqual(new Date(2026, 8, 1));
-		expect(calendar.data).toHaveLength(31);
-		expect(calendar.data[0]?.day).toBe('2026-08-01');
+		expect(calendar.data).toHaveLength(37);
+		expect(calendar.data[0]?.day).toBe('2026-07-26');
+		expect(calendar.data[0]?.date.getDay()).toBe(0);
+		expect(calendar.data.find(({ day }) => day === '2026-07-26')?.tokens).toBe(0);
 		expect(calendar.data.find(({ day }) => day === '2026-08-25')?.tokens).toBe(100);
 		expect(calendar.data.find(({ day }) => day === '2026-08-26')?.tokens).toBe(0);
 		expect(calendar.data.find(({ day }) => day === '2026-08-27')?.tokens).toBe(300);
@@ -430,10 +442,11 @@ describe('buildTokenCalendar', () => {
 
 		const calendar = buildTokenCalendar(days, new Date(2026, 7, 31, 12));
 
-		expect(calendar.range.start).toEqual(new Date(2026, 6, 1));
+		expect(calendar.range.start).toEqual(new Date(2026, 5, 28));
 		expect(calendar.range.end).toEqual(new Date(2026, 8, 1));
-		expect(calendar.data).toHaveLength(62);
-		expect(calendar.data[0]?.day).toBe('2026-07-01');
+		expect(calendar.data).toHaveLength(65);
+		expect(calendar.data[0]?.day).toBe('2026-06-28');
+		expect(calendar.data[0]?.date.getDay()).toBe(0);
 		expect(calendar.data.at(-1)?.day).toBe('2026-08-31');
 	});
 
@@ -445,19 +458,31 @@ describe('buildTokenCalendar', () => {
 
 		const calendar = buildTokenCalendar(days, new Date(2026, 7, 31, 12));
 
-		expect(calendar.range.start).toEqual(new Date(2026, 5, 1));
+		expect(calendar.range.start).toEqual(new Date(2026, 4, 31));
 		expect(calendar.range.end).toEqual(new Date(2026, 8, 1));
-		expect(calendar.data).toHaveLength(92);
-		expect(calendar.data[0]?.day).toBe('2026-06-01');
+		expect(calendar.data).toHaveLength(93);
+		expect(calendar.data[0]?.day).toBe('2026-05-31');
+		expect(calendar.data[0]?.date.getDay()).toBe(0);
 		expect(calendar.data.find(({ day }) => day === '2026-08-31')?.tokens).toBe(0);
 		expect(calendar.data.at(-1)?.day).toBe('2026-08-31');
+	});
+
+	it('does not pad when the oldest month already starts on Sunday', () => {
+		const days = groupByDay([csvPoint({ date: '2026-02-10T10:00:00.000Z', tokens: 100 })]);
+		const calendar = buildTokenCalendar(days, new Date(2026, 1, 28, 12));
+
+		expect(calendar.range.start).toEqual(new Date(2026, 1, 1));
+		expect(calendar.range.end).toEqual(new Date(2026, 2, 1));
+		expect(calendar.data).toHaveLength(28);
+		expect(calendar.data[0]?.day).toBe('2026-02-01');
+		expect(calendar.data[0]?.date.getDay()).toBe(0);
 	});
 
 	it('treats a current-month day with zero tokens as current-month data', () => {
 		const days = groupByDay([csvPoint({ date: '2026-08-02T10:00:00.000Z', tokens: 0 })]);
 		const calendar = buildTokenCalendar(days, new Date(2026, 7, 31, 12));
 
-		expect(calendar.range.start).toEqual(new Date(2026, 7, 1));
+		expect(calendar.range.start).toEqual(new Date(2026, 6, 26));
 		expect(calendar.range.end).toEqual(new Date(2026, 8, 1));
 	});
 
