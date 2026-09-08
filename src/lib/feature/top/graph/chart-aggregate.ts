@@ -116,7 +116,7 @@ export function buildModelIndexTable(
 	const names = [...new Set(points.map((point) => point.model || unknownModel))].sort(
 		(left, right) => left.localeCompare(right)
 	);
-	const indexByName: Record<string, number> = {};
+	const indexByName = Object.create(null) as Record<string, number>;
 	for (let index = 0; index < names.length; index += 1) {
 		indexByName[names[index]] = index;
 	}

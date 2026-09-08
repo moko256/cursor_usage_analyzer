@@ -199,6 +199,23 @@ describe('buildModelIndexTable', () => {
 			count: 2
 		});
 	});
+
+	it('stores prototype-key model names as own properties', () => {
+		const table = buildModelIndexTable([
+			csvPoint({ model: '__proto__' }),
+			csvPoint({ model: 'constructor' })
+		]);
+
+		expect(Object.getPrototypeOf(table.indexByName)).toBeNull();
+		expect(Object.hasOwn(table.indexByName, '__proto__')).toBe(true);
+		expect(Object.hasOwn(table.indexByName, 'constructor')).toBe(true);
+		expect(table.indexByName['__proto__']).toBe(table.names.indexOf('__proto__'));
+		expect(table.indexByName['constructor']).toBe(table.names.indexOf('constructor'));
+
+		const cloned = structuredClone(table);
+		expect(Object.getPrototypeOf(cloned.indexByName)).toBeNull();
+		expect(cloned.indexByName['__proto__']).toBe(table.indexByName['__proto__']);
+	});
 });
 
 describe('buildDailyModelSeries', () => {
