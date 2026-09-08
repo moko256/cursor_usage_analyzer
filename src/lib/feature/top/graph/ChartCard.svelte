@@ -3,14 +3,13 @@
 	import { getChartImageBlob } from 'layerchart/utils/download';
 
 	interface Props {
-		title?: string;
-		subtitle?: string;
+		title: string;
 		ariaLabel: string;
 		children: Snippet;
 		class?: string;
 	}
 
-	let { title, subtitle, ariaLabel, children, class: className = '' }: Props = $props();
+	let { title, ariaLabel, children, class: className = '' }: Props = $props();
 	let chartRef: HTMLElement | undefined;
 
 	function attachChart(node: HTMLElement) {
@@ -34,10 +33,7 @@
 <article class={['chart-card', className]}>
 	<figure>
 		<figcaption>
-			<div class="caption-text">
-				{#if title}<strong>{title}</strong>{/if}
-				{#if subtitle}<span>{subtitle}</span>{/if}
-			</div>
+			<strong>{title}</strong>
 			<button type="button" onclick={copyChartImage} class="outline secondary">Copy</button>
 		</figcaption>
 		<div {@attach attachChart} role="img" aria-label={ariaLabel}>
@@ -60,11 +56,6 @@
 	figcaption {
 		display: flex;
 		align-items: baseline;
-	}
-
-	.caption-text {
-		display: flex;
-		flex-direction: column;
 	}
 
 	figcaption button {

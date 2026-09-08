@@ -144,7 +144,6 @@ test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) =
 	await expect(page.locator('.calendar-group')).toHaveCount(0);
 	await expect(calendar).toHaveCount(1);
 	await expect(calendar.locator('figcaption strong')).toHaveText('Token count calendar');
-	await expect(calendar.locator('figcaption span')).toHaveCount(0);
 	await expect(calendar.locator('.lc-rect')).toHaveCount(
 		new Date(chartMonthStart.getFullYear(), chartMonthStart.getMonth() + 1, 0).getDate()
 	);
@@ -175,7 +174,6 @@ test('tokenカレンダーがグラフグリッドに並ぶ', async ({ page }) =
 	const hourly = activeLocator(page, '.hourly-token-card');
 	await expect(hourly).toHaveCount(1);
 	await expect(hourly.locator('figcaption strong')).toHaveText('Token count / time of day');
-	await expect(hourly.locator('figcaption span')).toHaveCount(0);
 	await expect(hourly.locator('[role="img"]')).toHaveAttribute(
 		'aria-label',
 		'Token count by time of day.'
@@ -279,7 +277,7 @@ test('横棒グラフの軸にモデル名が描画される', async ({ page }) 
 });
 
 test('軸の目盛りラベルが切り取られない', async ({ page }) => {
-	const cards = await activeLocator(page, '.chart-card:not(.calendar-card):not(.empty-card)').all();
+	const cards = await activeLocator(page, '.chart-card:not(.calendar-card)').all();
 
 	for (const card of cards) {
 		const labels = await readTickLabels(card);
