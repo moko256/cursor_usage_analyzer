@@ -6,7 +6,7 @@
 		formatChartAxis,
 		formatChartValue,
 		modelAxisPadding,
-		truncateModelLabel,
+		modelTickLabelTruncate,
 		chartTooltipRootProps,
 		type ChartMetric,
 		type ModelBreakdownValue,
@@ -48,7 +48,11 @@
 		{padding}
 		props={{
 			xAxis: { format: (value) => formatChartAxis(value, metric) },
-			yAxis: { format: truncateModelLabel }
+			yAxis: {
+				tickLabelProps: {
+					truncate: modelTickLabelTruncate
+				}
+			}
 		}}
 	>
 		{#snippet marks({ context })}

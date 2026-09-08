@@ -51,8 +51,8 @@ export {
 	getTokenBreakdownColor,
 	HOURLY_TOKEN_COLOR,
 	modelAxisPadding,
-	TOKEN_CALENDAR_COLORS,
-	truncateModelLabel
+	modelTickLabelTruncate,
+	TOKEN_CALENDAR_COLORS
 } from './chart-style';
 
 export {

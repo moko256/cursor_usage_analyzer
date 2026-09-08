@@ -2,6 +2,13 @@ import { interpolateLab, interpolateRgb } from 'd3-interpolate';
 import { interpolatePuBu, schemeObservable10 } from 'd3-scale-chromatic';
 import { getStringWidth, truncateText } from 'layerchart/utils/string';
 
+/** LayerChart `tickLabelProps.truncate` for horizontal model-name axes. */
+export const modelTickLabelTruncate = {
+	maxChars: 19,
+	ellipsis: '...',
+	position: 'end' as const
+};
+
 export const errorMinusColor = 'light-dark(' + '#868e96, #adb5bd)';
 export const errorPlusColor = 'light-dark(' + '#e03131, #ff6b6b)';
 
@@ -61,33 +68,30 @@ export const HOURLY_TOKEN_COLOR = interpolatePuBu(0.7);
  */
 const tickLabelStyle = { fontSize: '10px', fontWeight: '300' } as unknown as CSSStyleDeclaration;
 
-/** Keeps an unusually long model name from squeezing the bars out of the plot area. */
-const maxModelLabelWidth = 180;
-
 /** Separates a model name from the plot area: LayerChart's default tick length plus breathing room. */
 const modelLabelGap = 8;
 
 /** Room for the outermost value tick label, which is centred on the end of the value axis. */
 const valueLabelInset = 24;
 
-export function truncateModelLabel(model: string) {
-	return truncateText(model, { maxWidth: maxModelLabelWidth, style: tickLabelStyle });
-}
-
 /**
  * LayerChart reserves a fixed 20px on the left of a chart, which fits the short numeric ticks of a
  * vertical chart but not the model names a horizontal one puts there: tick labels are drawn
  * right-aligned from the plot origin, so anything wider lands outside the SVG and is clipped away.
  * Top and bottom repeat LayerChart's own defaults, which have to be restated once `padding` is set.
+ * Width follows the truncated tick text so left padding matches `modelTickLabelTruncate`.
  */
 export function modelAxisPadding(models: string[]) {
-	const labelWidth = models.reduce((widest, model) => Math.max(widest, measureLabel(model)), 0);
+	const labelWidth = models.reduce(
+		(widest, model) => Math.max(widest, measureLabel(truncateText(model, modelTickLabelTruncate))),
+		0
+	);
 
 	return {
 		top: 4,
 		right: valueLabelInset,
 		bottom: 20,
-		left: Math.ceil(Math.min(labelWidth, maxModelLabelWidth)) + modelLabelGap
+		left: Math.ceil(labelWidth) + modelLabelGap
 	};
 }
 

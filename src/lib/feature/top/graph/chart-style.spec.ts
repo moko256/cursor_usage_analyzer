@@ -5,7 +5,9 @@ import {
 	getDailyModelColors,
 	getTokenBreakdownColor,
 	HOURLY_TOKEN_COLOR,
-	TOKEN_CALENDAR_COLORS
+	TOKEN_CALENDAR_COLORS,
+	modelAxisPadding,
+	modelTickLabelTruncate
 } from './chart-style';
 
 const modelColorStops = 10;
@@ -92,5 +94,19 @@ describe('TOKEN_CALENDAR_COLORS', () => {
 describe('HOURLY_TOKEN_COLOR', () => {
 	it('uses the mid-dark interpolatePuBu stop', () => {
 		expect(HOURLY_TOKEN_COLOR).toBe(interpolatePuBu(0.7));
+	});
+});
+
+describe('modelAxisPadding', () => {
+	it('sizes left padding from the truncated tick label, not the full model name', () => {
+		const short = modelAxisPadding(['composer-2.5']);
+		const long = modelAxisPadding(['a'.repeat(50)]);
+		const alreadyTruncated = modelAxisPadding([
+			'a'.repeat(modelTickLabelTruncate.maxChars) + modelTickLabelTruncate.ellipsis
+		]);
+
+		expect(long.left).toBe(alreadyTruncated.left);
+		expect(short.left).toBeLessThan(long.left);
+		expect(long).toMatchObject({ top: 4, right: 24, bottom: 20 });
 	});
 });

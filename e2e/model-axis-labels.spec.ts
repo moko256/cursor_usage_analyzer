@@ -29,6 +29,9 @@ const heatmapCalendarCsv = [
 ].join('\n');
 
 const models = ['claude-4.5-sonnet-thinking', 'gpt-5.6-luna-high', 'composer-2.5'];
+const truncatedModels = models.map((model) =>
+	model.length > 19 ? `${model.slice(0, 19)}...` : model
+);
 
 /**
  * A tick label is laid out relative both to the nested `<svg>` LayerChart wraps it in and to the
@@ -274,8 +277,40 @@ test('横棒グラフの軸にモデル名が描画される', async ({ page }) 
 			.filter((label) => label.clippedBy.length === 0)
 			.map((label) => label.text);
 
-		expect(painted).toEqual(expect.arrayContaining(models));
+		expect(painted).toEqual(expect.arrayContaining(truncatedModels));
 	}
+});
+
+test('長いモデル名は軸で省略し、ツールチップでは全文を出す', async ({ page }) => {
+	const longModel = 'an-unusually-long-model-identifier';
+	await page.locator('input[type="file"]').setInputFiles({
+		name: 'long-model.csv',
+		mimeType: 'text/csv',
+		buffer: Buffer.from(
+			[
+				'Date,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost',
+				`2026-08-25T10:00:00.000Z,${longModel},0,20,0,80,100,1.00`
+			].join('\n')
+		)
+	});
+
+	const cards = await activeLocator(page, '.chart-card.horizontal-card').all();
+	expect(cards).toHaveLength(2);
+
+	const truncated = `${longModel.slice(0, 19)}...`;
+	for (const card of cards) {
+		const painted = (await readTickLabels(card))
+			.filter((label) => label.clippedBy.length === 0)
+			.map((label) => label.text);
+
+		expect(painted).toContain(truncated);
+		expect(painted).not.toContain(longModel);
+	}
+
+	await cards[0].locator('.lc-tooltip-rect').hover();
+	const tooltip = page.locator('.lc-tooltip-root:not([inert])');
+	await expect(tooltip).toBeVisible();
+	await expect(tooltip.locator('.lc-tooltip-header')).toHaveText(longModel);
 });
 
 test('軸の目盛りラベルが切り取られない', async ({ page }) => {
