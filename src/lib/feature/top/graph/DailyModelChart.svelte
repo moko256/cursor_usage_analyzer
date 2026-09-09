@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages';
-	import { BarChart, Tooltip } from 'layerchart/svg';
+	import { BarChart, Tooltip } from './layerchart';
 	import {
 		buildDailyModelSeries,
 		dailyAxisInterval,

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages';
 	import { scaleThreshold } from 'd3-scale';
-	import { Calendar, Chart, Layer, Rect, Tooltip } from 'layerchart/svg';
+	import { Calendar, Chart, Layer, Rect, Tooltip } from './layerchart';
 	import {
 		buildTokenCalendar,
 		buildTokenCalendarThresholds,

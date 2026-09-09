@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages';
-	import { Bar, Bars, BarChart, Tooltip } from 'layerchart/svg';
+	import { Bar, Bars, BarChart, Tooltip } from './layerchart';
 	import {
 		buildModelBreakdownSeries,
 		formatChartAxis,
