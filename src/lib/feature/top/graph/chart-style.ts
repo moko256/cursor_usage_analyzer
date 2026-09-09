@@ -1,6 +1,45 @@
 import { interpolateLab, interpolateRgb } from 'd3-interpolate';
 import { interpolatePuBu, schemeObservable10 } from 'd3-scale-chromatic';
-import { getStringWidth, truncateText } from 'layerchart/utils/string';
+
+/** Wrap width for horizontal model-name tick labels (`tickLabelProps.width`). */
+export const modelTickLabelWidth = 100;
+
+/** Fallback character width when splitting hyphenated ids to fit `modelTickLabelWidth`. */
+const modelTickLabelCharWidth = 6;
+
+/**
+ * Setting `width` would otherwise enable LayerChart's default maxWidth truncation.
+ * `truncate: false` keeps the full name so `width` wraps instead of ellipsizing.
+ */
+export const modelTickLabelProps = {
+	width: modelTickLabelWidth,
+	textAnchor: 'end' as const,
+	truncate: false
+};
+
+/**
+ * LayerChart wraps on whitespace/`\\n` and does not split a single token. Model ids are hyphenated
+ * with no spaces, so insert line breaks at hyphens that would overflow `modelTickLabelWidth`.
+ */
+export function wrapModelTickLabel(model: string) {
+	const maxChars = Math.max(1, Math.floor(modelTickLabelWidth / modelTickLabelCharWidth));
+	const parts = String(model).split('-');
+	const lines: string[] = [];
+	let current = '';
+
+	for (const part of parts) {
+		const next = current ? `${current}-${part}` : part;
+		if (current && next.length > maxChars) {
+			lines.push(`${current}-`);
+			current = part;
+		} else {
+			current = next;
+		}
+	}
+
+	if (current) lines.push(current);
+	return lines.join('\n');
+}
 
 export const errorMinusColor = 'light-dark(' + '#868e96, #adb5bd)';
 export const errorPlusColor = 'light-dark(' + '#e03131, #ff6b6b)';
@@ -54,43 +93,22 @@ export const TOKEN_CALENDAR_COLORS = [0, 0.25, 0.5, 0.75, 1].map(
 /** Single-series hourly bar color. */
 export const HOURLY_TOKEN_COLOR = interpolatePuBu(0.7);
 
-/**
- * Mirrors LayerChart's `.lc-axis-tick-label` rule so a measured width matches the drawn one.
- * `getStringWidth` only assigns the properties it is handed, but types them as a whole
- * `CSSStyleDeclaration`.
- */
-const tickLabelStyle = { fontSize: '10px', fontWeight: '300' } as unknown as CSSStyleDeclaration;
-
-/** Keeps an unusually long model name from squeezing the bars out of the plot area. */
-const maxModelLabelWidth = 180;
-
-/** Separates a model name from the plot area: LayerChart's default tick length plus breathing room. */
+/** Separates wrapped model names from the plot area: tick length plus breathing room. */
 const modelLabelGap = 8;
 
 /** Room for the outermost value tick label, which is centred on the end of the value axis. */
 const valueLabelInset = 24;
-
-export function truncateModelLabel(model: string) {
-	return truncateText(model, { maxWidth: maxModelLabelWidth, style: tickLabelStyle });
-}
 
 /**
  * LayerChart reserves a fixed 20px on the left of a chart, which fits the short numeric ticks of a
  * vertical chart but not the model names a horizontal one puts there: tick labels are drawn
  * right-aligned from the plot origin, so anything wider lands outside the SVG and is clipped away.
  * Top and bottom repeat LayerChart's own defaults, which have to be restated once `padding` is set.
+ * Left padding matches `modelTickLabelWidth` so wrapped labels stay inside the chart.
  */
-export function modelAxisPadding(models: string[]) {
-	const labelWidth = models.reduce((widest, model) => Math.max(widest, measureLabel(model)), 0);
-
-	return {
-		top: 4,
-		right: valueLabelInset,
-		bottom: 20,
-		left: Math.ceil(Math.min(labelWidth, maxModelLabelWidth)) + modelLabelGap
-	};
-}
-
-function measureLabel(text: string) {
-	return getStringWidth(text, tickLabelStyle) ?? text.length * 6;
-}
+export const modelAxisPadding = {
+	top: 4,
+	right: valueLabelInset,
+	bottom: 20,
+	left: modelTickLabelWidth + modelLabelGap
+} as const;

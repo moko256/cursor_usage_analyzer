@@ -5,7 +5,10 @@ import {
 	getDailyModelColors,
 	getTokenBreakdownColor,
 	HOURLY_TOKEN_COLOR,
-	TOKEN_CALENDAR_COLORS
+	TOKEN_CALENDAR_COLORS,
+	modelAxisPadding,
+	modelTickLabelWidth,
+	wrapModelTickLabel
 } from './chart-style';
 
 const modelColorStops = 10;
@@ -92,5 +95,31 @@ describe('TOKEN_CALENDAR_COLORS', () => {
 describe('HOURLY_TOKEN_COLOR', () => {
 	it('uses the mid-dark interpolatePuBu stop', () => {
 		expect(HOURLY_TOKEN_COLOR).toBe(interpolatePuBu(0.7));
+	});
+});
+
+describe('wrapModelTickLabel', () => {
+	it('keeps short names on one line', () => {
+		expect(wrapModelTickLabel('composer-2.5')).toBe('composer-2.5');
+	});
+
+	it('breaks long hyphenated names onto multiple lines without dropping hyphens', () => {
+		expect(wrapModelTickLabel('an-unusually-long-model-identifier')).toBe(
+			['an-unusually-', 'long-model-', 'identifier'].join('\n')
+		);
+		expect(wrapModelTickLabel('an-unusually-long-model-identifier').replaceAll('\n', '')).toBe(
+			'an-unusually-long-model-identifier'
+		);
+	});
+});
+
+describe('modelAxisPadding', () => {
+	it('reserves left padding for wrapped model tick labels', () => {
+		expect(modelAxisPadding).toEqual({
+			top: 4,
+			right: 24,
+			bottom: 20,
+			left: modelTickLabelWidth + 8
+		});
 	});
 });

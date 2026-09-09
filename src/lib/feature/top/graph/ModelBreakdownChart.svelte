@@ -6,7 +6,8 @@
 		formatChartAxis,
 		formatChartValue,
 		modelAxisPadding,
-		truncateModelLabel,
+		modelTickLabelProps,
+		wrapModelTickLabel,
 		chartTooltipRootProps,
 		type ChartMetric,
 		type ModelBreakdownValue,
@@ -22,7 +23,6 @@
 
 	let { modelValues, metric, modelIndices }: Props = $props();
 	let horizontalChartHeight = $derived(Math.max(190, modelValues.length * 36 + 55));
-	let padding = $derived(modelAxisPadding(modelValues.map((value) => value.model)));
 	let series = $derived(buildModelBreakdownSeries(modelValues, metric, modelIndices));
 	let fillByKey = $derived(
 		new Map<string, (row: ModelBreakdownValue) => string>(
@@ -45,10 +45,13 @@
 		seriesLayout="stack"
 		orientation="horizontal"
 		height={horizontalChartHeight}
-		{padding}
+		padding={modelAxisPadding}
 		props={{
 			xAxis: { format: (value) => formatChartAxis(value, metric) },
-			yAxis: { format: truncateModelLabel }
+			yAxis: {
+				format: wrapModelTickLabel,
+				tickLabelProps: modelTickLabelProps
+			}
 		}}
 	>
 		{#snippet marks({ context })}

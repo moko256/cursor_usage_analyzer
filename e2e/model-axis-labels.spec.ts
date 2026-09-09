@@ -296,6 +296,48 @@ test('横棒グラフの軸にモデル名が描画される', async ({ page }) 
 	}
 });
 
+test('長いモデル名は軸で折り返し、ツールチップでは全文を出す', async ({ page }) => {
+	const longModel = 'an-unusually-long-model-identifier';
+	await page.locator('input[type="file"]').setInputFiles({
+		name: 'long-model.csv',
+		mimeType: 'text/csv',
+		buffer: Buffer.from(
+			[
+				'Date,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost',
+				`2026-08-25T10:00:00.000Z,${longModel},0,20,0,80,100,1.00`
+			].join('\n')
+		)
+	});
+	await expect(page.getByText(/records loaded/)).toBeVisible();
+	await expect(activeChartCards(page)).toHaveCount(6);
+
+	const cards = activeLocator(page, '.chart-card.horizontal-card');
+	await expect(
+		cards.first().locator('text.lc-axis-tick-label', { hasText: longModel })
+	).toBeVisible();
+	await expect(cards).toHaveCount(2);
+
+	for (const card of await cards.all()) {
+		const painted = (await readTickLabels(card))
+			.filter((label) => label.clippedBy.length === 0)
+			.map((label) => label.text);
+
+		expect(painted).toContain(longModel);
+		expect(painted.some((text) => text.includes('...'))).toBe(false);
+
+		const tspanCount = await card
+			.locator('text.lc-axis-tick-label', { hasText: longModel })
+			.locator('tspan')
+			.count();
+		expect(tspanCount).toBeGreaterThan(1);
+	}
+
+	await cards.nth(0).locator('.lc-tooltip-rect').hover();
+	const tooltip = page.locator('.lc-tooltip-root:not([inert])');
+	await expect(tooltip).toBeVisible();
+	await expect(tooltip.locator('.lc-tooltip-header')).toHaveText(longModel);
+});
+
 test('軸の目盛りラベルが切り取られない', async ({ page }) => {
 	const cards = await activeLocator(page, '.chart-card:not(.calendar-card)').all();
 
