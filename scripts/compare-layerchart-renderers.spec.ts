@@ -5,8 +5,8 @@ import { gzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 import {
 	filesWithLayerchartRendererImports,
-	measureClientAssets,
 	measureHtmlBundle,
+	measureInlineScripts,
 	RENDERERS,
 	rewriteLayerchartRenderer
 } from './compare-layerchart-renderers.mjs';
@@ -54,44 +54,23 @@ describe('measureHtmlBundle', () => {
 			largest: {
 				file: 'en/index.html',
 				bytes: locale.byteLength,
-				gzipBytes: gzipSync(locale, { level: 9 }).byteLength
+				gzipBytes: gzipSync(locale, { level: 9 }).byteLength,
+				scripts: measureInlineScripts(locale.toString('utf8'))
 			}
 		});
 	});
 });
 
-describe('measureClientAssets', () => {
-	it('sums the hashed client bundle and stylesheet', () => {
-		const dir = mkdtempSync(join(tmpdir(), 'layerchart-client-'));
-		mkdirSync(join(dir, 'assets'));
-		const js = Buffer.from('console.log(1);');
-		const css = Buffer.from('body{color:red}');
-		writeFileSync(join(dir, 'bundle.abc.js'), js);
-		writeFileSync(join(dir, 'assets/style.xyz.css'), css);
+describe('measureInlineScripts', () => {
+	it('sums inline script bodies and their gzip-9 size', () => {
+		const html =
+			'<html><script type="module">const a=1;</script><script>const b=2;</script></html>';
+		const joined = Buffer.from('const a=1;\nconst b=2;');
 
-		expect(measureClientAssets(dir)).toEqual({
-			js: {
-				bytes: js.byteLength,
-				gzipBytes: gzipSync(js, { level: 9 }).byteLength,
-				files: [
-					{
-						file: 'bundle.abc.js',
-						bytes: js.byteLength,
-						gzipBytes: gzipSync(js, { level: 9 }).byteLength
-					}
-				]
-			},
-			css: {
-				bytes: css.byteLength,
-				gzipBytes: gzipSync(css, { level: 9 }).byteLength,
-				files: [
-					{
-						file: 'style.xyz.css',
-						bytes: css.byteLength,
-						gzipBytes: gzipSync(css, { level: 9 }).byteLength
-					}
-				]
-			}
+		expect(measureInlineScripts(html)).toEqual({
+			count: 2,
+			bytes: joined.byteLength,
+			gzipBytes: gzipSync(joined, { level: 9 }).byteLength
 		});
 	});
 });

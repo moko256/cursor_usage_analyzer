@@ -16,7 +16,6 @@ export const RENDERERS = ['svg', 'html', 'canvas'];
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 export const repositoryRoot = join(scriptDir, '..');
 const graphDir = join(repositoryRoot, 'src/lib/feature/top/graph');
-const svelteKitClientDir = join(repositoryRoot, '.svelte-kit/output/client/_app/immutable');
 
 function layerchartImportPattern() {
 	return /from 'layerchart\/(svg|html|canvas)'/g;
@@ -46,25 +45,13 @@ function gzipBytesOf(buffer) {
 	return gzipSync(buffer, { level: 9 }).byteLength;
 }
 
-function measureNamedAssets(dir, test) {
-	try {
-		const matches = readdirSync(dir)
-			.filter(test)
-			.map((name) => {
-				const buffer = readFileSync(join(dir, name));
-				return { file: name, bytes: buffer.byteLength, gzipBytes: gzipBytesOf(buffer) };
-			});
-		return {
-			bytes: matches.reduce((sum, file) => sum + file.bytes, 0),
-			gzipBytes: matches.reduce((sum, file) => sum + file.gzipBytes, 0),
-			files: matches
-		};
-	} catch (error) {
-		if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
-			return { bytes: 0, gzipBytes: 0, files: [] };
-		}
-		throw error;
+export function measureInlineScripts(html) {
+	const parts = [];
+	for (const match of html.matchAll(/<script\b[^>]*>([^]*?)<\/script>/gi)) {
+		if (match[1]) parts.push(match[1]);
 	}
+	const buffer = Buffer.from(parts.join('\n'));
+	return { count: parts.length, bytes: buffer.byteLength, gzipBytes: gzipBytesOf(buffer) };
 }
 
 export function measureHtmlBundle(buildDir) {
@@ -75,7 +62,7 @@ export function measureHtmlBundle(buildDir) {
 
 	let bytes = 0;
 	let gzipBytes = 0;
-	let largest = { file: '', bytes: 0, gzipBytes: 0 };
+	let largest = { file: '', bytes: 0, gzipBytes: 0, scripts: { count: 0, bytes: 0, gzipBytes: 0 } };
 
 	for (const file of htmlFiles) {
 		const buffer = readFileSync(file);
@@ -86,7 +73,8 @@ export function measureHtmlBundle(buildDir) {
 			largest = {
 				file: relative(buildDir, file),
 				bytes: buffer.byteLength,
-				gzipBytes: gzip
+				gzipBytes: gzip,
+				scripts: measureInlineScripts(buffer.toString('utf8'))
 			};
 		}
 	}
@@ -97,14 +85,6 @@ export function measureHtmlBundle(buildDir) {
 		gzipBytes,
 		largest
 	};
-}
-
-export function measureClientAssets(clientImmutableDir = svelteKitClientDir) {
-	const js = measureNamedAssets(clientImmutableDir, (name) => /^bundle\..+\.js$/.test(name));
-	const css = measureNamedAssets(join(clientImmutableDir, 'assets'), (name) =>
-		/^style\..+\.css$/.test(name)
-	);
-	return { js, css };
 }
 
 function applyRenderer(renderer, files) {
@@ -140,16 +120,13 @@ function gzipDelta(value, baseline) {
 }
 
 function printRow(row, baselineGzip) {
-	const js = row.client.js.files[0];
+	const scripts = row.html.largest.scripts;
 	console.log(
 		[
 			row.renderer.padEnd(8),
 			formatBytes(row.html.bytes).padStart(14),
 			formatBytes(row.html.gzipBytes).padStart(14),
-			js
-				? `${js.file} ${formatBytes(js.bytes)} / gzip ${formatBytes(js.gzipBytes)}`
-				: '(no client bundle)',
-			row.html.largest.file
+			`${row.html.largest.file} inline JS ${formatBytes(scripts.bytes)} / gzip ${formatBytes(scripts.gzipBytes)}`
 		].join('  ') + gzipDelta(row.html.gzipBytes, baselineGzip)
 	);
 }
@@ -171,8 +148,7 @@ export function main() {
 			buildSite();
 			results.push({
 				renderer,
-				html: measureHtmlBundle(buildDir),
-				client: measureClientAssets()
+				html: measureHtmlBundle(buildDir)
 			});
 		}
 	} finally {
@@ -182,9 +158,7 @@ export function main() {
 	results.sort((a, b) => a.html.gzipBytes - b.html.gzipBytes);
 	const svg = results.find((row) => row.renderer === 'svg');
 
-	console.log(
-		'\nrenderer           html       gzip-9  client JS                                      page'
-	);
+	console.log('\nrenderer           html       gzip-9  largest page inline JS');
 	for (const row of results) {
 		printRow(row, svg?.html.gzipBytes);
 	}
