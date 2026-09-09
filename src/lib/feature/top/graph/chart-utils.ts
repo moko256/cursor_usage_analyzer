@@ -32,6 +32,10 @@ export {
 export {
 	compactNumberFormat,
 	currencyFormat,
+	dailyAxisInterval,
+	dailyAxisTickFormat,
+	dailyAxisTickSpacing,
+	dailyChartPoints,
 	formatChartAxis,
 	formatChartValue,
 	formatCostAxis,
@@ -42,6 +46,7 @@ export {
 	verticalChartHeight,
 	verticalChartPadding
 } from './chart-format';
+export type { DailyChartPoint } from './chart-format';
 
 export {
 	chartTooltipRootProps,

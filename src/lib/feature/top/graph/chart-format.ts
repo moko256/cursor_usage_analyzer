@@ -1,4 +1,6 @@
-import type { ChartMetric } from './chart-types';
+import { timeDay } from 'd3-time';
+import type { ChartMetric, DailyValue } from './chart-types';
+import { dateFromUtcDay } from './chart-utc';
 
 export const verticalChartPadding = { top: 4, right: 24, bottom: 20, left: 41 } as const;
 export const verticalChartHeight = 270;
@@ -74,6 +76,21 @@ const dayLabelFormat = new Intl.DateTimeFormat('en-US', {
 export function formatDay(value: string) {
 	const date = new Date(`${value}T00:00:00Z`);
 	return Number.isNaN(date.getTime()) ? value : dayLabelFormat.format(date);
+}
+
+/**
+ * Daily bar charts use a local time scale. LayerChart places each bar in a
+ * `timeDay` interval so the axis follows the data's own date range.
+ */
+export const dailyAxisInterval = timeDay;
+export const dailyAxisTickFormat = { type: 'day', options: { variant: 'short' } } as const;
+/** Pixel gap between date-axis ticks on the daily charts. */
+export const dailyAxisTickSpacing = 30;
+
+export type DailyChartPoint = DailyValue & { date: Date };
+
+export function dailyChartPoints(days: DailyValue[]): DailyChartPoint[] {
+	return days.map((day) => ({ ...day, date: dateFromUtcDay(day.day) }));
 }
 
 export function formatHour(value: number) {
