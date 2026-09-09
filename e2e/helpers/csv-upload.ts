@@ -32,3 +32,16 @@ export async function setCsvInputFiles(page: Page, buffer: Buffer, name = 'usage
 		buffer
 	});
 }
+
+const MANY_ROW_HEADER =
+	'Date,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost';
+const MANY_ROW = '2026-08-28T17:00:00.000Z,alpha,0,0,0,0,1234,12.34';
+
+/** Many short rows so the parse loop can emit 15ms progress ticks. */
+export function buildManyRowCsv(rowCount: number): Buffer {
+	const lines = [MANY_ROW_HEADER];
+	for (let index = 0; index < rowCount; index += 1) {
+		lines.push(MANY_ROW);
+	}
+	return Buffer.from(lines.join('\n'));
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { csvPoint } from './csv-point.fixture';
-import { parseCsvText } from './csv-parser';
+import { createThrottledCsvProgress, parseCsvText, type CsvParseProgress } from './csv-parser';
 
 const newCsvHeader =
 	'Date,Cloud Agent ID,Automation ID,Kind,Model,Max Mode,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost';
@@ -188,5 +188,50 @@ describe('parseCsvText', () => {
 	it('throws when the file has no records', () => {
 		expect(() => parseCsvText('')).toThrow('empty');
 		expect(() => parseCsvText('\n\n')).toThrow('empty');
+	});
+
+	it('reports scan progress as monotonic processedChars', () => {
+		const text = [
+			usedCsvHeader,
+			'2026-04-02T10:00:00Z,alpha,0,0,0,0,10,1',
+			'2026-04-03T10:00:00Z,alpha,0,0,0,0,10,2'
+		].join('\n');
+		const reports: CsvParseProgress[] = [];
+
+		parseCsvText(text, (progress) => reports.push(progress));
+
+		expect(reports.length).toBeGreaterThan(0);
+		expect(reports[0]?.processedChars).toBeGreaterThan(0);
+		for (let index = 1; index < reports.length; index += 1) {
+			expect(reports[index].processedChars).toBeGreaterThanOrEqual(
+				reports[index - 1].processedChars
+			);
+			expect(reports[index].totalChars).toBe(text.length);
+		}
+		expect(reports.at(-1)).toEqual({ processedChars: text.length, totalChars: text.length });
+	});
+});
+
+describe('createThrottledCsvProgress', () => {
+	it('posts at the interval and skips 100%', () => {
+		let now = 0;
+		const posted: CsvParseProgress[] = [];
+		const post = createThrottledCsvProgress(
+			(progress) => posted.push(progress),
+			15,
+			() => now
+		);
+
+		post({ processedChars: 1, totalChars: 10 });
+		now = 10;
+		post({ processedChars: 2, totalChars: 10 });
+		now = 15;
+		post({ processedChars: 3, totalChars: 10 });
+		post({ processedChars: 10, totalChars: 10 });
+
+		expect(posted).toEqual([
+			{ processedChars: 1, totalChars: 10 },
+			{ processedChars: 3, totalChars: 10 }
+		]);
 	});
 });
