@@ -4,8 +4,13 @@
 	import GraphGroup from '$lib/feature/top/graph/GraphGroup.svelte';
 	import RangeSwitcher from '$lib/feature/top/graph/RangeSwitcher.svelte';
 	import {
-		rememberMountedRange,
-		nextPremountRange
+		chartCountFor,
+		ensureRangeVisible,
+		incrementMountedChart,
+		mountedRangesFromCounts,
+		nextChartMountRange,
+		yieldToMain,
+		type ChartMountCounts
 	} from '$lib/feature/top/graph/chart-range-mount';
 	import type { DashboardData, DayRange } from '$lib/feature/top/graph/chart-utils';
 	import * as m from '$lib/paraglide/messages';
@@ -18,36 +23,33 @@
 	let { dashboard }: Props = $props();
 
 	let rangeDays = $state<DayRange>('all');
-	let mountedRanges = $state<DayRange[]>(['all']);
+	let chartCounts = $state<ChartMountCounts>({ all: 1 });
 	let range = $derived(dashboard.ranges[rangeDays]);
+	let mountedRanges = $derived(mountedRangesFromCounts(chartCounts));
 
 	function selectRange(days: DayRange) {
-		mountedRanges = rememberMountedRange(mountedRanges, days);
+		chartCounts = ensureRangeVisible(chartCounts, days);
 		rangeDays = days;
 	}
 
 	onMount(() => {
 		let cancelled = false;
 
-		function scheduleRangePremount() {
-			const next = nextPremountRange(mountedRanges);
-			if (next === undefined) return;
+		async function premountRemainingCharts() {
+			while (!cancelled) {
+				const next = nextChartMountRange(chartCounts, rangeDays);
+				if (next === undefined) return;
 
-			const premount = () => {
+				await yieldToMain();
 				if (cancelled) return;
-				mountedRanges = rememberMountedRange(mountedRanges, next);
-				scheduleRangePremount();
-			};
 
-			if (typeof requestIdleCallback === 'function') {
-				requestIdleCallback(premount, { timeout: 400 });
-				return;
+				const again = nextChartMountRange(chartCounts, rangeDays);
+				if (again === undefined) return;
+				chartCounts = incrementMountedChart(chartCounts, again);
 			}
-
-			requestAnimationFrame(premount);
 		}
 
-		scheduleRangePremount();
+		void premountRemainingCharts();
 
 		return () => {
 			cancelled = true;
@@ -64,7 +66,11 @@
 				class={['graph-range', rangeDays === days && 'is-active']}
 				aria-hidden={rangeDays !== days}
 			>
-				<DashboardCharts range={dashboard.ranges[days]} modelIndices={dashboard.modelIndices} />
+				<DashboardCharts
+					range={dashboard.ranges[days]}
+					modelIndices={dashboard.modelIndices}
+					mountedCount={chartCountFor(chartCounts, days)}
+				/>
 			</div>
 		{/each}
 	</GraphGroup>
