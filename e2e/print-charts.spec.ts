@@ -117,13 +117,18 @@ test('print content fills the page width with no horizontal padding', async ({ p
 	});
 	const screenCard = await firstCard.evaluate((el) => {
 		const style = getComputedStyle(el);
-		return { paddingLeft: style.paddingLeft, paddingRight: style.paddingRight };
+		return {
+			paddingLeft: style.paddingLeft,
+			paddingRight: style.paddingRight,
+			boxShadow: style.boxShadow
+		};
 	});
 
 	expect(cssPx(screenContainer.paddingLeft)).toBeGreaterThan(0);
 	expect(cssPx(screenContainer.paddingRight)).toBeGreaterThan(0);
 	expect(cssPx(screenCard.paddingLeft)).toBeGreaterThan(0);
 	expect(cssPx(screenCard.paddingRight)).toBeGreaterThan(0);
+	expect(screenCard.boxShadow).not.toBe('none');
 	await expect(copyButton).toBeVisible();
 
 	await page.emulateMedia({ media: 'print' });
@@ -159,6 +164,8 @@ test('print content fills the page width with no horizontal padding', async ({ p
 					maxWidth: style.maxWidth,
 					paddingLeft: style.paddingLeft,
 					paddingRight: style.paddingRight,
+					boxShadow: style.boxShadow,
+					borderWidth: style.borderWidth,
 					matchesContainer:
 						!!containerEl &&
 						Math.abs(el.getBoundingClientRect().width - containerEl.getBoundingClientRect().width) <
@@ -170,6 +177,8 @@ test('print content fills the page width with no horizontal padding', async ({ p
 			maxWidth: '100%',
 			paddingLeft: '0px',
 			paddingRight: '0px',
+			boxShadow: 'none',
+			borderWidth: '0px',
 			matchesContainer: true
 		});
 

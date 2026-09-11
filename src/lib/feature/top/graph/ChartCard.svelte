@@ -59,6 +59,7 @@
 			width: 100%;
 			max-width: 100%;
 			padding-inline: 0;
+			box-shadow: none;
 			break-inside: avoid;
 			page-break-inside: avoid;
 
