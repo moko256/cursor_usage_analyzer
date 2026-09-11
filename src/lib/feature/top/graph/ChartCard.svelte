@@ -57,6 +57,8 @@
 		@media print {
 			display: inline-block;
 			width: 100%;
+			max-width: 100%;
+			padding-inline: 0;
 			break-inside: avoid;
 			page-break-inside: avoid;
 
@@ -64,6 +66,20 @@
 				break-before: page;
 				page-break-before: always;
 			}
+		}
+	}
+
+	figure {
+		@media print {
+			margin-inline: 0;
+			width: 100%;
+		}
+	}
+
+	.chart-card :global(.lc-root-container) {
+		@media print {
+			width: 100%;
+			max-width: 100%;
 		}
 	}
 

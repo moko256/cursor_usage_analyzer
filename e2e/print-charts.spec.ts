@@ -45,6 +45,11 @@ test('print stacks charts in one column and keeps cards on one page', async ({ p
 	expect(screenSecond).toBeTruthy();
 	expect(screenSecond!.x).toBeGreaterThan(screenFirst!.x + screenFirst!.width / 2);
 
+	const screenContainerMaxWidth = await page
+		.locator('main.container')
+		.evaluate((el) => getComputedStyle(el).maxWidth);
+	expect(screenContainerMaxWidth).toBe('1200px');
+
 	await page.emulateMedia({ media: 'print' });
 
 	await expect
@@ -72,4 +77,149 @@ test('print stacks charts in one column and keeps cards on one page', async ({ p
 	expect(printSecond).toBeTruthy();
 	expect(printSecond!.y).toBeGreaterThan(printFirst!.y + printFirst!.height / 2);
 	expect(Math.abs(printSecond!.x - printFirst!.x)).toBeLessThan(8);
+
+	await expect
+		.poll(async () => page.locator('main.container').evaluate((el) => getComputedStyle(el).maxWidth))
+		.toBe('none');
+});
+
+function cssPx(value: string) {
+	return Number.parseFloat(value);
+}
+
+test('print content fills the page width with no horizontal padding', async ({ page }) => {
+	await page.setViewportSize({ width: 500, height: 800 });
+	await page.goto('/cursor_usage_analyzer/en/');
+	await page.waitForLoadState('networkidle');
+	await page.locator('input[type="file"]').setInputFiles({
+		name: 'usage.csv',
+		mimeType: 'text/csv',
+		buffer: Buffer.from(csv)
+	});
+
+	await expect(page.getByText('4 records loaded')).toBeVisible();
+
+	const container = page.locator('main.container');
+	const firstCard = activeChartCards(page).first();
+	const figure = firstCard.locator('figure');
+	const chartRoot = firstCard.locator('.lc-root-container');
+	const copyButton = firstCard.getByRole('button', { name: 'Copy' });
+
+	const screenContainer = await container.evaluate((el) => {
+		const style = getComputedStyle(el);
+		return {
+			maxWidth: style.maxWidth,
+			paddingLeft: style.paddingLeft,
+			paddingRight: style.paddingRight
+		};
+	});
+	const screenCard = await firstCard.evaluate((el) => {
+		const style = getComputedStyle(el);
+		return { paddingLeft: style.paddingLeft, paddingRight: style.paddingRight };
+	});
+
+	expect(cssPx(screenContainer.paddingLeft)).toBeGreaterThan(0);
+	expect(cssPx(screenContainer.paddingRight)).toBeGreaterThan(0);
+	expect(cssPx(screenCard.paddingLeft)).toBeGreaterThan(0);
+	expect(cssPx(screenCard.paddingRight)).toBeGreaterThan(0);
+	await expect(copyButton).toBeVisible();
+
+	await page.emulateMedia({ media: 'print' });
+
+	await expect
+		.poll(async () =>
+			container.evaluate((el) => {
+				const style = getComputedStyle(el);
+				return {
+					maxWidth: style.maxWidth,
+					width: style.width,
+					paddingLeft: style.paddingLeft,
+					paddingRight: style.paddingRight
+				};
+			})
+		)
+		.toEqual({
+			maxWidth: 'none',
+			width: '500px',
+			paddingLeft: '0px',
+			paddingRight: '0px'
+		});
+
+	await expect
+		.poll(async () =>
+			firstCard.evaluate((el) => {
+				const style = getComputedStyle(el);
+				return {
+					maxWidth: style.maxWidth,
+					paddingLeft: style.paddingLeft,
+					paddingRight: style.paddingRight
+				};
+			})
+		)
+		.toEqual({
+			maxWidth: '100%',
+			paddingLeft: '0px',
+			paddingRight: '0px'
+		});
+
+	await expect
+		.poll(async () =>
+			figure.evaluate((el) => {
+				const style = getComputedStyle(el);
+				return {
+					width: style.width,
+					marginLeft: style.marginLeft,
+					marginRight: style.marginRight
+				};
+			})
+		)
+		.toEqual({
+			width: '500px',
+			marginLeft: '0px',
+			marginRight: '0px'
+		});
+
+	await expect
+		.poll(async () =>
+			chartRoot.evaluate((el) => {
+				const style = getComputedStyle(el);
+				return { width: style.width, maxWidth: style.maxWidth };
+			})
+		)
+		.toEqual({ width: '500px', maxWidth: '100%' });
+
+	const pageMargin = await page.evaluate(() => {
+		for (const sheet of document.styleSheets) {
+			let rules: CSSRuleList;
+			try {
+				rules = sheet.cssRules;
+			} catch {
+				continue;
+			}
+
+			for (const rule of rules) {
+				if (!(rule instanceof CSSMediaRule) || !rule.conditionText.includes('print')) {
+					continue;
+				}
+
+				for (const inner of rule.cssRules) {
+					if (inner instanceof CSSPageRule) {
+						return inner.style.margin || inner.style.getPropertyValue('margin');
+					}
+				}
+			}
+		}
+
+		return null;
+	});
+	expect(pageMargin === '0' || pageMargin === '0px').toBeTruthy();
+
+	await expect(copyButton).toBeVisible();
+
+	const containerBox = await container.boundingBox();
+	const cardBox = await firstCard.boundingBox();
+	expect(containerBox).toBeTruthy();
+	expect(cardBox).toBeTruthy();
+	expect(containerBox!.width).toBe(500);
+	expect(cardBox!.width).toBe(500);
 });
