@@ -41,10 +41,6 @@
 	@import '$lib/styles/pico.scss';
 
 	@media print {
-		@page {
-			margin: 0;
-		}
-
 		:global(.container) {
 			max-width: none;
 			width: 100%;

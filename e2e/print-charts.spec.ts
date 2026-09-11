@@ -232,7 +232,7 @@ test('print content fills the page width with no horizontal padding', async ({ p
 
 		return null;
 	});
-	expect(pageMargin === '0' || pageMargin === '0px').toBeTruthy();
+	expect(pageMargin).toBeNull();
 
 	await expect(copyButton).toBeVisible();
 });
