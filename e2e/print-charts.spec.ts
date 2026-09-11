@@ -79,7 +79,9 @@ test('print stacks charts in one column and keeps cards on one page', async ({ p
 	expect(Math.abs(printSecond!.x - printFirst!.x)).toBeLessThan(8);
 
 	await expect
-		.poll(async () => page.locator('main.container').evaluate((el) => getComputedStyle(el).maxWidth))
+		.poll(async () =>
+			page.locator('main.container').evaluate((el) => getComputedStyle(el).maxWidth)
+		)
 		.toBe('none');
 });
 
@@ -132,61 +134,77 @@ test('print content fills the page width with no horizontal padding', async ({ p
 				const style = getComputedStyle(el);
 				return {
 					maxWidth: style.maxWidth,
-					width: style.width,
 					paddingLeft: style.paddingLeft,
-					paddingRight: style.paddingRight
+					paddingRight: style.paddingRight,
+					matchesPage:
+						Math.abs(el.getBoundingClientRect().width - document.documentElement.clientWidth) < 1
 				};
 			})
 		)
 		.toEqual({
 			maxWidth: 'none',
-			width: '500px',
 			paddingLeft: '0px',
-			paddingRight: '0px'
+			paddingRight: '0px',
+			matchesPage: true
 		});
 
 	await expect
 		.poll(async () =>
 			firstCard.evaluate((el) => {
 				const style = getComputedStyle(el);
+				const containerEl = el.closest('.container');
 				return {
 					maxWidth: style.maxWidth,
 					paddingLeft: style.paddingLeft,
-					paddingRight: style.paddingRight
+					paddingRight: style.paddingRight,
+					matchesContainer:
+						!!containerEl &&
+						Math.abs(el.getBoundingClientRect().width - containerEl.getBoundingClientRect().width) <
+							1
 				};
 			})
 		)
 		.toEqual({
 			maxWidth: '100%',
 			paddingLeft: '0px',
-			paddingRight: '0px'
+			paddingRight: '0px',
+			matchesContainer: true
 		});
 
 	await expect
 		.poll(async () =>
 			figure.evaluate((el) => {
 				const style = getComputedStyle(el);
+				const card = el.closest('.chart-card');
 				return {
-					width: style.width,
 					marginLeft: style.marginLeft,
-					marginRight: style.marginRight
+					marginRight: style.marginRight,
+					matchesCard:
+						!!card &&
+						Math.abs(el.getBoundingClientRect().width - card.getBoundingClientRect().width) < 1
 				};
 			})
 		)
 		.toEqual({
-			width: '500px',
 			marginLeft: '0px',
-			marginRight: '0px'
+			marginRight: '0px',
+			matchesCard: true
 		});
 
 	await expect
 		.poll(async () =>
 			chartRoot.evaluate((el) => {
 				const style = getComputedStyle(el);
-				return { width: style.width, maxWidth: style.maxWidth };
+				const card = el.closest('.chart-card');
+				return {
+					maxWidth: style.maxWidth,
+					matchesCard:
+						!!card &&
+						Math.abs(el.getBoundingClientRect().width - card.getBoundingClientRect().width) < 1
+				};
 			})
 		)
-		.toEqual({ width: '500px', maxWidth: '100%' });
+		.toEqual({ maxWidth: '100%', matchesCard: true });
 
 	const pageMargin = await page.evaluate(() => {
 		for (const sheet of document.styleSheets) {
@@ -215,11 +233,4 @@ test('print content fills the page width with no horizontal padding', async ({ p
 	expect(pageMargin === '0' || pageMargin === '0px').toBeTruthy();
 
 	await expect(copyButton).toBeVisible();
-
-	const containerBox = await container.boundingBox();
-	const cardBox = await firstCard.boundingBox();
-	expect(containerBox).toBeTruthy();
-	expect(cardBox).toBeTruthy();
-	expect(containerBox!.width).toBe(500);
-	expect(cardBox!.width).toBe(500);
 });
