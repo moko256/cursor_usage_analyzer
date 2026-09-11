@@ -137,7 +137,9 @@ test('print content fills the page width with no horizontal padding', async ({ p
 					paddingLeft: style.paddingLeft,
 					paddingRight: style.paddingRight,
 					matchesPage:
-						Math.abs(el.getBoundingClientRect().width - document.documentElement.clientWidth) < 1
+						Math.abs(
+							el.getBoundingClientRect().width - document.body.getBoundingClientRect().width
+						) < 1
 				};
 			})
 		)
