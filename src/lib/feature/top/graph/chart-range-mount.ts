@@ -62,13 +62,11 @@ type SchedulerWithYield = {
 	yield(): Promise<void>;
 };
 
-export function yieldToMain(): Promise<void> {
+export function yieldToMain(): Promise<void> | undefined {
 	const scheduler = (globalThis as { scheduler?: SchedulerWithYield }).scheduler;
 	if (typeof scheduler?.yield === 'function') {
 		return scheduler.yield();
 	}
 
-	return new Promise((resolve) => {
-		setTimeout(resolve, 0);
-	});
+	return undefined;
 }

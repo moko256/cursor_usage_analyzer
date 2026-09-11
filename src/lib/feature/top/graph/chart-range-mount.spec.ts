@@ -81,7 +81,6 @@ describe('nextChartMountRange', () => {
 
 describe('yieldToMain', () => {
 	afterEach(() => {
-		vi.useRealTimers();
 		vi.unstubAllGlobals();
 	});
 
@@ -94,14 +93,11 @@ describe('yieldToMain', () => {
 		expect(yieldMock).toHaveBeenCalledOnce();
 	});
 
-	it('falls back to setTimeout when scheduler.yield is missing', async () => {
+	it('does not yield when scheduler.yield is missing', () => {
 		vi.stubGlobal('scheduler', undefined);
-		vi.useFakeTimers();
+		expect(yieldToMain()).toBeUndefined();
 
-		const pending = yieldToMain();
-		await vi.runAllTimersAsync();
-		await pending;
-
-		expect(await pending).toBeUndefined();
+		vi.stubGlobal('scheduler', {});
+		expect(yieldToMain()).toBeUndefined();
 	});
 });

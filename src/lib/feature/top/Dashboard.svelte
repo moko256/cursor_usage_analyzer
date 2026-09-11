@@ -41,8 +41,11 @@
 				const next = nextChartMountRange(chartCounts, rangeDays);
 				if (next === undefined) return;
 
-				await yieldToMain();
-				if (cancelled) return;
+				const pause = yieldToMain();
+				if (pause) {
+					await pause;
+					if (cancelled) return;
+				}
 
 				const again = nextChartMountRange(chartCounts, rangeDays);
 				if (again === undefined) return;
