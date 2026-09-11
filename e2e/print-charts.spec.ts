@@ -48,9 +48,13 @@ test('print stacks charts in one column and keeps cards on one page', async ({ p
 	await page.emulateMedia({ media: 'print' });
 
 	await expect
-		.poll(async () =>
-			columnCount(await grid.evaluate((el) => getComputedStyle(el).gridTemplateColumns))
-		)
+		.poll(async () => {
+			const style = await grid.evaluate((el) => {
+				const computed = getComputedStyle(el);
+				return { display: computed.display, columns: computed.gridTemplateColumns };
+			});
+			return style.display === 'block' ? 1 : columnCount(style.columns);
+		})
 		.toBe(1);
 	await expect
 		.poll(async () => firstCard.evaluate((el) => getComputedStyle(el).breakInside))

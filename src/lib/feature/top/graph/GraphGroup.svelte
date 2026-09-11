@@ -34,4 +34,14 @@
 		visibility: hidden;
 		pointer-events: none;
 	}
+
+	@media print {
+		.graph-group :global(.graph-range.is-active) {
+			position: static;
+		}
+
+		.graph-group :global(.graph-range:not(.is-active)) {
+			display: none;
+		}
+	}
 </style>

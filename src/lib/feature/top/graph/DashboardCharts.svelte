@@ -34,7 +34,8 @@
 		}
 
 		@media print {
-			grid-template-columns: minmax(0, 1fr);
+			/* Block flow keeps a single column and lets cards avoid page splits. */
+			display: block;
 		}
 	}
 </style>
