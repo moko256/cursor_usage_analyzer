@@ -55,6 +55,8 @@
 
 	.chart-card {
 		@media print {
+			display: inline-block;
+			width: 100%;
 			break-inside: avoid;
 			page-break-inside: avoid;
 		}

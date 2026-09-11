@@ -36,6 +36,10 @@
 	}
 
 	@media print {
+		.graph-group {
+			position: static;
+		}
+
 		.graph-group :global(.graph-range.is-active) {
 			position: static;
 		}
