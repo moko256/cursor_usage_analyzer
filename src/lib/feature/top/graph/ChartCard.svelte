@@ -53,6 +53,13 @@
 		overflow: visible;
 	}
 
+	.chart-card {
+		@media print {
+			break-inside: avoid;
+			page-break-inside: avoid;
+		}
+	}
+
 	figcaption {
 		display: flex;
 		align-items: baseline;

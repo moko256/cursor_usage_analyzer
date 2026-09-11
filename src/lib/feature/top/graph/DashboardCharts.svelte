@@ -32,5 +32,9 @@
 		@media (max-width: 700px) {
 			grid-template-columns: minmax(0, 1fr);
 		}
+
+		@media print {
+			grid-template-columns: minmax(0, 1fr);
+		}
 	}
 </style>
