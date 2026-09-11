@@ -7,17 +7,30 @@ test.use({ viewport: { width: 1400, height: 1100 } });
 
 const csv = buildHeavyUsageCsv({ days: 60 });
 
-test('remaining charts mount one at a time after the first card', async ({ page }) => {
+test('all-time charts appear together; other ranges premount per graph', async ({ page }) => {
 	await page.goto('/cursor_usage_analyzer/en/');
 	await page.waitForLoadState('networkidle');
 
 	await page.evaluate(() => {
-		const counts: number[] = [];
+		const activeCounts: number[] = [];
+		const inactiveCounts: number[] = [];
 		const record = () => {
-			const count = document.querySelectorAll('.graph-range.is-active .chart-card').length;
-			if (counts.at(-1) !== count) counts.push(count);
+			const active = document.querySelectorAll('.graph-range.is-active .chart-card').length;
+			const inactive = document.querySelectorAll('.graph-range:not(.is-active) .chart-card').length;
+			if (activeCounts.at(-1) !== active) activeCounts.push(active);
+			if (inactiveCounts.at(-1) !== inactive) inactiveCounts.push(inactive);
 		};
-		(globalThis as unknown as { __activeChartCounts: number[] }).__activeChartCounts = counts;
+		(
+			globalThis as unknown as {
+				__activeChartCounts: number[];
+				__inactiveChartCounts: number[];
+			}
+		).__activeChartCounts = activeCounts;
+		(
+			globalThis as unknown as {
+				__inactiveChartCounts: number[];
+			}
+		).__inactiveChartCounts = inactiveCounts;
 		record();
 		new MutationObserver(record).observe(document.body, { childList: true, subtree: true });
 	});
@@ -27,16 +40,29 @@ test('remaining charts mount one at a time after the first card', async ({ page 
 	await expect(activeChartCards(page)).toHaveCount(6, { timeout: 60_000 });
 	await expect(page.locator('.graph-range')).toHaveCount(3, { timeout: 60_000 });
 
-	const counts = await page.evaluate(
-		() => (globalThis as unknown as { __activeChartCounts: number[] }).__activeChartCounts
-	);
+	const { activeCounts, inactiveCounts } = await page.evaluate(() => {
+		const state = globalThis as unknown as {
+			__activeChartCounts: number[];
+			__inactiveChartCounts: number[];
+		};
+		return {
+			activeCounts: state.__activeChartCounts,
+			inactiveCounts: state.__inactiveChartCounts
+		};
+	});
 
-	expect(counts[0], `counts=${counts.join(',')}`).toBe(0);
-	expect(counts, `counts=${counts.join(',')}`).toContain(1);
-	expect(counts.at(-1), `counts=${counts.join(',')}`).toBe(6);
+	expect(activeCounts[0], `active=${activeCounts.join(',')}`).toBe(0);
+	expect(activeCounts.at(-1), `active=${activeCounts.join(',')}`).toBe(6);
 	expect(
-		counts.some((count) => count > 0 && count < 6),
-		`expected incremental mounts, counts=${counts.join(',')}`
+		activeCounts.some((count) => count > 0 && count < 6),
+		`all-time should appear as one period, active=${activeCounts.join(',')}`
+	).toBe(false);
+
+	expect(inactiveCounts[0], `inactive=${inactiveCounts.join(',')}`).toBe(0);
+	expect(inactiveCounts.at(-1), `inactive=${inactiveCounts.join(',')}`).toBe(12);
+	expect(
+		inactiveCounts.some((count) => count > 0 && count < 12),
+		`other ranges should premount per graph, inactive=${inactiveCounts.join(',')}`
 	).toBe(true);
 
 	const group = page.getByRole('group', { name: 'Chart date range' });

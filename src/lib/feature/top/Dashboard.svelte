@@ -4,6 +4,7 @@
 	import GraphGroup from '$lib/feature/top/graph/GraphGroup.svelte';
 	import RangeSwitcher from '$lib/feature/top/graph/RangeSwitcher.svelte';
 	import {
+		INITIAL_CHART_COUNTS,
 		chartCountFor,
 		ensureRangeVisible,
 		incrementMountedChart,
@@ -23,7 +24,7 @@
 	let { dashboard }: Props = $props();
 
 	let rangeDays = $state<DayRange>('all');
-	let chartCounts = $state<ChartMountCounts>({ all: 1 });
+	let chartCounts = $state<ChartMountCounts>({ ...INITIAL_CHART_COUNTS });
 	let range = $derived(dashboard.ranges[rangeDays]);
 	let mountedRanges = $derived(mountedRangesFromCounts(chartCounts));
 

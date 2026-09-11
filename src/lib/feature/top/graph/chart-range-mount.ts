@@ -6,8 +6,16 @@ export const PREMOUNT_RANGES = [7, 1] as const satisfies readonly DayRange[];
 
 export type ChartMountCounts = { [K in DayRange]?: number };
 
+export const INITIAL_CHART_COUNTS = {
+	all: DASHBOARD_CHART_COUNT
+} as const satisfies ChartMountCounts;
+
 export function chartCountFor(counts: ChartMountCounts, range: DayRange): number {
 	return counts[range] ?? 0;
+}
+
+export function isRangeComplete(counts: ChartMountCounts, range: DayRange): boolean {
+	return chartCountFor(counts, range) >= DASHBOARD_CHART_COUNT;
 }
 
 export function mountedRangesFromCounts(counts: ChartMountCounts): DayRange[] {
@@ -20,7 +28,7 @@ export function mountedRangesFromCounts(counts: ChartMountCounts): DayRange[] {
 }
 
 export function ensureRangeVisible(counts: ChartMountCounts, range: DayRange): ChartMountCounts {
-	return chartCountFor(counts, range) > 0 ? counts : { ...counts, [range]: 1 };
+	return isRangeComplete(counts, range) ? counts : { ...counts, [range]: DASHBOARD_CHART_COUNT };
 }
 
 export function incrementMountedChart(counts: ChartMountCounts, range: DayRange): ChartMountCounts {
