@@ -62,6 +62,9 @@ test('print stacks charts in one column and keeps cards on one page', async ({ p
 	await expect
 		.poll(async () => firstCard.evaluate((el) => getComputedStyle(el).pageBreakInside))
 		.toBe('avoid');
+	await expect
+		.poll(async () => page.locator('.graph-range.is-active .chart-card.print-break-before').count())
+		.toBeGreaterThan(0);
 
 	const printFirst = await cards.nth(0).boundingBox();
 	const printSecond = await cards.nth(1).boundingBox();

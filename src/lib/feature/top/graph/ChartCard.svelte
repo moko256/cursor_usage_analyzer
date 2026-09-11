@@ -59,6 +59,11 @@
 			width: 100%;
 			break-inside: avoid;
 			page-break-inside: avoid;
+
+			&.print-break-before {
+				break-before: page;
+				page-break-before: always;
+			}
 		}
 	}
 
