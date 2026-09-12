@@ -39,4 +39,12 @@
 <style>
 	@import 'kiso.css';
 	@import '$lib/styles/pico.scss';
+
+	@media print {
+		:global(.container) {
+			max-width: none;
+			width: 100%;
+			padding-inline: 0;
+		}
+	}
 </style>

@@ -32,5 +32,10 @@
 		@media (max-width: 700px) {
 			grid-template-columns: minmax(0, 1fr);
 		}
+
+		@media print {
+			/* Block flow keeps a single column and lets cards avoid page splits. */
+			display: block;
+		}
 	}
 </style>
