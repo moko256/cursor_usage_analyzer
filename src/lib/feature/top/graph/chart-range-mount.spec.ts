@@ -1,81 +1,23 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DayRange } from './chart-types';
-import {
-	DASHBOARD_CHART_COUNT,
-	INITIAL_CHART_COUNTS,
-	chartCountFor,
-	ensureRangeVisible,
-	incrementMountedChart,
-	isRangeComplete,
-	mountedRangesFromCounts,
-	nextChartMountRange,
-	yieldToMain
-} from './chart-range-mount';
+import { nextPremountRange, rememberMountedRange, yieldToMain } from './chart-range-mount';
 
-describe('INITIAL_CHART_COUNTS', () => {
-	it('shows every all-time chart together', () => {
-		expect(INITIAL_CHART_COUNTS).toEqual({ all: DASHBOARD_CHART_COUNT });
+describe('rememberMountedRange', () => {
+	it('appends a range the first time it is selected', () => {
+		expect(rememberMountedRange(['all'], 7)).toEqual(['all', 7]);
+	});
+
+	it('keeps the existing list when the range is already mounted', () => {
+		const mounted: DayRange[] = ['all', 7];
+		expect(rememberMountedRange(mounted, 7)).toBe(mounted);
 	});
 });
 
-describe('chartCountFor', () => {
-	it('returns 0 for a range that has not started mounting', () => {
-		expect(chartCountFor({ all: 1 }, 7)).toBe(0);
-	});
-});
-
-describe('isRangeComplete', () => {
-	it('is true only after every chart in the range is mounted', () => {
-		expect(isRangeComplete({ all: 5 }, 'all')).toBe(false);
-		expect(isRangeComplete({ all: 6 }, 'all')).toBe(true);
-	});
-});
-
-describe('mountedRangesFromCounts', () => {
-	it('lists all-time first, then premount ranges that have at least one chart', () => {
-		expect(mountedRangesFromCounts({ all: 1 })).toEqual(['all']);
-		expect(mountedRangesFromCounts({ all: 6, 1: 2 })).toEqual(['all', 1]);
-		expect(mountedRangesFromCounts({ all: 6, 7: 1, 1: 1 })).toEqual(['all', 7, 1]);
-	});
-});
-
-describe('ensureRangeVisible', () => {
-	it('mounts every chart in a period so the range can display together', () => {
-		expect(ensureRangeVisible({ all: 6 }, 7)).toEqual({ all: 6, 7: 6 });
-		expect(ensureRangeVisible({ all: 6, 7: 3 }, 7)).toEqual({ all: 6, 7: 6 });
-	});
-
-	it('keeps the existing object when the range is already complete', () => {
-		const counts = { all: 6, 7: 6 };
-		expect(ensureRangeVisible(counts, 7)).toBe(counts);
-	});
-});
-
-describe('incrementMountedChart', () => {
-	it('adds one chart until the dashboard count is reached', () => {
-		expect(incrementMountedChart({ all: 1 }, 'all')).toEqual({ all: 2 });
-		const complete = { all: DASHBOARD_CHART_COUNT };
-		expect(incrementMountedChart(complete, 'all')).toBe(complete);
-	});
-});
-
-describe('nextChartMountRange', () => {
-	it('finishes the active range before premounting the others', () => {
-		expect(nextChartMountRange({ all: 1 }, 'all')).toBe('all');
-		expect(nextChartMountRange({ all: 6 }, 'all')).toBe(7);
-		expect(nextChartMountRange({ all: 6, 7: 6 }, 'all')).toBe(1);
-		expect(nextChartMountRange({ all: 6, 7: 6, 1: 6 }, 'all')).toBeUndefined();
-	});
-
-	it('prioritizes a newly selected range over leftover premount work', () => {
-		const counts = { all: 4, 7: 2 };
-		expect(nextChartMountRange(counts, 1)).toBe(1);
-		expect(nextChartMountRange({ ...counts, 1: 1 }, 1)).toBe(1);
-	});
-
-	it('returns all-time last when it is incomplete and not active', () => {
-		const counts: { [K in DayRange]?: number } = { all: 3, 7: 6, 1: 6 };
-		expect(nextChartMountRange(counts, 7)).toBe('all');
+describe('nextPremountRange', () => {
+	it('returns 7-day then 1-day after all-time is mounted', () => {
+		expect(nextPremountRange(['all'])).toBe(7);
+		expect(nextPremountRange(['all', 7])).toBe(1);
+		expect(nextPremountRange(['all', 7, 1])).toBeUndefined();
 	});
 });
 

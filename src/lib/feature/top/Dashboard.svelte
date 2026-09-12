@@ -4,14 +4,9 @@
 	import GraphGroup from '$lib/feature/top/graph/GraphGroup.svelte';
 	import RangeSwitcher from '$lib/feature/top/graph/RangeSwitcher.svelte';
 	import {
-		INITIAL_CHART_COUNTS,
-		chartCountFor,
-		ensureRangeVisible,
-		incrementMountedChart,
-		mountedRangesFromCounts,
-		nextChartMountRange,
-		yieldToMain,
-		type ChartMountCounts
+		nextPremountRange,
+		rememberMountedRange,
+		yieldToMain
 	} from '$lib/feature/top/graph/chart-range-mount';
 	import type { DashboardData, DayRange } from '$lib/feature/top/graph/chart-utils';
 	import * as m from '$lib/paraglide/messages';
@@ -24,12 +19,11 @@
 	let { dashboard }: Props = $props();
 
 	let rangeDays = $state<DayRange>('all');
-	let chartCounts = $state<ChartMountCounts>({ ...INITIAL_CHART_COUNTS });
+	let mountedRanges = $state<DayRange[]>(['all']);
 	let range = $derived(dashboard.ranges[rangeDays]);
-	let mountedRanges = $derived(mountedRangesFromCounts(chartCounts));
 
 	function selectRange(days: DayRange) {
-		chartCounts = ensureRangeVisible(chartCounts, days);
+		mountedRanges = rememberMountedRange(mountedRanges, days);
 		rangeDays = days;
 	}
 
@@ -38,7 +32,7 @@
 
 		async function premountRemainingCharts() {
 			while (!cancelled) {
-				const next = nextChartMountRange(chartCounts, rangeDays);
+				const next = nextPremountRange(mountedRanges);
 				if (next === undefined) return;
 
 				const pause = yieldToMain();
@@ -47,9 +41,9 @@
 					if (cancelled) return;
 				}
 
-				const again = nextChartMountRange(chartCounts, rangeDays);
+				const again = nextPremountRange(mountedRanges);
 				if (again === undefined) return;
-				chartCounts = incrementMountedChart(chartCounts, again);
+				mountedRanges = rememberMountedRange(mountedRanges, again);
 			}
 		}
 
@@ -70,11 +64,7 @@
 				class={['graph-range', rangeDays === days && 'is-active']}
 				aria-hidden={rangeDays !== days}
 			>
-				<DashboardCharts
-					range={dashboard.ranges[days]}
-					modelIndices={dashboard.modelIndices}
-					mountedCount={chartCountFor(chartCounts, days)}
-				/>
+				<DashboardCharts range={dashboard.ranges[days]} modelIndices={dashboard.modelIndices} />
 			</div>
 		{/each}
 	</GraphGroup>

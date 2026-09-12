@@ -7,7 +7,9 @@ test.use({ viewport: { width: 1400, height: 1100 } });
 
 const csv = buildHeavyUsageCsv({ days: 60 });
 
-test('all-time charts appear together; other ranges premount per graph', async ({ page }) => {
+test('all-time charts appear together; other ranges premount per DashboardCharts', async ({
+	page
+}) => {
 	await page.goto('/cursor_usage_analyzer/en/');
 	await page.waitForLoadState('networkidle');
 
@@ -61,8 +63,12 @@ test('all-time charts appear together; other ranges premount per graph', async (
 	expect(inactiveCounts[0], `inactive=${inactiveCounts.join(',')}`).toBe(0);
 	expect(inactiveCounts.at(-1), `inactive=${inactiveCounts.join(',')}`).toBe(12);
 	expect(
-		inactiveCounts.some((count) => count > 0 && count < 12),
-		`other ranges should premount per graph, inactive=${inactiveCounts.join(',')}`
+		inactiveCounts.every((count) => count % 6 === 0),
+		`other ranges should premount a full DashboardCharts, inactive=${inactiveCounts.join(',')}`
+	).toBe(true);
+	expect(
+		inactiveCounts.some((count) => count === 6),
+		`7-day DashboardCharts should appear before 1-day, inactive=${inactiveCounts.join(',')}`
 	).toBe(true);
 
 	const group = page.getByRole('group', { name: 'Chart date range' });
