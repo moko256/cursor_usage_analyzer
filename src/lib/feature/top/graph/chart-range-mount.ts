@@ -9,3 +9,16 @@ export function rememberMountedRange(mounted: DayRange[], next: DayRange): DayRa
 export function nextPremountRange(mounted: readonly DayRange[]): DayRange | undefined {
 	return PREMOUNT_RANGES.find((range) => !mounted.includes(range));
 }
+
+type SchedulerWithYield = {
+	yield(): Promise<void>;
+};
+
+export function yieldToMain(): Promise<void> | undefined {
+	const scheduler = (globalThis as { scheduler?: SchedulerWithYield }).scheduler;
+	if (typeof scheduler?.yield === 'function') {
+		return scheduler.yield();
+	}
+
+	return undefined;
+}

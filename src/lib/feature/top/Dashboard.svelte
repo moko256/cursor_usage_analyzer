@@ -4,8 +4,9 @@
 	import GraphGroup from '$lib/feature/top/graph/GraphGroup.svelte';
 	import RangeSwitcher from '$lib/feature/top/graph/RangeSwitcher.svelte';
 	import {
+		nextPremountRange,
 		rememberMountedRange,
-		nextPremountRange
+		yieldToMain
 	} from '$lib/feature/top/graph/chart-range-mount';
 	import type { DashboardData, DayRange } from '$lib/feature/top/graph/chart-utils';
 	import * as m from '$lib/paraglide/messages';
@@ -29,25 +30,24 @@
 	onMount(() => {
 		let cancelled = false;
 
-		function scheduleRangePremount() {
-			const next = nextPremountRange(mountedRanges);
-			if (next === undefined) return;
+		async function premountRemainingCharts() {
+			while (!cancelled) {
+				const next = nextPremountRange(mountedRanges);
+				if (next === undefined) return;
 
-			const premount = () => {
-				if (cancelled) return;
-				mountedRanges = rememberMountedRange(mountedRanges, next);
-				scheduleRangePremount();
-			};
+				const pause = yieldToMain();
+				if (pause) {
+					await pause;
+					if (cancelled) return;
+				}
 
-			if (typeof requestIdleCallback === 'function') {
-				requestIdleCallback(premount, { timeout: 400 });
-				return;
+				const again = nextPremountRange(mountedRanges);
+				if (again === undefined) return;
+				mountedRanges = rememberMountedRange(mountedRanges, again);
 			}
-
-			requestAnimationFrame(premount);
 		}
 
-		scheduleRangePremount();
+		void premountRemainingCharts();
 
 		return () => {
 			cancelled = true;

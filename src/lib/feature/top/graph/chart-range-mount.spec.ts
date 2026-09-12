@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DayRange } from './chart-types';
-import { nextPremountRange, rememberMountedRange } from './chart-range-mount';
+import { nextPremountRange, rememberMountedRange, yieldToMain } from './chart-range-mount';
 
 describe('rememberMountedRange', () => {
 	it('appends a range the first time it is selected', () => {
@@ -18,5 +18,28 @@ describe('nextPremountRange', () => {
 		expect(nextPremountRange(['all'])).toBe(7);
 		expect(nextPremountRange(['all', 7])).toBe(1);
 		expect(nextPremountRange(['all', 7, 1])).toBeUndefined();
+	});
+});
+
+describe('yieldToMain', () => {
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	it('uses scheduler.yield when the browser provides it', async () => {
+		const yieldMock = vi.fn().mockResolvedValue(undefined);
+		vi.stubGlobal('scheduler', { yield: yieldMock });
+
+		await yieldToMain();
+
+		expect(yieldMock).toHaveBeenCalledOnce();
+	});
+
+	it('does not yield when scheduler.yield is missing', () => {
+		vi.stubGlobal('scheduler', undefined);
+		expect(yieldToMain()).toBeUndefined();
+
+		vi.stubGlobal('scheduler', {});
+		expect(yieldToMain()).toBeUndefined();
 	});
 });
