@@ -46,11 +46,14 @@ export default defineConfig(({ command }) => {
 							: {
 									// Production
 									'default-src': ['none'],
-									'worker-src': ['blob:', 'data:'],
+									// Inline workers use blob URLs. data: would allow arbitrary worker scripts.
+									'worker-src': ['blob:'],
 									'manifest-src': ['self'],
 									'img-src': ['self'],
 									'frame-ancestors': ['none'],
-									'base-uri': ['none']
+									'base-uri': ['none'],
+									'form-action': ['none'],
+									'upgrade-insecure-requests': true
 								},
 					mode: 'hash'
 				},
