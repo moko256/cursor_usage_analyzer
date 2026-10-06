@@ -46,7 +46,6 @@ export default defineConfig(({ command }) => {
 							: {
 									// Production
 									'default-src': ['none'],
-									// Inline workers use blob URLs. data: would allow arbitrary worker scripts.
 									'worker-src': ['blob:'],
 									'manifest-src': ['self'],
 									'img-src': ['self'],
