@@ -46,11 +46,13 @@ export default defineConfig(({ command }) => {
 							: {
 									// Production
 									'default-src': ['none'],
-									'worker-src': ['blob:', 'data:'],
+									'worker-src': ['blob:'],
 									'manifest-src': ['self'],
 									'img-src': ['self'],
 									'frame-ancestors': ['none'],
-									'base-uri': ['none']
+									'base-uri': ['none'],
+									'form-action': ['none'],
+									'upgrade-insecure-requests': true
 								},
 					mode: 'hash'
 				},
