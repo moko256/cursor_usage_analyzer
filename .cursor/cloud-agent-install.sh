@@ -36,7 +36,8 @@ prefer_node() {
 	local runtime="/exec-daemon/cursor-node"
 	local signature wrapper
 
-	if [[ -d /exec-daemon && ! -x "${runtime}" && -f /exec-daemon/node ]]; then
+	# install-exec-daemon replaces this binary on every environment build.
+	if [[ -d /exec-daemon && -f /exec-daemon/node ]]; then
 		signature="$(od -An -t x1 -N 4 /exec-daemon/node | tr -d ' \n')"
 		if [[ "${signature}" == "7f454c46" ]]; then
 			sudo cp -a /exec-daemon/node "${runtime}"
