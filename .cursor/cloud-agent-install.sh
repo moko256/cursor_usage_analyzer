@@ -66,8 +66,8 @@ install_node
 prefer_node
 
 export PATH="/usr/local/bin:${PATH}"
-sudo env COREPACK_ENABLE_DOWNLOAD_PROMPT=0 /usr/local/bin/corepack enable
-sudo env COREPACK_ENABLE_DOWNLOAD_PROMPT=0 /usr/local/bin/corepack prepare "pnpm@${PNPM_VERSION}" --activate
+# Node.js 26 does not ship Corepack.
+sudo /usr/local/bin/npm install -g "pnpm@${PNPM_VERSION}"
 
 pnpm install --frozen-lockfile
 pnpm exec playwright install --with-deps chromium
