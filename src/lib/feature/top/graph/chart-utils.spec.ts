@@ -1,6 +1,6 @@
 import { timeDay } from 'd3-time';
 import { describe, expect, it } from 'vitest';
-import { csvPoint, modelBreakdown } from '$lib/csv-point.fixture';
+import { csvPoint, modelBreakdown } from '#lib/csv-point.fixture.js';
 import {
 	buildDailyModelSeries,
 	buildModelBreakdownSeries,

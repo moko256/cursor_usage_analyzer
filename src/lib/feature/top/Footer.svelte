@@ -1,6 +1,6 @@
 <script>
-	import { m } from '$lib/paraglide/messages';
-	import { currentPageAbsoluteUrl } from '$lib/site-url-resolver';
+	import { m } from '#lib/paraglide/messages.js';
+	import { currentPageAbsoluteUrl } from '#lib/site-url-resolver.js';
 </script>
 
 <footer class="container">

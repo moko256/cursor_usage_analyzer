@@ -7,6 +7,10 @@ export const e2eDevOrigin = `http://${e2eDevHost}:${e2eDevPort}`;
 
 const serverCommand = ['pnpm', 'dev', '--host', e2eDevHost, '--port', String(e2eDevPort)];
 
+/**
+ * @param {string} stdout
+ * @returns {number[]}
+ */
 export function parseLsofPids(stdout) {
 	return uniquePids(
 		stdout
@@ -18,6 +22,11 @@ export function parseLsofPids(stdout) {
 	);
 }
 
+/**
+ * @param {string} stdout
+ * @param {number} port
+ * @returns {number[]}
+ */
 export function parseNetstatPids(stdout, port) {
 	const pattern = new RegExp(`[:.]${port}\\s+\\S+\\s+LISTEN\\s+(\\d+)/`, 'g');
 	const pids = [];
@@ -29,10 +38,19 @@ export function parseNetstatPids(stdout, port) {
 	return uniquePids(pids);
 }
 
+/**
+ * @param {string} cmdline
+ */
 export function isDevWrapperCommand(cmdline) {
 	return /(?:^|\/)(?:node|pnpm|npm|vite)(?:\s|$)/.test(cmdline);
 }
 
+/**
+ * @param {number} pid
+ * @param {(pid: number) => number} readPpid
+ * @param {(pid: number) => string} readCmdline
+ * @returns {number[]}
+ */
 export function collectAncestorPids(pid, readPpid, readCmdline) {
 	const pids = [pid];
 	let current = pid;
@@ -64,6 +82,10 @@ export function selfProcessPids(readParentPid = readPpid) {
 	return pids;
 }
 
+/**
+ * @param {number} port
+ * @returns {number[]}
+ */
 export function listenPids(port) {
 	try {
 		const stdout = execFileSync('lsof', ['-nP', `-iTCP:${port}`, '-sTCP:LISTEN', '-t'], {
@@ -72,7 +94,9 @@ export function listenPids(port) {
 		});
 		return parseLsofPids(stdout);
 	} catch (error) {
-		if (error.status === 1) return [];
+		if (typeof error === 'object' && error !== null && 'status' in error && error.status === 1) {
+			return [];
+		}
 	}
 
 	try {
@@ -86,6 +110,15 @@ export function listenPids(port) {
 	}
 }
 
+/**
+ * @param {number} port
+ * @param {{
+ *   kill?: (pid: number, signal?: NodeJS.Signals) => void;
+ *   sleep?: (ms: number) => Promise<void>;
+ *   pidsForPort?: (port: number) => number[];
+ * }} [options]
+ * @returns {Promise<number[]>}
+ */
 export async function freeListenPort(
 	port,
 	{ kill = process.kill, sleep = delay, pidsForPort = listenPids } = {}
@@ -128,10 +161,18 @@ export async function freeListenPort(
 	return tree;
 }
 
+/**
+ * @param {number[]} pids
+ * @returns {number[]}
+ */
 function uniquePids(pids) {
 	return [...new Set(pids.filter((pid) => Number.isInteger(pid) && pid > 0))];
 }
 
+/**
+ * @param {number} pid
+ * @returns {number}
+ */
 function readPpid(pid) {
 	try {
 		const status = readFileSync(`/proc/${pid}/status`, 'utf8');
@@ -141,6 +182,10 @@ function readPpid(pid) {
 	}
 }
 
+/**
+ * @param {number} pid
+ * @returns {string}
+ */
 function readCmdline(pid) {
 	try {
 		return readFileSync(`/proc/${pid}/cmdline`, 'utf8').replaceAll('\0', ' ').trim();
@@ -149,6 +194,10 @@ function readCmdline(pid) {
 	}
 }
 
+/**
+ * @param {number} ms
+ * @returns {Promise<void>}
+ */
 function delay(ms) {
 	return new Promise((resolve) => {
 		setTimeout(resolve, ms);
@@ -175,7 +224,9 @@ if (isDirectRun()) {
 		env: { ...process.env, E2E: '1' }
 	});
 
-	for (const signal of ['SIGINT', 'SIGTERM']) {
+	/** @type {NodeJS.Signals[]} */
+	const signals = ['SIGINT', 'SIGTERM'];
+	for (const signal of signals) {
 		process.on(signal, () => {
 			child.kill(signal);
 		});

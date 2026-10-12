@@ -1,5 +1,5 @@
-import type { CsvPoint } from '$lib/csv-parser';
-import * as m from '$lib/paraglide/messages';
+import type { CsvPoint } from '#lib/csv-parser.js';
+import * as m from '#lib/paraglide/messages.js';
 import { finalizeDays, finalizeHours } from './chart-accumulate';
 import type {
 	DailyModelValue,

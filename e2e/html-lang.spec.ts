@@ -11,6 +11,14 @@ for (const locale of ['ja', 'en'] as const) {
 			}
 
 			const response = await route.fetch();
+			// SvelteKit 3 emits a relative redirect (`../ja`) and relative module URLs.
+			// Fulfilling the post-redirect document at the pre-redirect URL makes those
+			// modules resolve under the wrong path.
+			if (new URL(response.url()).pathname !== new URL(route.request().url()).pathname) {
+				await route.continue();
+				return;
+			}
+
 			const body = (await response.text()).replace(/<html\b[^>]*>/, '<html lang="xx" dir="rtl">');
 			await route.fulfill({ response, body });
 		});

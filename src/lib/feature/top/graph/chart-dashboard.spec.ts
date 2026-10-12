@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { csvPoint } from '$lib/csv-point.fixture';
+import { csvPoint } from '#lib/csv-point.fixture.js';
 import { buildDashboardData } from './chart-dashboard';
 import {
 	filterPointsByDays,
