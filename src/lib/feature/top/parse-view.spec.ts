@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildDashboardData } from '$lib/feature/top/graph/chart-dashboard';
-import { csvPoint } from '$lib/csv-point.fixture';
+import { buildDashboardData } from '#lib/feature/top/graph/chart-dashboard.js';
+import { csvPoint } from '#lib/csv-point.fixture.js';
 import { csvProgressValue, toPickerView, type ParseView } from './parse-view';
 
 describe('toPickerView', () => {

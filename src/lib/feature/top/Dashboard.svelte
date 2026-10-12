@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import DashboardCharts from '$lib/feature/top/graph/DashboardCharts.svelte';
-	import GraphGroup from '$lib/feature/top/graph/GraphGroup.svelte';
-	import RangeSwitcher from '$lib/feature/top/graph/RangeSwitcher.svelte';
+	import DashboardCharts from '#lib/feature/top/graph/DashboardCharts.svelte';
+	import GraphGroup from '#lib/feature/top/graph/GraphGroup.svelte';
+	import RangeSwitcher from '#lib/feature/top/graph/RangeSwitcher.svelte';
 	import {
 		nextPremountRange,
 		rememberMountedRange,
 		yieldToMain
-	} from '$lib/feature/top/graph/chart-range-mount';
-	import type { DashboardData, DayRange } from '$lib/feature/top/graph/chart-utils';
-	import * as m from '$lib/paraglide/messages';
+	} from '#lib/feature/top/graph/chart-range-mount.js';
+	import type { DashboardData, DayRange } from '#lib/feature/top/graph/chart-utils.js';
+	import * as m from '#lib/paraglide/messages.js';
 	import Usage from './Usage.svelte';
 
 	interface Props {
