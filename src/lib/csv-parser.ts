@@ -1,5 +1,5 @@
-import CsvParserWorker from '$lib/csv-parser.worker?worker&inline';
-import type { DashboardData } from '$lib/feature/top/graph/chart-types';
+import CsvParserWorker from '#lib/csv-parser.worker?worker&inline';
+import type { DashboardData } from '#lib/feature/top/graph/chart-types.js';
 import {
 	pickUsedCsvColumns,
 	resolveCsvColumnIndex,

@@ -1,6 +1,6 @@
 import { asset, resolve } from '$app/paths';
-import { m } from '$lib/paraglide/messages';
-import { baseLocale, locales } from '$lib/paraglide/runtime';
+import { m } from '#lib/paraglide/messages.js';
+import { baseLocale, locales } from '#lib/paraglide/runtime.js';
 
 const data = {
 	name: m.page_title({}, { locale: baseLocale }),
@@ -18,41 +18,41 @@ const data = {
 	display_override: ['standalone'],
 	icons: [
 		{
-			src: asset('/icons/icon-192.png'),
+			src: asset('icons/icon-192.png'),
 			type: 'image/png',
 			sizes: '192x192'
 		},
 		{
-			src: asset('/icons/icon-512-mask.png'),
+			src: asset('icons/icon-512-mask.png'),
 			type: 'image/png',
 			sizes: '512x512',
 			purpose: 'maskable'
 		},
 		{
-			src: asset('/icons/icon-512.png'),
+			src: asset('icons/icon-512.png'),
 			type: 'image/png',
 			sizes: '512x512'
 		}
 	],
 	screenshots: [
 		{
-			src: asset('/screenshots/screenshot-light.png'),
+			src: asset('screenshots/screenshot-light.png'),
 			sizes: '1280x720',
 			type: 'image/png'
 		},
 		{
-			src: asset('/screenshots/screenshot-dark.png'),
+			src: asset('screenshots/screenshot-dark.png'),
 			sizes: '1280x720',
 			type: 'image/png'
 		},
 		{
-			src: asset('/screenshots/screenshot-light.png'),
+			src: asset('screenshots/screenshot-light.png'),
 			sizes: '1280x720',
 			type: 'image/png',
 			form_factor: 'wide'
 		},
 		{
-			src: asset('/screenshots/screenshot-dark.png'),
+			src: asset('screenshots/screenshot-dark.png'),
 			sizes: '1280x720',
 			type: 'image/png',
 			form_factor: 'wide'

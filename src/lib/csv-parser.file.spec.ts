@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildDashboardData } from '$lib/feature/top/graph/chart-dashboard';
+import { buildDashboardData } from '#lib/feature/top/graph/chart-dashboard.js';
 import { csvPoint } from './csv-point.fixture';
 import { CsvParseError } from './csv-parser';
 
@@ -25,7 +25,7 @@ const harness = vi.hoisted(() => {
 	};
 });
 
-vi.mock('$lib/csv-parser.worker?worker&inline', () => ({
+vi.mock('#lib/csv-parser.worker?worker&inline', () => ({
 	default: harness.MockWorker
 }));
 

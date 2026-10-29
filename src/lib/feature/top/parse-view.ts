@@ -1,4 +1,4 @@
-import type { DashboardData } from '$lib/feature/top/graph/chart-types';
+import type { DashboardData } from '#lib/feature/top/graph/chart-types.js';
 
 export type ParseView =
 	| { status: 'idle' }

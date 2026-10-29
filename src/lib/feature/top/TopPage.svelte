@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { csvParseErrorMessage } from '$lib/csv-parse-error-message';
-	import { isLargeCsvFile } from '$lib/csv-large-file';
-	import { parseCsvFile } from '$lib/csv-parser';
-	import NoScript from '$lib/components/NoScript.svelte';
-	import Dashboard from '$lib/feature/top/Dashboard.svelte';
-	import Header from '$lib/feature/top/Header.svelte';
-	import * as m from '$lib/paraglide/messages';
+	import { csvParseErrorMessage } from '#lib/csv-parse-error-message.js';
+	import { isLargeCsvFile } from '#lib/csv-large-file.js';
+	import { parseCsvFile } from '#lib/csv-parser.js';
+	import NoScript from '#lib/components/NoScript.svelte';
+	import Dashboard from '#lib/feature/top/Dashboard.svelte';
+	import Header from '#lib/feature/top/Header.svelte';
+	import * as m from '#lib/paraglide/messages.js';
 	import { toPickerView, type ParseView } from './parse-view';
 	import Footer from './Footer.svelte';
 	import Picker from './Picker.svelte';

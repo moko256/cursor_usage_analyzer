@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import * as m from '$lib/paraglide/messages';
-import { csvPoint, modelBreakdown } from '$lib/csv-point.fixture';
+import * as m from '#lib/paraglide/messages.js';
+import { csvPoint, modelBreakdown } from '#lib/csv-point.fixture.js';
 import {
 	computeTokenBreakdownErrors,
 	groupByModelBreakdown,

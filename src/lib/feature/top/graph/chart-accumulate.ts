@@ -1,4 +1,4 @@
-import type { CsvPoint } from '$lib/csv-parser';
+import type { CsvPoint } from '#lib/csv-parser.js';
 import { maxTokensFromDays } from './chart-aggregate';
 import { computeTokenBreakdownErrors } from './chart-breakdown';
 import type {

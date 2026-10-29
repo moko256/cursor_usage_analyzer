@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import * as m from '$lib/paraglide/messages';
+import * as m from '#lib/paraglide/messages.js';
 import { csvParseErrorMessage } from './csv-parse-error-message';
 import { CsvParseError, type CsvParseErrorCode } from './csv-parser';
 
